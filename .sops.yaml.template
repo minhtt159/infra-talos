@@ -3,4 +3,4 @@ creation_rules:
     path_regex: .*\.sops\.ya?ml
     key_groups:
       - age:
-          - "age12r6lxtys5actk0sts2fl8g0g9qv4sunxp4nv08cmvjd9t6u7tvlq90zq0r"
+          - "$key"
