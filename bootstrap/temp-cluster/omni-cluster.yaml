@@ -1,0 +1,54 @@
+kind: Cluster
+name: talos-temp
+kubernetes:
+  # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+  version: v1.34.2
+talos:
+  # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
+  version: v1.11.5
+features:
+  enableWorkloadProxy: true
+  useEmbeddedDiscoveryService: true
+patches:
+  - file: ../global/machine-file.yaml
+  - file: ../global/machine-kubelet.yaml
+  - file: ../global/machine-network.yaml
+  - file: ../global/machine-sysctls.yaml
+  - file: ../global/machine-time.yaml
+systemExtensions:
+  - siderolabs/util-linux-tools
+---
+kind: ControlPlane
+machines:
+  - a9bc5b76-59d2-4281-97bd-37cf0c320ea0
+patches:
+  - file: ../controller/cluster-patch.yaml
+  - name: patch-label
+    inline:
+      machine:
+        nodeLabels:
+          role: master
+---
+kind: Workers
+machines:
+  - 4f0f1578-1849-48af-ae41-50b10212a191
+patches:
+  - name: patch-label
+    inline:
+      machine:
+        nodeLabels:
+          role: worker
+---
+kind: Machine
+name: 4f0f1578-1849-48af-ae41-50b10212a191
+install:
+  disk: /dev/sda
+systemExtensions:
+  - siderolabs/qemu-guest-agent
+---
+kind: Machine
+name: a9bc5b76-59d2-4281-97bd-37cf0c320ea0
+install:
+  disk: /dev/sda
+systemExtensions:
+  - siderolabs/qemu-guest-agent

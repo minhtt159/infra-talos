@@ -1,6 +1,0 @@
-creation_rules:
-  - # IMPORTANT: This rule MUST be above the others
-    path_regex: .*\.sops\.ya?ml
-    key_groups:
-      - age:
-          - "$key"
