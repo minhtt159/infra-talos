@@ -33,6 +33,8 @@ spec:
       enabled: false
     hubble:
       enabled: true
+      relay:
+        enabled: true
     ipam:
       mode: kubernetes
     ipv4NativeRoutingCIDR: "10.69.0.0/16"
