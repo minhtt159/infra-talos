@@ -1,6 +1,8 @@
 ---
 fullnameOverride: coredns
 k8sAppLabelOverride: kube-dns
+image:
+  repository: mirror.gcr.io/coredns/coredns
 serviceAccount:
   create: true
 service:
@@ -18,30 +20,33 @@ servers:
         configBlock: |-
           lameduck 5s
       - name: ready
-      - name: log
-        configBlock: |-
-          class error
-      - name: prometheus
-        parameters: 0.0.0.0:9153
       - name: kubernetes
         parameters: cluster.local in-addr.arpa ip6.arpa
         configBlock: |-
-          pods insecure
+          pods verified
           fallthrough in-addr.arpa ip6.arpa
+      - name: autopath
+        parameters: "@kubernetes"
       - name: forward
         parameters: . /etc/resolv.conf
       - name: cache
-        parameters: 30
+        configBlock: |-
+          prefetch 20
+          serve_stale
       - name: loop
       - name: reload
       - name: loadbalance
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: node-role.kubernetes.io/control-plane
-              operator: Exists
+      - name: prometheus
+        parameters: 0.0.0.0:9153
+      - name: log
+        configBlock: |-
+          class error
+nodeAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+      - matchExpressions:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
 tolerations:
   - key: CriticalAddonsOnly
     operator: Exists

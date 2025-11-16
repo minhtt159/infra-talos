@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
 ---
 # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-talosVersion: v1.9.5
+talosVersion: v1.11.3
 # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
-kubernetesVersion: v1.32.3
+kubernetesVersion: v1.34.2
 
 clusterName: "chivel"
 endpoint: https://10.1.0.6:6443
@@ -14,8 +14,8 @@ clusterSvcNets:
   - "10.96.0.0/16"
 
 additionalApiServerCertSans: &sans
-  - "10.1.0.6"
-  - 127.0.0.1 # KubePrism
+  - "127.0.0.1"
+  - "10.1.80.9"
   - "chivel.local"
 additionalMachineCertSans: *sans
 
@@ -23,121 +23,36 @@ additionalMachineCertSans: *sans
 cniConfig:
   name: none
 
-nodes:
-  - hostname: "pi0"
-    ipAddress: "10.1.0.20"
-    installDisk: &default-disk "/dev/sda"
-    talosImageURL: &qemu-os factory.talos.dev/installer/fd348d98739b8a67b5ec9688914440959ef2446e2ad5cafdd839c9c356e40149
-    controlPlane: true
-    networkInterfaces:
-      - deviceSelector:
-          hardwareAddr: "4e:77:90:32:b3:e7"
-        dhcp: false
-        addresses:
-          - "10.1.0.20/24"
-        routes:
-          - network: 0.0.0.0/0
-            gateway: "10.1.0.1"
-        mtu: 1500
-        vip:
-          ip: "10.1.0.6"
-  - hostname: "pi1"
-    ipAddress: "10.1.0.21"
-    installDisk: *default-disk
-    talosImageURL: &rpi-os factory.talos.dev/installer/d9792964ae2a0d748b31778944ee772759558c33c1274ee9db774509ef52fb6f
-    controlPlane: true
-    networkInterfaces:
-      - deviceSelector:
-          hardwareAddr: "dc:a6:32:f1:4f:7e"
-        dhcp: false
-        addresses:
-          - "10.1.0.21/24"
-        routes:
-          - network: 0.0.0.0/0
-            gateway: "10.1.0.1"
-        mtu: 1500
-        vip:
-          ip: "10.1.0.6"
-  - hostname: "pi2"
-    ipAddress: "10.1.0.22"
-    installDisk: *default-disk
-    talosImageURL: *rpi-os
-    controlPlane: true
-    networkInterfaces:
-      - deviceSelector:
-          hardwareAddr: "dc:a6:32:f1:52:27"
-        dhcp: false
-        addresses:
-          - "10.1.0.22/24"
-        routes:
-          - network: 0.0.0.0/0
-            gateway: "10.1.0.1"
-        mtu: 1500
-        vip:
-          ip: "10.1.0.6"
-  - hostname: "pi3"
-    ipAddress: "10.1.0.23"
-    installDisk: *default-disk
-    talosImageURL: *rpi-os
-    controlPlane: false
-    networkInterfaces:
-      - deviceSelector:
-          hardwareAddr: "e4:5f:01:ac:4c:d8"
-        dhcp: false
-        addresses:
-          - "10.1.0.23/24"
-        routes:
-          - network: 0.0.0.0/0
-            gateway: "10.1.0.1"
-        mtu: 1500
-  - hostname: "pi4"
-    ipAddress: "10.1.0.24"
-    installDisk: *default-disk
-    talosImageURL: *rpi-os
-    controlPlane: false
-    networkInterfaces:
-      - deviceSelector:
-          hardwareAddr: "e4:5f:01:ac:4a:17"
-        dhcp: false
-        addresses:
-          - "10.1.0.24/24"
-        routes:
-          - network: 0.0.0.0/0
-            gateway: "10.1.0.1"
-        mtu: 1500
-  # - hostname: "talos-w1"
-  #   ipAddress: "10.1.0.30"
-  #   installDisk: *default-disk
-  #   talosImageURL: *qemu-os
-  #   controlPlane: false
+nodes: []
+  # - hostname: "pi0"
+  #   ipAddress: "10.1.0.20"
+  #   installDisk: "/dev/sda"
+  #   talosImageURL: factory.talos.dev/installer/fd348d98739b8a67b5ec9688914440959ef2446e2ad5cafdd839c9c356e40149
+  #   controlPlane: true
   #   networkInterfaces:
   #     - deviceSelector:
-  #         hardwareAddr: "bc:24:11:1a:f9:59"
+  #         hardwareAddr: "4e:77:90:32:b3:e7"
   #       dhcp: false
   #       addresses:
-  #         - "10.1.0.30/24"
+  #         - "10.1.0.20/24"
   #       routes:
   #         - network: 0.0.0.0/0
   #           gateway: "10.1.0.1"
   #       mtu: 1500
+  #       vip:
+  #         ip: "10.1.0.6"
 
 patches:
-  - "@./global/cluster-discovery.yaml"
-  - "@./global/disable-search-domain.yaml"
-  - "@./global/dns.yaml"
-  - "@./global/hostdns.yaml"
-  - "@./global/kubelet.yaml"
-  - "@./global/ntp.yaml"
-  - "@./global/openebs-local.yaml"
-  - "@./global/sysctl.yaml"
+  - "@./global/machine-file.yaml"
+  - "@./global/machine-kubelet.yaml"
+  - "@./global/machine-network.yaml"
+  - "@./global/machine-sysctls.yaml"
+  - "@./global/machine-time.yaml"
 
 controlPlane:
   patches:
-    - "@./controller/api-access.yaml"
-    - "@./controller/etcd.yaml"
-    - "@./controller/cluster-patch.yaml"
-    - "@./controller/node-label.yaml"
+    - "@./controller/machine-controller.yaml"
 
 worker:
   patches:
-    - "@./worker/node-label.yaml"
+    - "@./worker/machine-worker.yaml"

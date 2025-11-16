@@ -1,0 +1,15 @@
+# Add additional sysctl configs
+machine:
+  sysctls:
+    # Watchdog
+    fs.inotify.max_user_watches: "1048576"
+    fs.inotify.max_user_instances: "8192"
+    # Cloudflared | QUIC
+    net.core.rmem_max: "7500000"
+    net.core.wmem_max: "7500000"
+    # Prevent ARP cache overflows
+    net.ipv4.neigh.default.gc_thresh1: "4096"
+    net.ipv4.neigh.default.gc_thresh2: "8192"
+    net.ipv4.neigh.default.gc_thresh3: "16384"
+    # User Namespaces
+    user.max_user_namespaces: "11255"

@@ -1,3 +1,0 @@
----
-providerRegex: ^(pi0|pi1|pi2|pi3|pi4|turing-01|turing-02|turing-03|turing-04|talos-w1)$
-bypassDnsResolution: true

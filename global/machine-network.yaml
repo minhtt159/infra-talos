@@ -1,0 +1,9 @@
+machine:
+  network:
+    disableSearchDomain: true
+    nameservers:
+      # Router
+      - 10.1.80.1
+      # Cloudflare
+      - 1.1.1.1
+      # - 1.0.0.1
