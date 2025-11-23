@@ -3,15 +3,12 @@
 
 # This helmfile is for extracting and installing Custom Resource Definitions (CRDs) from Helm charts.
 # It is not intended to be used with helmfile apply or helmfile sync.
+# helmfile --quiet --file bootstrap/helmfile.d/00-crds.yaml -b /opt/homebrew/opt/helm@3/bin/helm template | yq eval-all --exit-status 'select(.kind == "CustomResourceDefinition")' | kubectl apply --server-side -f -
 
 helmDefaults:
   args:
     - --include-crds
     - --no-hooks
-  postRenderer: bash
-  postRendererArgs:
-    - -c
-    - yq eval-all --exit-status 'select(.kind == "CustomResourceDefinition")'
 
 releases:
   - name: cloudflare-dns
@@ -33,4 +30,4 @@ releases:
   - name: kube-prometheus-stack
     namespace: observability
     chart: oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack
-    version: 79.5.0
+    version: 79.7.1

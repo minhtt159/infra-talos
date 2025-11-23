@@ -12,6 +12,7 @@ features:
 patches:
   - file: ../global/machine-file.yaml
   - file: ../global/machine-kubelet.yaml
+  # - file: ../global/machine-kubespan.yaml
   - file: ../global/machine-network.yaml
   - file: ../global/machine-sysctls.yaml
   - file: ../global/machine-time.yaml

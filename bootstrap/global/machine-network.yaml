@@ -7,3 +7,9 @@ machine:
       # Cloudflare
       - 1.1.1.1
       # - 1.0.0.1
+cluster:
+  network:
+    podSubnets:
+      - 10.69.0.0/16
+    serviceSubnets:
+      - 10.96.0.0/16
