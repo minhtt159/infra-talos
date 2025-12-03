@@ -37,7 +37,7 @@ kind: Workers
 machines:
   - 33303734-3966-3030-3966-346234636131 # turing-01
   - 64306566-3266-6634-3566-346632363063 # turing-03
-  # - 30303031-3030-3030-6232-353461303639 # turing-04 (CM4)
+  - 30303031-3030-3030-6232-353461303639 # turing-04 (CM4)
 patches:
   - name: patch-label
     inline:
@@ -69,12 +69,6 @@ install:
 systemExtensions:
   - siderolabs/qemu-guest-agent
 ---
-# kind: Machine
-# # turing-04 (CM4)
-# name: 30303031-3030-3030-6232-353461303639
-# install:
-#   disk: /dev/sda
-# ---
 kind: Machine
 # turing-01
 name: 33303734-3966-3030-3966-346234636131
@@ -88,3 +82,9 @@ kind: Machine
 name: 64306566-3266-6634-3566-346632363063
 install:
   disk: /dev/disk/by-id/nvme-WDC_WDS500G2B0C-00PXH0_210541802916
+---
+kind: Machine
+# turing-04 (CM4)
+name: 30303031-3030-3030-6232-353461303639
+install:
+  disk: /dev/sda # model: Flash Drive FIT
