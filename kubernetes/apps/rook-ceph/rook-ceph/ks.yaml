@@ -21,6 +21,10 @@ kind: Kustomization
 metadata:
   name: rook-ceph-cluster
 spec:
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
   dependsOn:
     - name: rook-ceph
     # - name: volsync
