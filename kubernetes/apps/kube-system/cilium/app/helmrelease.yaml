@@ -13,8 +13,6 @@ spec:
     autoDirectNodeRoutes: true
     bpf:
       masquerade: true
-      # Ref: https://github.com/siderolabs/talos/issues/10002
-      hostLegacyRouting: true
     cni:
       # Required for pairing with Multus CNI
       exclusive: false
@@ -46,7 +44,8 @@ spec:
     loadBalancer:
       algorithm: maglev
       mode: "dsr"
-    localRedirectPolicy: true
+    localRedirectPolicy:
+      enabled: true
     operator:
       dashboards:
         enabled: true
