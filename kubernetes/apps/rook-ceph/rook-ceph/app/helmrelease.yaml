@@ -10,6 +10,7 @@ spec:
     name: rook-ceph
   interval: 1h
   values:
+    # ref: https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph/values.yaml
     csi:
       cephFSKernelMountOptions: ms_mode=prefer-crc
       enableLiveness: true
@@ -19,8 +20,3 @@ spec:
       repository: ghcr.io/rook/ceph
     monitoring:
       enabled: true
-    resources:
-      requests:
-        memory: 128Mi # unchangable
-        cpu: 100m # unchangable
-      limits: {}
