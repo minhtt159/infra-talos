@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -11,8 +12,7 @@ spec:
       namespace: cert-manager
     - apiVersion: cert-manager.io/v1
       kind: ClusterIssuer
-      # name: letsencrypt-production
-      name: letsencrypt-staging
+      name: letsencrypt-production
   healthCheckExprs:
     - apiVersion: cert-manager.io/v1
       kind: ClusterIssuer

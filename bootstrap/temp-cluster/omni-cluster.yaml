@@ -32,24 +32,24 @@ patches:
       machine:
         nodeLabels:
           role: master
----
-kind: Workers
-machines:
-  - 33303734-3966-3030-3966-346234636131 # turing-01
-  - 64306566-3266-6634-3566-346632363063 # turing-03
-  - 30303031-3030-3030-6232-353461303639 # turing-04 (CM4)
-patches:
-  - name: patch-label
-    inline:
-      machine:
-        nodeLabels:
-          role: worker
+# ---
+# kind: Workers
+# machines:
+#   - 33303734-3966-3030-3966-346234636131 # turing-01
+#   - 64306566-3266-6634-3566-346632363063 # turing-03
+#   - 30303031-3030-3030-6232-353461303639 # turing-04 (CM4)
+# patches:
+#   - name: patch-label
+#     inline:
+#       machine:
+#         nodeLabels:
+#           role: worker
 ---
 kind: Machine
 # mini-talos-01
 name: 4f0f1578-1849-48af-ae41-50b10212a191
 install:
-  disk: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi2
+  disk: /dev/sda
 systemExtensions:
   - siderolabs/qemu-guest-agent
 ---
@@ -57,7 +57,7 @@ kind: Machine
 # mini-talos-02
 name: a9bc5b76-59d2-4281-97bd-37cf0c320ea0
 install:
-  disk: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi0
+  disk: /dev/sda
 systemExtensions:
   - siderolabs/qemu-guest-agent
 ---
@@ -65,26 +65,26 @@ kind: Machine
 # mini-talos-03
 name: fa4df0b9-6d3b-4194-9e38-4ceec7b7f379
 install:
-  disk: /dev/disk/by-id/nvme-WDS100T3X0C-00SJG0_21101U460209
+  disk: /dev/sda
 systemExtensions:
   - siderolabs/qemu-guest-agent
----
-kind: Machine
-# turing-01
-name: 33303734-3966-3030-3966-346234636131
-install:
-  disk: /dev/disk/by-id/nvme-WDC_WDS500G2B0C-00PXH0_210541801953
-systemExtensions:
-  - siderolabs/gasket-driver
----
-kind: Machine
-# turing-03
-name: 64306566-3266-6634-3566-346632363063
-install:
-  disk: /dev/disk/by-id/nvme-WDC_WDS500G2B0C-00PXH0_210541802916
----
-kind: Machine
-# turing-04 (CM4)
-name: 30303031-3030-3030-6232-353461303639
-install:
-  disk: /dev/sda # model: Flash Drive FIT
+# ---
+# kind: Machine
+# # turing-01
+# name: 33303734-3966-3030-3966-346234636131
+# install:
+#   disk: /dev/disk/by-id/nvme-WDC_WDS500G2B0C-00PXH0_210541801953
+# systemExtensions:
+#   - siderolabs/gasket-driver
+# ---
+# kind: Machine
+# # turing-03
+# name: 64306566-3266-6634-3566-346632363063
+# install:
+#   disk: /dev/disk/by-id/nvme-WDC_WDS500G2B0C-00PXH0_210541802916
+# ---
+# kind: Machine
+# # turing-04 (CM4)
+# name: 30303031-3030-3030-6232-353461303639
+# install:
+#   disk: /dev/sda # model: Flash Drive FIT
