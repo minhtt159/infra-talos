@@ -11,6 +11,14 @@ spec:
   interval: 1h
   values:
     # ref: https://github.com/rook/rook/blob/master/deploy/charts/rook-ceph-cluster/values.yaml
+    cleanupPolicy:
+      confirmation: yes-really-destroy-data
+      sanitizeDisks:
+        method: quick
+        dataSource: zero
+        iteration: 1
+      allowUninstallWithVolumes: false
+
     monitoring:
       enabled: true
       createPrometheusRules: true

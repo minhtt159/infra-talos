@@ -9,5 +9,4 @@ components:
 
 resources:
   - ./namespace.yaml
-  # NOTE: Disable rook-ceph for now
-  # - ./rook-ceph/ks.yaml
+  - ./rook-ceph/ks.yaml
