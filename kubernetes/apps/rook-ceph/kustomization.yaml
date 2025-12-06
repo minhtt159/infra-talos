@@ -7,7 +7,7 @@ namespace: rook-ceph
 components:
   - ../../components/sops
 
-# NOTE: Disable rook-ceph for now
-resources: []
-  # - ./namespace.yaml
+resources:
+  - ./namespace.yaml
+  # NOTE: Disable rook-ceph for now
   # - ./rook-ceph/ks.yaml
