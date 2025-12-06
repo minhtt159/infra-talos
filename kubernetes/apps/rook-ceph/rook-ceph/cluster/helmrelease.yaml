@@ -46,8 +46,7 @@ spec:
         enabled: true
         urlPrefix: /
         ssl: false
-        prometheusEndpoint: nil
-        # prometheusEndpoint: http://prometheus-operated.observability.svc.cluster.local:9090
+        prometheusEndpoint: http://prometheus-operated.observability.svc.cluster.local:9090
       mgr:
         modules:
           - name: diskprediction_local
@@ -75,6 +74,7 @@ spec:
         config:
           osdsPerDevice: "1"
 
+    # NOTE: Block
     cephBlockPools:
       - name: ceph-blockpool
         spec:
@@ -107,6 +107,8 @@ spec:
       name: csi-ceph-blockpool
       isDefault: false
       deletionPolicy: Delete
+
+    # NOTE: File system
     cephFileSystems:
       - name: &cephFileSystemName ceph-filesystem
         spec:
@@ -158,4 +160,6 @@ spec:
       name: csi-ceph-filesystem
       isDefault: false
       deletionPolicy: Delete
+
+    # NOTE: Do not use Object storage
     cephObjectStores: []
