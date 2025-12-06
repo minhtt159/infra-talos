@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cluster-cleanup-job-talos-6le-qu2
+  namespace: &ns rook-ceph
+  labels:
+    app: rook-ceph-cleanup
+    rook-ceph-cleanup: "true"
+    rook_cluster: *ns
+spec:
+  template:
+    spec:
+      containers:
+        # - name: rook-ceph-cleanup-talos-6le-qu2
+        - name: rook-ceph-cleanup-talos-6le-qu2
+          securityContext:
+            privileged: true
+          image: quay.io/ceph/ceph:v19.2.3
+          env:
+            # if ROOK_DATA_DIR_HOST_PATH is available, then delete the dataDirHostPath
+            - name: ROOK_DATA_DIR_HOST_PATH
+              value: &dataDirHostPath /var/lib/rook
+            - name: ROOK_NAMESPACE_DIR
+              value: rook-ceph
+            - name: ROOK_MON_SECRET
+              value: *dataDirHostPath
+            - name: ROOK_CLUSTER_FSID
+              value: *dataDirHostPath
+            - name: ROOK_LOG_LEVEL
+              value: *dataDirHostPath
+            - name: ROOK_SANITIZE_METHOD
+              value: "quick"
+            - name: ROOK_SANITIZE_DATA_SOURCE
+              value: "zero"
+            - name: ROOK_SANITIZE_ITERATION
+              value: "1"
+          args: ["ceph", "clean"]
+          volumeMounts:
+            - name: cleanup-volume
+              # data dir host path that needs to be cleaned up.
+              mountPath: *dataDirHostPath
+            - name: devices
+              mountPath: /dev
+      volumes:
+        - name: cleanup-volume
+          hostPath:
+            path: *dataDirHostPath
+        - name: devices
+          hostPath:
+            path: /dev
+      restartPolicy: OnFailure
