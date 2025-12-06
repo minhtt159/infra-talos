@@ -17,6 +17,7 @@ patches:
   - file: ../global/machine-network.yaml
   - file: ../global/machine-sysctls.yaml
   - file: ../global/machine-time.yaml
+  - file: ../global/machine-label.yaml
 systemExtensions:
   - siderolabs/util-linux-tools
 ---

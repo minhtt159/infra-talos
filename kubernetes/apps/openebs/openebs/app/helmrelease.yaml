@@ -11,12 +11,8 @@ spec:
   interval: 1h
   values:
     # ref: https://github.com/openebs/openebs/blob/develop/charts/values.yaml
-    openebs-crds:
-      csi:
-        volumeSnapshots:
-          # NOTE: already installed ../../../kube-system/snapshot-controller/ks.yaml
-          enabled: false
-          keep: false
+    preUpgradeHook:
+      enabled: false
 
     # localpv-provisioner:
     #   analytics:
