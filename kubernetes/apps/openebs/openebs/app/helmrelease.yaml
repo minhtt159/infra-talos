@@ -30,19 +30,19 @@ spec:
     #   helperPod:
     #     image:
     #       registry: *registry
-    # zfs-localpv:
-    #   enabled: false
-    # lvm-localpv:
-    #   enabled: false
+    zfs-localpv:
+      enabled: false
+    lvm-localpv:
+      enabled: false
     # mayastor:
     #   enabled: false
-    #
-    # engines:
-    #   local:
-    #     lvm:
-    #       enabled: false
-    #     zfs:
-    #       enabled: false
+
+    engines:
+      local:
+        lvm:
+          enabled: false
+        zfs:
+          enabled: false
     #   replicated:
     #     mayastor:
     #       enabled: false
