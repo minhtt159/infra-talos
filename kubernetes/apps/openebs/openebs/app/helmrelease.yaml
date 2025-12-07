@@ -45,9 +45,9 @@ spec:
           enabled: false
         zfs:
           enabled: false
-    replicated:
-      mayastor:
-        enabled: false
+      replicated:
+        mayastor:
+          enabled: false
     loki:
       enabled: false
     alloy:
