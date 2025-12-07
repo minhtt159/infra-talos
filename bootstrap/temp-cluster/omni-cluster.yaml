@@ -50,25 +50,31 @@ kind: Machine
 # mini-talos-01
 name: 4f0f1578-1849-48af-ae41-50b10212a191
 install:
-  disk: /dev/sda
+  disk: /dev/sda # SCSI1
 systemExtensions:
   - siderolabs/qemu-guest-agent
+  - siderolabs/util-linux-tools
+  - siderolabs/iscsi-tools
 ---
 kind: Machine
 # mini-talos-02
 name: a9bc5b76-59d2-4281-97bd-37cf0c320ea0
 install:
-  disk: /dev/sda
+  disk: /dev/sda # Proxmox disk
 systemExtensions:
   - siderolabs/qemu-guest-agent
+  - siderolabs/util-linux-tools
+  - siderolabs/iscsi-tools
 ---
 kind: Machine
 # mini-talos-03
 name: fa4df0b9-6d3b-4194-9e38-4ceec7b7f379
 install:
-  disk: /dev/sda
+  disk: /dev/nvme0n1
 systemExtensions:
   - siderolabs/qemu-guest-agent
+  - siderolabs/util-linux-tools
+  - siderolabs/iscsi-tools
 ---
 kind: Machine
 # turing-01
@@ -77,15 +83,23 @@ install:
   disk: /dev/disk/by-id/nvme-WDC_WDS500G2B0C-00PXH0_210541801953
 systemExtensions:
   - siderolabs/gasket-driver
+  - siderolabs/util-linux-tools
+  - siderolabs/iscsi-tools
 ---
 kind: Machine
 # turing-03
 name: 64306566-3266-6634-3566-346632363063
 install:
   disk: /dev/disk/by-id/nvme-WDC_WDS500G2B0C-00PXH0_210541802916
+systemExtensions:
+  - siderolabs/util-linux-tools
+  - siderolabs/iscsi-tools
 ---
 kind: Machine
 # turing-04 (CM4)
 name: 30303031-3030-3030-6232-353461303639
 install:
   disk: /dev/sda # model: Flash Drive FIT
+systemExtensions:
+  - siderolabs/util-linux-tools
+  - siderolabs/iscsi-tools
