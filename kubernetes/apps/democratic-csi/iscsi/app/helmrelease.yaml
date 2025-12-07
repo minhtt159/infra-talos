@@ -11,6 +11,8 @@ spec:
   interval: 1h
   values:
     # ref: https://github.com/democratic-csi/charts/blob/master/stable/democratic-csi/values.yaml
+    fullnameOverride: "truenas-iscsi"
+
     driver:
       existingConfigSecret: truenas-iscsi-secret-config
       config:
