@@ -5,11 +5,3 @@ machine:
     nodeIP:
       validSubnets:
         - 10.1.80.0/24
-    extraMounts:
-      - destination: /var/local
-        type: bind
-        source: /var/local
-        options:
-          - bind
-          - rshared
-          - rw

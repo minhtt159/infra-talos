@@ -13,5 +13,3 @@ machine:
     net.ipv4.neigh.default.gc_thresh3: "16384"
     # User Namespaces
     user.max_user_namespaces: "11255"
-    # OpenEBS
-    vm.nr_hugepages: "1024"
