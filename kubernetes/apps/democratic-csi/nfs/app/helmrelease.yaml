@@ -20,8 +20,8 @@ spec:
           port: 443
           allowInsecure: true
         zfs:
-          datasetParentName: Cullinan/k8s-nfs
-          detachedSnapshotsDatasetParentName: Cullinan/k8s-nfs/snaps
+          datasetParentName: "PLACEHOLDER_PARENT"
+          detachedSnapshotsDatasetParentName: "PALCEHOLDER_SNAPS"
           datasetEnableQuotas: true
           datasetEnableReservation: false
           datasetPermissionsMode: "0777"
