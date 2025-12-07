@@ -13,7 +13,7 @@ spec:
     driver:
       existingConfigSecret: truenas-nfs-secret-config
       config:
-        driver: freenas-nfs
+        driver: freenas-api-nfs
 
     csiDriver:
       # should be globally unique for a given cluster
@@ -33,3 +33,7 @@ spec:
 
     volumeSnapshotClasses:
       - name: truenas
+
+    controller:
+      driver:
+        tag: next@sha256:34d1b1dac29ec3288f9f8d419bcb16a33b0c0170b52493dcf1aa2fd48c221b10
