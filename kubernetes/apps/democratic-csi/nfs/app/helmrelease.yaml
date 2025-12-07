@@ -11,34 +11,7 @@ spec:
   interval: 1h
   values:
     driver:
-      config:
-        driver: freenas-nfs
-        httpConnection:
-          protocol: https
-          apiKey: "PLACEHOLDER"
-          host: &host 10.1.0.4
-          port: 443
-          allowInsecure: true
-        sshConnection:
-          host: *host
-        zfs:
-          datasetParentName: "PLACEHOLDER_PARENT"
-          detachedSnapshotsDatasetParentName: "PALCEHOLDER_SNAPS"
-          datasetEnableQuotas: true
-          datasetEnableReservation: false
-          datasetPermissionsMode: "0777"
-          datasetPermissionsUser: 0
-          datasetPermissionsGroup: 0
-        nfs:
-          shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
-          shareHost: *host
-          shareAlldirs: false
-          shareAllowedHosts: []
-          shareAllowedNetworks: []
-          shareMaprootUser: root
-          shareMaprootGroup: root
-          shareMapallUser: ""
-          shareMapallGroup: ""
+      existingConfigSecret: truenas-nfs-secret-config
 
     csiDriver:
       # should be globally unique for a given cluster

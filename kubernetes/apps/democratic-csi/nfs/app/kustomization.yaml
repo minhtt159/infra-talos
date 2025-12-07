@@ -4,8 +4,9 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
+  - ./secretstruenas.sops.yaml
 
-patches:
-  - path: ./secretstruenas.sops.yaml
-    target:
-      kind: HelmRelease
+# patches:
+#   - path: ./secretstruenas.sops.yaml
+#     target:
+#       kind: HelmRelease
