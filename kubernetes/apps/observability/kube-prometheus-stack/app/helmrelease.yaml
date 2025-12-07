@@ -7,6 +7,18 @@ spec:
     kind: OCIRepository
     name: kube-prometheus-stack
   interval: 1h
+  driftDetection:
+    mode: enabled
+    ignore:
+      # Ignore "validated" annotation which is not inserted during install
+      - paths: ["/metadata/annotations/prometheus-operator-validated"]
+        target:
+          kind: PrometheusRule
+  valuesFrom:
+    # Override kube-state-metrics-config for FluxCD
+    - kind: ConfigMap
+      name: flux-kube-state-metrics-config
+      valuesKey: kube-state-metrics-config.yaml
   values:
     # ref: https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
     cleanPrometheusOperatorObjectNames: true
@@ -77,10 +89,14 @@ spec:
               resources:
                 requests:
                   storage: 50Gi
+
     prometheus-node-exporter:
       fullnameOverride: node-exporter
-    kube-state-metrics:
-      fullnameOverride: kube-state-metrics
+
+    # NOTE: see ./kube-state-metrics-config.yaml
+    # kube-state-metrics:
+    #   fullnameOverride: kube-state-metrics
+
     grafana:
       enabled: false
       forceDeployDashboards: true
