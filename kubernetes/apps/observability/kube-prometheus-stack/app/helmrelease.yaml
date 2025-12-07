@@ -83,12 +83,12 @@ spec:
           limits:
             memory: 2000Mi
           storageSpec:
-          volumeClaimTemplate:
-            spec:
-              storageClassName: truenas-iscsi
-              resources:
-                requests:
-                  storage: 50Gi
+            volumeClaimTemplate:
+              spec:
+                storageClassName: truenas-iscsi
+                resources:
+                  requests:
+                    storage: 50Gi
 
     prometheus-node-exporter:
       fullnameOverride: node-exporter
