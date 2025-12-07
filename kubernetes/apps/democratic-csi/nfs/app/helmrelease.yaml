@@ -12,10 +12,12 @@ spec:
   values:
     driver:
       existingConfigSecret: truenas-nfs-secret-config
+      config:
+        driver: freenas-nfs
 
     csiDriver:
       # should be globally unique for a given cluster
-      name: "org.democratic-csi.freenas-api-nfs"
+      name: "org.democratic-csi.freenas-nfs"
 
     storageClasses:
       - name: truenas-nfs
