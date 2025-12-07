@@ -12,13 +12,15 @@ spec:
   values:
     driver:
       config:
-        driver: freenas-api-nfs
+        driver: freenas-nfs
         httpConnection:
           protocol: https
           apiKey: "PLACEHOLDER"
           host: &host 10.1.0.4
           port: 443
           allowInsecure: true
+        sshConnection:
+          host: *host
         zfs:
           datasetParentName: "PLACEHOLDER_PARENT"
           detachedSnapshotsDatasetParentName: "PALCEHOLDER_SNAPS"
