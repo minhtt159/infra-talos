@@ -10,6 +10,7 @@ spec:
     name: democratic-csi
   interval: 1h
   values:
+    # ref: https://github.com/democratic-csi/charts/blob/master/stable/democratic-csi/values.yaml
     driver:
       existingConfigSecret: truenas-nfs-secret-config
       config:
@@ -35,6 +36,11 @@ spec:
       - name: truenas
 
     controller:
-      driver:
+      driver: &driver
         image:
+          registry: ghcr.io/democratic-csi/democratic-csi
           tag: next@sha256:34d1b1dac29ec3288f9f8d419bcb16a33b0c0170b52493dcf1aa2fd48c221b10
+    node:
+      driver: *driver
+    csiProxy:
+      driver: *driver

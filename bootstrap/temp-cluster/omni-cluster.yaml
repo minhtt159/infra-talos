@@ -17,9 +17,6 @@ patches:
   - file: ../global/machine-network.yaml
   - file: ../global/machine-sysctls.yaml
   - file: ../global/machine-time.yaml
-systemExtensions:
-  - siderolabs/util-linux-tools
-  - siderolabs/iscsi-tools
 ---
 kind: ControlPlane
 machines:

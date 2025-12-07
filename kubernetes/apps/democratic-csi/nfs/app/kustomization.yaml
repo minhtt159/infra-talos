@@ -5,8 +5,3 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./secretstruenas.sops.yaml
-
-# patches:
-#   - path: ./secretstruenas.sops.yaml
-#     target:
-#       kind: HelmRelease
