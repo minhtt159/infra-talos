@@ -14,39 +14,40 @@ spec:
     preUpgradeHook:
       enabled: false
 
-    # localpv-provisioner:
-    #   analytics:
-    #     enabled: false
-    #   localpv:
-    #     image:
-    #       registry: &registry quay.io/
-    #     # ref: ../../../../../bootstrap/controller/cluster-patch.yaml
-    #     basePath: &hostPath /var/mnt/local-hostpath
-    #   hostpathClass:
-    #     enabled: true
-    #     name: openebs-hostpath
-    #     isDefaultClass: false
-    #     basePath: *hostPath
-    #   helperPod:
-    #     image:
-    #       registry: *registry
+    localpv-provisioner:
+      # ref: https://github.com/openebs/dynamic-localpv-provisioner/blob/v4.2.0/deploy/helm/charts/values.yaml
+      analytics:
+        enabled: false
+      localpv:
+        image:
+          registry: &registry quay.io/
+        # ref: ../../../../../bootstrap/temp-cluster/omni-cluster.yaml
+        basePath: &hostPath /var/mnt/data
+      hostpathClass:
+        enabled: true
+        name: openebs-hostpath
+        isDefaultClass: false
+        basePath: *hostPath
+      helperPod:
+        image:
+          registry: *registry
+
+    # NOTE: Disable unused package
     zfs-localpv:
       enabled: false
     lvm-localpv:
       enabled: false
-    # mayastor:
-    #   enabled: false
-
+    mayastor:
+      enabled: false
     engines:
       local:
         lvm:
           enabled: false
         zfs:
           enabled: false
-    #   replicated:
-    #     mayastor:
-    #       enabled: false
-
+    replicated:
+      mayastor:
+        enabled: false
     loki:
       enabled: false
     alloy:
