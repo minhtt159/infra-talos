@@ -38,7 +38,7 @@ spec:
         storage:
           volumeClaimTemplate:
             spec:
-              storageClassName: openebs-hostpath
+              storageClassName: truenas-nfs
               resources:
                 requests:
                   storage: 1Gi
@@ -85,7 +85,7 @@ spec:
           storageSpec:
           volumeClaimTemplate:
             spec:
-              storageClassName: openebs-hostpath
+              storageClassName: truenas-iscsi
               resources:
                 requests:
                   storage: 50Gi
