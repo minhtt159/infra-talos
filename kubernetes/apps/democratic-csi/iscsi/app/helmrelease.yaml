@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: truenas-iscsi
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: democratic-csi
+  interval: 1h
+  values:
+    # ref: https://github.com/democratic-csi/charts/blob/master/stable/democratic-csi/values.yaml
+    driver:
+      existingConfigSecret: truenas-iscsi-secret-config
+      config:
+        driver: freenas-api-iscsi
+
+    csiDriver:
+      # should be globally unique for a given cluster
+      name: "org.democratic-csi.freenas-iscsi"
+
+    storageClasses:
+      - name: truenas-iscsi
+        defaultClass: false
+        reclaimPolicy: Delete
+        volumeBindingMode: Immediate
+        allowVolumeExpansion: true
+        parameters:
+          fsType: xfs
+          detachedVolumesFromSnapshots: "false"
+        mountOptions: []
+        secrets:
+          provisioner-secret:
+          controller-publish-secret:
+          node-stage-secret:
+          node-publish-secret:
+          controller-expand-secret:
+
+    volumeSnapshotClasses:
+      - name: truenas-iscsi
+        parameters:
+          detachedSnapshots: "true"
+
+    controller:
+      driver:
+        image: &image
+          registry: ghcr.io/democratic-csi/democratic-csi
+          tag: next
+    csiProxy:
+      driver:
+        image: *image
+    node:
+      hostPID: true
+      driver:
+        image: *image
+        extraEnv:
+          - name: ISCSIADM_HOST_STRATEGY
+            value: nsenter
+          - name: ISCSIADM_HOST_PATH
+            value: /usr/local/sbin/iscsiadm
+        iscsiDirHostPath: /usr/local/etc/iscsi
+        iscsiDirHostPathType: ""

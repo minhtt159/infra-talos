@@ -9,3 +9,4 @@ components:
 resources:
   - ./namespace.yaml
   - ./nfs/ks.yaml
+  - ./iscsi/ks.yaml
