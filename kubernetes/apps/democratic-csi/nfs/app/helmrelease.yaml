@@ -39,7 +39,7 @@ spec:
       driver: &driver
         image:
           registry: ghcr.io/democratic-csi/democratic-csi
-          tag: next@sha256:34d1b1dac29ec3288f9f8d419bcb16a33b0c0170b52493dcf1aa2fd48c221b10
+          tag: next
     node:
       driver: *driver
     csiProxy:
