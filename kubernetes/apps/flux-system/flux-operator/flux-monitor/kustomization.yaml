@@ -9,3 +9,6 @@ configMapGenerator:
     files:
       - dashboards/control-plane.json
       - dashboards/cluster.json
+
+configurations:
+  - kustomizeconfig.yaml
