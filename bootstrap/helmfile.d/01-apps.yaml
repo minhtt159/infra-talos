@@ -13,7 +13,7 @@ releases:
     namespace: kube-system
     # chart: https://helm.cilium.io
     chart: oci://ghcr.io/home-operations/charts-mirror/cilium
-    version: 1.18.4
+    version: 1.18.5
     values:
       - ./templates/values.yaml.gotmpl
 
