@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: &name frigate
+  annotations:
+    omni-kube-service-exposer.sidero.dev/port: "8971"
+    omni-kube-service-exposer.sidero.dev/label: Frigate
+spec:
+  selector:
+    app: *name
+  type: ClusterIP
+  ports:
+    - name: *name
+      protocol: TCP
+      port: 80
+      targetPort: 8971

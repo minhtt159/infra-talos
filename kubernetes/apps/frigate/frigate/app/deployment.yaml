@@ -15,6 +15,7 @@ spec:
       labels:
         app: *name
     spec:
+      restartPolicy: Always
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -36,14 +37,22 @@ spec:
             #   cpu: 100m
             #   memory: 400Mi
           ports:
-            - containerPort: 8971
-              name: *name
+            - name: webui
+              containerPort: 8971
+            - name: internal
+              containerPort: 5000
+            - name: rstp
+              containerPort: 8554
+            - name: webrtc
+              containerPort: 8555
           volumeMounts:
             - name: coral
               mountPath: /dev/apex_0
             - name: config
               mountPath: /config/config.yaml
               subPath: config.yaml
+            - name: media
+              mountPath: /media/frigate
           securityContext:
             privileged: true
           # securityContext:
@@ -65,5 +74,6 @@ spec:
         - name: config
           configMap:
             name: frigate-configmap
-      restartPolicy: Always
----
+        - name: media
+          persistentVolumeClaim:
+            claimName: frigate-media
