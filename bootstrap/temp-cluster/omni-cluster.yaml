@@ -2,10 +2,10 @@ kind: Cluster
 name: talos-temp
 kubernetes:
   # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
-  version: v1.34.2
+  version: v1.34.3
 talos:
   # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-  version: v1.11.5
+  version: v1.11.6
 features:
   enableWorkloadProxy: true
   useEmbeddedDiscoveryService: true
@@ -35,7 +35,7 @@ kind: Workers
 machines:
   - 33303734-3966-3030-3966-346234636131 # turing-01
   - 64306566-3266-6634-3566-346632363063 # turing-03
-  - 30303031-3030-3030-6232-353461303639 # turing-04 (CM4)
+  # - 30303031-3030-3030-6232-353461303639 # turing-04 (CM4)
 patches:
   - name: patch-label
     inline:
@@ -78,6 +78,18 @@ kind: Machine
 name: 33303734-3966-3030-3966-346234636131
 install:
   disk: /dev/disk/by-id/nvme-WDC_WDS500G2B0C-00PXH0_210541801953
+patches:
+  - name: enable-gasket
+    inline:
+      machine:
+        udev:
+          rules:
+            - SUBSYSTEM=="apex", MODE="0660", GROUP="44"
+  - name: inline-label
+    inline:
+      machine:
+        nodeLabels:
+          capability: coral
 systemExtensions:
   - siderolabs/gasket-driver
   - siderolabs/util-linux-tools
@@ -91,12 +103,11 @@ install:
 systemExtensions:
   - siderolabs/util-linux-tools
   - siderolabs/iscsi-tools
----
-kind: Machine
-# turing-04 (CM4)
-name: 30303031-3030-3030-6232-353461303639
-install:
-  disk: /dev/sda # model: Flash Drive FIT
-systemExtensions:
-  - siderolabs/util-linux-tools
-  - siderolabs/iscsi-tools
+# ---
+# kind: Machine
+# # turing-04 (CM4)
+# name: 30303031-3030-3030-6232-353461303639
+# install:
+#   disk: /dev/sda # model: Flash Drive FIT
+# systemExtensions:
+#   - siderolabs/iscsi-tools
