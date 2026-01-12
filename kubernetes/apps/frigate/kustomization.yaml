@@ -8,4 +8,4 @@ components:
 
 resources:
   - ./namespace.yaml
-  # - ./frigate/ks.yaml
+  - ./frigate/ks.yaml

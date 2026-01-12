@@ -48,11 +48,12 @@ spec:
           volumeMounts:
             - name: coral
               mountPath: /dev/apex_0
-            # - name: config
-            #   mountPath: /config/config.yaml
-            #   subPath: config.yaml
+            - name: config
+              mountPath: /config
             - name: media
               mountPath: /media/frigate
+            - name: shm-volume
+              mountPath: /dev/shm
           securityContext:
             privileged: true
           # securityContext:
@@ -72,8 +73,12 @@ spec:
           hostPath:
             path: /dev/apex_0
         - name: config
-          configMap:
-            name: frigate-configmap
+          persistentVolumeClaim:
+            claimName: frigate-config
         - name: media
           persistentVolumeClaim:
             claimName: frigate-media
+        - name: shm-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi

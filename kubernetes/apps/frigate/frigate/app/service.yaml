@@ -13,5 +13,5 @@ spec:
   ports:
     - name: *name
       protocol: TCP
-      port: 80
+      port: 443
       targetPort: 8971
