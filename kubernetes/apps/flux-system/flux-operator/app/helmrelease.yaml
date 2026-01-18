@@ -10,5 +10,6 @@ spec:
     name: flux-operator
   interval: 1h
   values:
+    # ref: https://github.com/controlplaneio-fluxcd/charts/blob/main/charts/flux-operator/values.yaml
     serviceMonitor:
       create: true
