@@ -13,6 +13,8 @@ spec:
     # ref: https://github.com/controlplaneio-fluxcd/charts/blob/main/charts/flux-operator/values.yaml
     serviceMonitor:
       create: true
+    # NOTE: I made a PR to fix networkPolicy
+    # https://github.com/controlplaneio-fluxcd/charts/pull/135
     # web:
     #   networkPolicy:
     #     create: false
