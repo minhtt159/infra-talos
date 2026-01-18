@@ -6,4 +6,6 @@ resources:
   - ./ocirepository.yaml
   - ./secret.sops.yaml
   - ./httproute.yaml
+  - ./podmonitor.yaml
+  - ./prometheusrule.yaml
   - ./receiver.yaml
