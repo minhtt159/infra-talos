@@ -15,8 +15,8 @@ spec:
       labels:
         app: *name
     spec:
-      # imagePullSecrets:
-      #   - name: ghcr-pull-secret
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: *name
           image: ghcr.io/minhtt159/innogeoint:latest
