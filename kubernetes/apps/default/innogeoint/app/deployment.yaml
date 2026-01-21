@@ -80,12 +80,5 @@ spec:
           ports:
             - containerPort: 8000
               name: http
-          volumeMounts:
-            - name: localtime
-              mountPath: /etc/localtime
-      volumes:
-        - name: localtime
-          hostPath:
-            path: /usr/share/zoneinfo/Europe/Amsterdam
       restartPolicy: Always
 ---
