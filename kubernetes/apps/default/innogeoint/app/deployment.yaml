@@ -1,0 +1,78 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name innogeoint
+  labels:
+    app: *name
+spec:
+  selector:
+    matchLabels:
+      app: *name
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: *name
+    spec:
+      # imagePullSecrets:
+      #   - name: ghcr-pull-secret
+      containers:
+        - name: *name
+          image: ghcr.io/minhtt159/innogeoint:latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+
+          # livenessProbe:
+          #   tcpSocket:
+          #     port: 8080
+          #   initialDelaySeconds: 5
+          #   timeoutSeconds: 5
+          #   successThreshold: 1
+          #   failureThreshold: 3
+          #   periodSeconds: 10
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: 8080
+          #   initialDelaySeconds: 5
+          #   timeoutSeconds: 2
+          #   successThreshold: 1
+          #   failureThreshold: 3
+          #   periodSeconds: 10
+
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: *name
+                  key: DB_HOST
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: *name
+            - name: DB_USER
+              value: goose
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: *name
+                  key: DB_PASSWORD
+          ports:
+            - containerPort: 8000
+              name: http
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Europe/Amsterdam
+      restartPolicy: Always
+---
