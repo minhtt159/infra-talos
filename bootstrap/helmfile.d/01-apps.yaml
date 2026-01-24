@@ -21,7 +21,7 @@ releases:
     namespace: kube-system
     chart: oci://ghcr.io/coredns/charts/coredns
     # chart: https://coredns.github.io/helm
-    version: 1.45.0
+    version: 1.45.2
     values:
       - ./templates/values.yaml.gotmpl
     needs:
