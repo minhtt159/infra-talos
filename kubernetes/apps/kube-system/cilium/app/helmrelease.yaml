@@ -117,7 +117,7 @@ spec:
           certValidityDuration: 1095
 
     hostFirewall:
-      enabled: true
+      enabled: false # enable in prod
 
     policyAuditMode: true # disable this for debug
     identityAllocationMode: crd
