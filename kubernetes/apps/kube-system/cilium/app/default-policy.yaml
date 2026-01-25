@@ -1,0 +1,54 @@
+---
+# Default deny all traffic - enforce zero trust
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  description: "Default deny - explicit allow required"
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+  egress:
+    - toEndpoints:
+        - {}
+    # Allow DNS
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+# Allow all traffic in kube-system
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kube-system
+  namespace: kube-system
+spec:
+  description: "Allow all in kube-system"
+  endpointSelector: {}
+  ingress:
+    - {}
+  egress:
+    - {}
+---
+# Allow all traffic in network namespace (for Envoy Gateway)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-network-namespace
+  namespace: network
+spec:
+  description: "Allow all in network namespace"
+  endpointSelector: {}
+  ingress:
+    - {}
+  egress:
+    - {}

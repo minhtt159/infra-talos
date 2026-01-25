@@ -1,0 +1,68 @@
+---
+# Protect Talos nodes with host firewall
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: host-firewall-control-plane
+spec:
+  description: "Host firewall for Talos control plane"
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/os: linux
+  ingress:
+    # Kubernetes API
+    - fromEntities:
+        - cluster
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+    # Kubelet
+    - fromEntities:
+        - cluster
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
+    # Cilium health
+    - fromEntities:
+        - cluster
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "4240"
+              protocol: TCP
+    # Cilium WireGuard
+    - fromEntities:
+        - cluster
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "51871"
+              protocol: UDP
+    # Talos API
+    - fromCIDR:
+        - "10.1.80.0/24"
+      toPorts:
+        - ports:
+            - port: "50000"
+              protocol: TCP
+            - port: "50001"
+              protocol: TCP
+    # Allow ICMP
+    - icmps:
+        - fields:
+            - type: 8
+    # Allow from LoadBalancer IPs (for health checks)
+    - fromCIDR:
+        - "10.1.80.0/24"
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+  egress:
+    - {}

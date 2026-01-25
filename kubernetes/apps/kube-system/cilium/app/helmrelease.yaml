@@ -11,42 +11,143 @@ spec:
   interval: 1h
   values:
     autoDirectNodeRoutes: true
+
     bpf:
       masquerade: true
       # Ref: https://github.com/siderolabs/talos/issues/10002
       # hostLegacyRouting: true
+      policyMapMax: 16384
+      lbMapMax: 65536
+
     cni:
-      # Required for pairing with Multus CNI
+      # If you want to use Multus CNI, or VPC-CNI
       exclusive: false
+
     cgroup:
       automount:
         enabled: false
       hostRoot: /sys/fs/cgroup
     # NOTE: devices might need to be set if you have more than one active NIC on your hosts
     # devices: eno+ eth+
+
     dashboards:
       enabled: true
     endpointRoutes:
       enabled: true
+
+    encryption:
+      enabled: true
+      type: wireguard
+      nodeEncryption: true
+      wireguard:
+        persistentKeepalive: 0s
+      strictMode:
+        enabled: true
+        allowRemoteNodeIdentities: false
+
     envoy:
-      enabled: false
+      enabled: true
+      log:
+        format: json
+        level: warn
+      prometheus:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+      resources:
+        limits:
+          memory: 2Gi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      # Enable socket-based load balancing
+      socketLB:
+        enabled: true
+      # Security context for Envoy pods
+      securityContext:
+        capabilities:
+          envoy:
+            - NET_BIND_SERVICE
+            - NET_ADMIN
+          keepCapNetBindService: true
+        seLinuxOptions:
+          type: spc_t
+
     gatewayAPI:
+      # ref: ../../../network/envoy-gateway/ks.yaml
       enabled: false
+
+    # ============================================
+    # OBSERVABILITY: Hubble
+    # ============================================
     hubble:
-      enabled: false
+      enabled: true
+      metrics:
+        enabled:
+          - dns:query;ignoreAAAA
+          - drop
+          - tcp
+          - flow
+          - port-distribution
+          - icmp
+          - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction
+        serviceMonitor:
+          enabled: true
+        dashboards:
+          enabled: true
+          annotations:
+            grafana_folder: "Cilium"
+      relay:
+        enabled: true
+        replicas: 2
+        rollOutPods: true
+        prometheus:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+      ui:
+        enabled: true
+        rollOutPods: true
+        replicas: 1
+        ingress:
+          enabled: false # Use Gateway API instead
+      tls:
+        enabled: true
+        auto:
+          enabled: true
+          method: helm
+          certValidityDuration: 1095
+
+    # ============================================
+    # SECURITY: Host Firewall
+    # ============================================
+    hostFirewall:
+      enabled: true
+
+    # ============================================
+    # SECURITY: Policy Enforcement
+    # ============================================
+    policyAuditMode: false
+    identityAllocationMode: crd
+
     ipam:
       mode: kubernetes
+
     ipv4NativeRoutingCIDR: "10.69.0.0/16"
     k8sServiceHost: 127.0.0.1
     k8sServicePort: 7445
+
     kubeProxyReplacement: true
     kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
+
     l2announcements:
       enabled: true
     loadBalancer:
       algorithm: maglev
       mode: "dsr"
+      serviceTopology: true
     localRedirectPolicy: true
+
     operator:
       dashboards:
         enabled: true
@@ -56,13 +157,16 @@ spec:
           enabled: true
       replicas: 1
       rollOutPods: true
+
     prometheus:
       enabled: true
       serviceMonitor:
         enabled: true
         trustCRDsExist: true
+
     rollOutCiliumPods: true
     routingMode: native
+
     securityContext:
       capabilities:
         ciliumAgent:
@@ -83,5 +187,7 @@ spec:
           - NET_ADMIN
           - SYS_ADMIN
           - SYS_RESOURCE
+
     socketLB:
-      hostNamespaceOnly: true
+      enabled: true
+      hostNamespaceOnly: false

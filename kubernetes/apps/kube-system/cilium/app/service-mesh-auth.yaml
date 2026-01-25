@@ -1,0 +1,23 @@
+---
+# Enable mTLS authentication for service mesh traffic
+# This enforces that all L7 traffic uses Cilium's identity-based auth
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: require-identity-auth
+  namespace: kube-system
+spec:
+  description: "Require identity-based authentication for L7 traffic"
+  endpointSelector:
+    matchLabels:
+      io.cilium.k8s.policy.serviceaccount: cilium
+  ingress:
+    - fromEndpoints:
+        - {}
+      authentication:
+        mode: required
+  egress:
+    - toEndpoints:
+        - {}
+      authentication:
+        mode: required
