@@ -1,0 +1,8 @@
+# Enable WireGuard for Cilium encryption on Talos
+machine:
+  kernel:
+    modules:
+      - name: wireguard
+  sysctls:
+    # Required for Cilium encryption
+    net.core.bpf_jit_enable: "1"

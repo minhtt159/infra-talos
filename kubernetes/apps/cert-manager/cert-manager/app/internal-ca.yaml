@@ -1,0 +1,36 @@
+---
+# Self-signed issuer for bootstrapping internal CA
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+# Internal CA certificate (root CA for service mesh)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: internal-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: internal-ca
+  secretName: internal-ca-secret
+  duration: 87600h # 10 years
+  renewBefore: 8760h # 1 year
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+---
+# ClusterIssuer using internal CA (for service certificates)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: internal-ca-issuer
+spec:
+  ca:
+    secretName: internal-ca-secret
