@@ -10,11 +10,13 @@ spec:
     name: flux-instance
   interval: 1h
   values:
+    # ref: https://github.com/controlplaneio-fluxcd/charts/blob/main/charts/flux-instance/values.yaml
     instance:
       distribution:
         artifact: oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests:v0.40.0
         version: 2.x
       cluster:
+        # ref: https://fluxoperator.dev/docs/crd/fluxinstance/#cluster-configuration
         size: medium
         networkPolicy: true
       components:
