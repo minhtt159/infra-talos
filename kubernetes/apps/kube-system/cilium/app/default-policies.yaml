@@ -38,17 +38,3 @@ spec:
     - {}
   egress:
     - {}
----
-# Allow all traffic in network namespace (for Envoy Gateway)
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-network-namespace
-  namespace: network
-spec:
-  description: "Allow all in network namespace"
-  endpointSelector: {}
-  ingress:
-    - {}
-  egress:
-    - {}
