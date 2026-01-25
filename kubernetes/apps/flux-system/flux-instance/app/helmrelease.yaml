@@ -15,7 +15,8 @@ spec:
         artifact: oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests:v0.40.0
         version: 2.x
       cluster:
-        networkPolicy: false
+        size: medium
+        networkPolicy: true
       components:
         - source-controller
         - kustomize-controller
@@ -31,34 +32,6 @@ spec:
           app.kubernetes.io/name: flux
       kustomize:
         patches:
-          - # Increase the number of workers
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: --concurrent=10
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: --requeue-dependency=5s
-            target:
-              kind: Deployment
-              name: (kustomize-controller|helm-controller|source-controller)
-          - # Increase the memory limits
-            patch: |
-              apiVersion: apps/v1
-              kind: Deployment
-              metadata:
-                name: all
-              spec:
-                template:
-                  spec:
-                    containers:
-                      - name: manager
-                        resources:
-                          limits:
-                            memory: 1Gi
-            target:
-              kind: Deployment
-              name: (kustomize-controller|helm-controller|source-controller)
           - # Enable in-memory kustomize builds
             patch: |
               - op: add

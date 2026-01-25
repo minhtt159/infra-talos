@@ -10,6 +10,7 @@ spec:
     name: cilium
   interval: 1h
   values:
+    # ref: https://github.com/cilium/cilium/blob/main/install/kubernetes/cilium/values.yaml
     autoDirectNodeRoutes: true
 
     bpf:
@@ -115,16 +116,10 @@ spec:
           method: helm
           certValidityDuration: 1095
 
-    # ============================================
-    # SECURITY: Host Firewall
-    # ============================================
     hostFirewall:
       enabled: true
 
-    # ============================================
-    # SECURITY: Policy Enforcement
-    # ============================================
-    policyAuditMode: false
+    policyAuditMode: true # disable this for debug
     identityAllocationMode: crd
 
     ipam:
