@@ -77,9 +77,6 @@ spec:
       # ref: ../../../network/envoy-gateway/ks.yaml
       enabled: false
 
-    # ============================================
-    # OBSERVABILITY: Hubble
-    # ============================================
     hubble:
       enabled: true
       metrics:

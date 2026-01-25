@@ -7,4 +7,4 @@ resources:
   - ./networks.yaml
   - ./default-policies.yaml
   - ./host-firewall.yaml
-  - ./service-mesh-auth.yaml
+  # - ./service-mesh-auth.yaml
