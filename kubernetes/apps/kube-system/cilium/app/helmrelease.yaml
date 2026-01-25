@@ -42,7 +42,7 @@ spec:
       nodeEncryption: true
       strictMode:
         egress:
-          enabled: true
+          enabled: false
           cidr: "10.69.0.0/16"
           allowRemoteNodeIdentities: false
 
