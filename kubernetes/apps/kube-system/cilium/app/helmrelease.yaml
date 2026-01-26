@@ -53,9 +53,9 @@ spec:
     # ####################
     envoy:
       enabled: true
-      log:
-        format: json
-        level: warn
+      # log:
+      #   format: json
+      #   level: warn
       prometheus:
         enabled: true
         serviceMonitor:
@@ -66,18 +66,6 @@ spec:
         requests:
           cpu: 100m
           memory: 256Mi
-      # Enable socket-based load balancing
-      socketLB:
-        enabled: true
-      # Security context for Envoy pods
-      securityContext:
-        capabilities:
-          envoy:
-            - NET_BIND_SERVICE
-            - NET_ADMIN
-          keepCapNetBindService: true
-        seLinuxOptions:
-          type: spc_t
 
     gatewayAPI:
       # ref: ../../../network/envoy-gateway/ks.yaml
@@ -87,7 +75,7 @@ spec:
     # Hubble Configuration
     # ####################
     hubble:
-      enabled: true
+      enabled: &hubble-state false # NOTE: disable hubble on cluster bootstrap
       metrics:
         enabled:
           - dns:query;ignoreAAAA
@@ -104,7 +92,7 @@ spec:
           annotations:
             grafana_folder: "Cilium"
       relay:
-        enabled: true
+        enabled: *hubble-state
         replicas: 2
         rollOutPods: true
         prometheus:
@@ -112,13 +100,13 @@ spec:
           serviceMonitor:
             enabled: true
       ui:
-        enabled: true
+        enabled: *hubble-state
         rollOutPods: true
         replicas: 1
         ingress:
           enabled: false # Use Gateway API instead
       tls:
-        enabled: true
+        enabled: *hubble-state
         auto:
           enabled: true
           method: helm

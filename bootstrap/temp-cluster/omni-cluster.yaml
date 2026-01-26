@@ -37,6 +37,7 @@ machines:
   - 33303734-3966-3030-3966-346234636131 # turing-01
   - 64306566-3266-6634-3566-346632363063 # turing-03
   # - 30303031-3030-3030-6232-353461303639 # turing-04 (CM4)
+  - b1e583f1-b1de-44f9-860b-812e9917f2d0 # mini-talos-04
 patches:
   - name: patch-label
     inline:
@@ -48,7 +49,7 @@ kind: Machine
 # mini-talos-01
 name: 4f0f1578-1849-48af-ae41-50b10212a191
 install:
-  disk: /dev/sda # SCSI1
+  disk: /dev/sda # SCSI1 - SATA disk
 systemExtensions:
   - siderolabs/qemu-guest-agent
   - siderolabs/util-linux-tools
@@ -68,7 +69,7 @@ kind: Machine
 # mini-talos-03
 name: fa4df0b9-6d3b-4194-9e38-4ceec7b7f379
 install:
-  disk: /dev/nvme0n1
+  disk: /dev/disk/by-id/nvme-WDS100T3X0C-00SJG0_21101U460209
 systemExtensions:
   - siderolabs/qemu-guest-agent
   - siderolabs/util-linux-tools
@@ -112,3 +113,14 @@ systemExtensions:
 #   disk: /dev/sda # model: Flash Drive FIT
 # systemExtensions:
 #   - siderolabs/iscsi-tools
+---
+kind: Machine
+# mini-talos-04
+name: b1e583f1-b1de-44f9-860b-812e9917f2d0
+install:
+  disk: /dev/nvme0n1
+systemExtensions:
+  - siderolabs/util-linux-tools
+  - siderolabs/iscsi-tools
+  - siderolabs/qemu-guest-agent
+  - siderolabs/i915
