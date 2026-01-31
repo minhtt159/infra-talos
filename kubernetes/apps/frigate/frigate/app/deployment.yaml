@@ -27,7 +27,7 @@ spec:
                       - coral
       containers:
         - name: frigate
-          image: ghcr.io/blakeblackshear/frigate:0.16.3-rk@sha256:cce08b7151749f63ac544bee65fcf48924b354b1db1ef16791af499fcabacce5 # stable-rk
+          image: ghcr.io/blakeblackshear/frigate:0.16.4-rk@sha256:80cdb876cb33aa142c9271500fbcf38c367e03cc08fa854a657d931ee9c0f10b # stable-rk
           imagePullPolicy: IfNotPresent
           resources:
             requests:
