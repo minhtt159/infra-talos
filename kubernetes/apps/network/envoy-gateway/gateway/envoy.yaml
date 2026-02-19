@@ -14,13 +14,13 @@ spec:
       envoyDeployment:
         replicas: 2
         pod:
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 65534
-            runAsGroup: 65534
-            fsGroup: 65534
-            seccompProfile:
-              type: RuntimeDefault
+          # securityContext:
+          #   runAsNonRoot: true
+          #   runAsUser: 65534
+          #   runAsGroup: 65534
+          #   fsGroup: 65534
+          #   seccompProfile:
+          #     type: RuntimeDefault
           topologySpreadConstraints:
             - maxSkew: 1
               topologyKey: kubernetes.io/hostname
@@ -35,14 +35,14 @@ spec:
               cpu: 100m
               memory: 256Mi
             limits:
-              cpu: 1000m
+              # cpu: 1000m
               memory: 1Gi
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop:
-                - ALL
+          # securityContext:
+          #   allowPrivilegeEscalation: false
+          #   readOnlyRootFilesystem: true
+          #   capabilities:
+          #     drop:
+          #       - ALL
       envoyService:
         externalTrafficPolicy: Local # Preserve ClientIP
   shutdown:
@@ -82,4 +82,4 @@ spec:
     metrics:
       prometheus:
         compression:
-          type: Gzip
+          type: Zstd
