@@ -1,0 +1,85 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/envoyproxy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: envoy
+spec:
+  logging:
+    level:
+      default: warn # info for debugging
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        replicas: 2
+        pod:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            fsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: DoNotSchedule
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: envoy
+        container:
+          imageRepository: mirror.gcr.io/envoyproxy/envoy
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      envoyService:
+        externalTrafficPolicy: Local # Preserve ClientIP
+  shutdown:
+    drainTimeout: 180s
+  telemetry:
+    # accessLog:
+    #   settings:
+    #     - format:
+    #         type: JSON
+    #         json:
+    #           start_time: "%START_TIME%"
+    #           method: "%REQ(:METHOD)%"
+    #           path: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
+    #           protocol: "%PROTOCOL%"
+    #           response_code: "%RESPONSE_CODE%"
+    #           response_flags: "%RESPONSE_FLAGS%"
+    #           bytes_received: "%BYTES_RECEIVED%"
+    #           bytes_sent: "%BYTES_SENT%"
+    #           duration: "%DURATION%"
+    #           upstream_service_time: "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%"
+    #           x_forwarded_for: "%REQ(X-FORWARDED-FOR)%"
+    #           user_agent: "%REQ(USER-AGENT)%"
+    #           request_id: "%REQ(X-REQUEST-ID)%"
+    #           authority: "%REQ(:AUTHORITY)%"
+    #           upstream_host: "%UPSTREAM_HOST%"
+    #           upstream_cluster: "%UPSTREAM_CLUSTER%"
+    #           # Security-relevant fields
+    #           downstream_remote_address: "%DOWNSTREAM_REMOTE_ADDRESS%"
+    #           downstream_local_address: "%DOWNSTREAM_LOCAL_ADDRESS%"
+    #           tls_version: "%DOWNSTREAM_TLS_VERSION%"
+    #           tls_cipher: "%DOWNSTREAM_TLS_CIPHER%"
+    #       sinks:
+    #         - type: OpenTelemetry
+    #           openTelemetry:
+    #             host: otel-collector.monitoring.svc.cluster.local
+    #             port: 4317
+    metrics:
+      prometheus:
+        compression:
+          type: Gzip
