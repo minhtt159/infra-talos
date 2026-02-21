@@ -2,7 +2,7 @@ kind: Cluster
 name: talos-temp
 kubernetes:
   # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
-  version: v1.34.3
+  version: v1.35.1
 talos:
   # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
   version: v1.12.4
