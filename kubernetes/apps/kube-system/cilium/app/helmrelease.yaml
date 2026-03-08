@@ -118,7 +118,7 @@ spec:
     hostFirewall:
       enabled: false # enable in prod
 
-    policyAuditMode: true # disable this for debug
+    policyAuditMode: false # disable this for debug
     identityAllocationMode: crd
 
     ipam:
