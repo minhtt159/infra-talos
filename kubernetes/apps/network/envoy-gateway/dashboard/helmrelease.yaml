@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: envoy-addon
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: envoy-addon
+  interval: 1h
+  values:
+    #ref: https://github.com/envoyproxy/gateway/blob/main/charts/gateway-addons-helm/values.yaml
+    grafana:
+      enabled: &state false
+    prometheus:
+      enabled: *state
+    fluent-bit:
+      enabled: *state
+    alloy:
+      enabled: *state
+    loki:
+      enabled: *state
+    tempo:
+      enabled: *state
+    opentelemetry-collector:
+      enabled: *state
