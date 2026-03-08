@@ -78,7 +78,7 @@ spec:
     # Hubble Configuration
     # ####################
     hubble:
-      enabled: &hubble-state false # NOTE: disable hubble on cluster bootstrap
+      enabled: &hubble-state true # NOTE: disable hubble on cluster bootstrap
       metrics:
         enabled:
           - dns:query;ignoreAAAA
