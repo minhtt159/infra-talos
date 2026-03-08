@@ -16,7 +16,7 @@ spec:
     bpf:
       masquerade: true
       # Ref: https://github.com/siderolabs/talos/issues/10002
-      # hostLegacyRouting: true
+      hostLegacyRouting: true
       # NOTE: Reconfigure this at some point
       policyMapMax: 16384 # 65536
       lbMapMax: 65536 # 131072
