@@ -55,20 +55,20 @@ spec:
     # Envoy Configuration
     # ####################
     envoy:
-      enabled: true
+      enabled: false
       # log:
       #   format: json
       #   level: warn
-      prometheus:
-        enabled: true
-        serviceMonitor:
-          enabled: true
-      resources:
-        limits:
-          memory: 2Gi
-        requests:
-          cpu: 100m
-          memory: 256Mi
+      # prometheus:
+      #   enabled: true
+      #   serviceMonitor:
+      #     enabled: true
+      # resources:
+      #   limits:
+      #     memory: 2Gi
+      #   requests:
+      #     cpu: 100m
+      #     memory: 256Mi
 
     gatewayAPI:
       # ref: ../../../network/envoy-gateway/ks.yaml
