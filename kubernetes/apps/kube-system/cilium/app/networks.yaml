@@ -18,7 +18,6 @@ spec:
   nodeSelector:
     matchLabels:
       kubernetes.io/os: linux
-  # NOTE: interfaces might need to be set if you have more than one active NIC on your hosts
-  # interfaces:
-  #   - ^eno[0-9]+
-  #   - ^eth[0-9]+
+  interfaces:
+    - ^ens[0-9]+
+    - ^eth[0-9]+
