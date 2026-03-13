@@ -5,7 +5,7 @@ kubernetes:
   version: v1.35.2
 talos:
   # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-  version: v1.12.4
+  version: v1.12.5
 features:
   enableWorkloadProxy: true
   useEmbeddedDiscoveryService: true
