@@ -3,12 +3,12 @@
 version: "3"
 
 set: [pipefail]
-shopt: [globstar]
 
 vars:
-  TALHELPER_CLUSTER_DIR: "./clusterconfig"
-  TALHELPER_SECRET_FILE: "./talsecret.sops.yaml"
-  TALHELPER_CONFIG_FILE: "./talconfig.yaml"
+  OMNI_CLUSTER_FILE: "{{.ROOT_DIR}}/bootstrap/temp-cluster/omni-cluster.yaml"
+  CLUSTER_NAME: talos-temp
+  HELMFILE_CRDS: "{{.ROOT_DIR}}/bootstrap/helmfile.d/00-crds.yaml"
+  HELMFILE_APPS: "{{.ROOT_DIR}}/bootstrap/helmfile.d/01-apps.yaml"
 
 env:
   KUBECONFIG: "{{.ROOT_DIR}}/kubeconfig"
@@ -16,73 +16,53 @@ env:
 tasks:
   default: task --list
 
-  bootstrap-talos:
-    desc: Bootstrap the Talos cluster
-    cmds:
-      # Generate Talos Node configs
-      - talhelper genconfig --config-file {{.TALHELPER_CONFIG_FILE}} --secret-file {{.TALHELPER_SECRET_FILE}}
-      # Apply Talos Node configs
-      - talhelper gencommand apply --config-file {{.TALHELPER_CONFIG_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}} --extra-flags="--insecure" | bash
-      # Bootstrap etcd onto the cluster
-      - until talhelper gencommand bootstrap --config-file {{.TALHELPER_CONFIG_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}} | bash; do sleep 10; done
-      # Get Kubeconfig when it's available
-      - until talhelper gencommand kubeconfig --config-file {{.TALHELPER_CONFIG_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}} --extra-flags="{{.ROOT_DIR}} --force" | bash; do sleep 10; done
-      # Apply extra configs
-      - task: helm
-      # Make sure everything is healthy
-      - talosctl health --server=false
-    deps:
-      - sops
+  cluster:validate:
+    desc: Validate the Omni cluster template
+    cmd: omnictl cluster template validate -f {{.OMNI_CLUSTER_FILE}}
     preconditions:
-      - msg: Missing talhelper config file
-        sh: test -f {{.TALHELPER_CONFIG_FILE}}
-      - msg: Missing Sops config file
-        sh: test -f {{.SOPS_CONFIG_FILE}}
-      - msg: Missing Sops Age key file
-        sh: test -f {{.SOPS_AGE_KEY_FILE}}
+      - msg: Missing Omni cluster template
+        sh: test -f {{.OMNI_CLUSTER_FILE}}
 
-  helm:
-    internal: true
-    dir: ./bootstrap/
-    cmds:
-      # Wait all nodes to be available
-      - until kubectl wait --for=condition=Ready=False nodes --all --timeout=600s; do sleep 10; done
-      # Apply helmfile to install prerequisite for the cluster
-      - helmfile --file helmfile.yaml apply --skip-diff-on-install --suppress-diff
-      # Wait all nodes to be ready
-      - until kubectl wait --for=condition=Ready nodes --all --timeout=600s; do sleep 10; done
+  cluster:sync:
+    desc: Provision / update Talos nodes via Omni
+    deps: [cluster:validate]
+    cmd: omnictl cluster template sync -f {{.OMNI_CLUSTER_FILE}}
+
+  cluster:kubeconfig:
+    desc: Fetch the cluster kubeconfig from Omni into ./kubeconfig
+    cmd: omnictl kubeconfig {{.KUBECONFIG}} --cluster {{.CLUSTER_NAME}} --force
+
+  cluster:delete:
+    desc: Delete the cluster from Omni (DESTRUCTIVE)
+    prompt: Delete cluster '{{.CLUSTER_NAME}}' from Omni?
+    cmd: omnictl cluster template delete -f {{.OMNI_CLUSTER_FILE}}
     preconditions:
-      - msg: Missing kubeconfig
+      - msg: Missing Omni cluster template
+        sh: test -f {{.OMNI_CLUSTER_FILE}}
+
+  bootstrap:crds:
+    desc: Install CRDs from the bootstrap Helm charts
+    cmd: |
+      helmfile --file {{.HELMFILE_CRDS}} template \
+        | yq ea 'select(.kind == "CustomResourceDefinition")' \
+        | kubectl apply --server-side -f -
+    preconditions:
+      - msg: Missing kubeconfig — run 'task cluster:kubeconfig'
         sh: test -f {{.KUBECONFIG}}
-      - msg: Missing helmfile
-        sh: test -f helmfile.yaml
 
-  bootstrap-secret:
-    desc: Init sops/age key and bootstrap secret
-    cmds:
-      - task: sops
-      # Generate new secret
-      - talhelper gensecret > {{.TALHELPER_SECRET_FILE}}
-      # Encrypt secret file
-      - sops --encrypt --in-place {{.TALHELPER_SECRET_FILE}}
-
-  sops:
-    internal: true
-    desc: Bootstrap the Sops Age key
-    cmd: age-keygen --output {{.SOPS_AGE_KEY_FILE}}
-    status:
-      - test -f {{.SOPS_AGE_KEY_FILE}}
-
-  reset:
-    desc: Reset nodes back to maintenance mode
-    cmd: "talhelper gencommand reset \
-      --config-file {{.TALHELPER_CONFIG_FILE}} \
-      --out-dir {{.TALHELPER_CLUSTER_DIR}} \
-      --extra-flags=\"--reboot --graceful=false --wait=false \
-      {{- if eq .CLI_FORCE false }} \
-      --system-labels-to-wipe STATE \
-      --system-labels-to-wipe EPHEMERAL \
-      {{ end }}\" | bash "
+  bootstrap:apps:
+    desc: Install cluster prerequisites (cilium, coredns, cert-manager, flux)
+    cmd: helmfile --file {{.HELMFILE_APPS}} sync
     preconditions:
-      - msg: Missing talosconfig file
-        sh: test -f {{.TALOSCONFIG}}
+      - msg: Missing kubeconfig — run 'task cluster:kubeconfig'
+        sh: test -f {{.KUBECONFIG}}
+
+  bootstrap:
+    desc: Bootstrap the cluster — CRDs then apps (after cluster:sync + kubeconfig)
+    cmds:
+      - task: bootstrap:crds
+      - task: bootstrap:apps
+
+  reconcile:
+    desc: Force Flux to pull and apply the latest Git revision
+    cmd: flux reconcile kustomization cluster-apps -n flux-system --with-source

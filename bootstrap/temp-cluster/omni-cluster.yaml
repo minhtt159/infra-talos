@@ -12,12 +12,12 @@ features:
   # backupConfiguration:
   #   interval: 24h
 patches:
-  - file: ../global/machine-file.yaml
-  - file: ../global/machine-kubelet.yaml
-  - file: ../global/machine-network.yaml
-  - file: ../global/machine-sysctls.yaml
-  - file: ../global/machine-time.yaml
-  - file: ../global/machine-encryption.yaml
+  - file: patches/global/machine-file.yaml
+  - file: patches/global/machine-kubelet.yaml
+  - file: patches/global/machine-network.yaml
+  - file: patches/global/machine-sysctls.yaml
+  - file: patches/global/machine-time.yaml
+  - file: patches/global/machine-encryption.yaml
 ---
 kind: ControlPlane
 machines:
@@ -25,7 +25,7 @@ machines:
   - a9bc5b76-59d2-4281-97bd-37cf0c320ea0 # mini-talos-02
   - fa4df0b9-6d3b-4194-9e38-4ceec7b7f379 # mini-talos-03
 patches:
-  - file: ../controller/cluster-patch.yaml
+  - file: patches/controller/cluster-patch.yaml
   - name: patch-label
     inline:
       machine:
