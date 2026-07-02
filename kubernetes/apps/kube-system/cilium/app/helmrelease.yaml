@@ -11,6 +11,9 @@ spec:
   interval: 1h
   values:
     # ref: https://github.com/cilium/cilium/blob/main/install/kubernetes/cilium/values.yaml
+
+    # -- Enable installation of PodCIDR routes between worker
+    # nodes if worker nodes share a common L2 network segment.
     autoDirectNodeRoutes: true
 
     bpf:
@@ -127,17 +130,23 @@ spec:
     ipv4NativeRoutingCIDR: "10.69.0.0/16"
     k8sServiceHost: 127.0.0.1
     k8sServicePort: 7445
-
     kubeProxyReplacement: true
     kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
 
     l2announcements:
       enabled: true
+
     loadBalancer:
       algorithm: maglev
       mode: "dsr"
-      serviceTopology: true
-    localRedirectPolicy: true
+      # serviceTopology: true
+
+    # ref: https://docs.cilium.io/en/stable/network/kubernetes/local-redirect-policy/
+    localRedirectPolices:
+      enabled: true
+    socketLB:
+      enabled: true
+      hostNamespaceOnly: false
 
     # ####################
     # Operator Configuration
@@ -195,7 +204,3 @@ spec:
           - SYS_RESOURCE
     rollOutCiliumPods: true
     routingMode: native
-
-    socketLB:
-      enabled: true
-      hostNamespaceOnly: false
