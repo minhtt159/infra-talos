@@ -60,15 +60,18 @@ Defined in [`bootstrap/homelab/omni-cluster.yaml`](bootstrap/homelab/omni-cluste
 Control planes are schedulable (`allowSchedulingOnControlPlanes: true`), so the
 master/worker split is logical rather than a hard workload boundary.
 
-| Node | Role | Install disk | Notable extensions / capability |
-|------|------|--------------|---------------------------------|
-| `mini-talos-01` | control-plane | `/dev/sda` (SATA) | qemu-guest-agent, iscsi-tools |
-| `mini-talos-02` | control-plane | `/dev/sda` (Proxmox) | qemu-guest-agent, iscsi-tools |
-| `mini-talos-03` | control-plane | NVMe (by-id) | qemu-guest-agent, iscsi-tools |
-| `turing-01` | worker | NVMe | **Coral TPU** (`gasket-driver`, label `capability=coral`), iscsi-tools |
-| `turing-03` | worker | NVMe | iscsi-tools |
-| `mini-talos-04` | worker | `/dev/nvme0n1` | **Intel Arc B580** (`xe`), qemu-guest-agent, iscsi-tools |
-| ~~`turing-04` (CM4)~~ | worker | — | commented out |
+| Node | Role | Hardware | Arch | Install disk | Notable extensions / capability |
+|------|------|----------|------|--------------|---------------------------------|
+| `mini-talos-01` | control-plane | Minisforum UM450 (32GB / 512GB SSD), Proxmox VM | amd64 | `/dev/nvme0n1` | qemu-guest-agent, iscsi-tools |
+| `mini-talos-02` | control-plane | Minisforum UM450 (32GB / 512GB SSD), Proxmox VM | amd64 | `/dev/nvme0n1` | qemu-guest-agent, iscsi-tools |
+| `mini-talos-03` | control-plane | Proxmox VM (host shared with 04) | amd64 | NVMe (by-id) | qemu-guest-agent, iscsi-tools |
+| `turing-01` | worker | Turing Pi RK1 (RK3588) | **arm64** | NVMe (by-id) | **Coral TPU** (`gasket-driver`, label `capability=coral`), iscsi-tools |
+| `turing-03` | worker | Turing Pi RK1 (RK3588) | **arm64** | NVMe (by-id) | iscsi-tools |
+| `mini-talos-04` | worker | Proxmox VM (host shared with 03) | amd64 | `/dev/nvme0n1` | **Intel Arc B580** (`xe` passthrough), qemu-guest-agent, iscsi-tools |
+| ~~`turing-04` (CM4)~~ | worker | Raspberry Pi CM4 | arm64 | — | commented out |
+
+> Mixed-architecture cluster: charts/images must be multi-arch; arch-picky
+> workloads pin `kubernetes.io/arch` via nodeSelector.
 
 **Cluster-wide Talos settings** ([`patches/controller/cluster-patch.yaml`](bootstrap/homelab/patches/controller/cluster-patch.yaml)):
 

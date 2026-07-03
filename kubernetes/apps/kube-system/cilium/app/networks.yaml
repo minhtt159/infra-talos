@@ -7,7 +7,11 @@ metadata:
 spec:
   allowFirstLastIPs: "No"
   blocks:
-    - cidr: "10.1.80.0/24"
+    # Narrow range, NOT the whole node /24 — pool used to cover the entire
+    # subnet incl. router/nodes/DHCP, so any unpinned LB Service could grab
+    # a conflicting IP. VERIFY this range is excluded from DHCP + node IPs.
+    - start: "10.1.80.10"
+      stop: "10.1.80.49"
 ---
 apiVersion: cilium.io/v2alpha1
 kind: CiliumL2AnnouncementPolicy

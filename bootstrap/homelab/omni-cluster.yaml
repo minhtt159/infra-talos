@@ -118,6 +118,9 @@ kind: Machine
 # mini-talos-04
 name: b1e583f1-b1de-44f9-860b-812e9917f2d0
 install:
+  # TODO: pin by-id like mini-talos-03 — run `task disks`, then use
+  # /dev/disk/by-id/nvme-<MODEL>_<SERIAL>. Raw node names can renumber
+  # when PCIe topology changes (the B580 passthrough makes this real).
   disk: /dev/nvme0n1
 systemExtensions:
   - siderolabs/util-linux-tools
