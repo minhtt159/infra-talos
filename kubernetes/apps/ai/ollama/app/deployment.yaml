@@ -37,7 +37,7 @@ spec:
               memory: 4Gi
             limits:
               memory: 16Gi
-              gpu.intel.com/i915: "1"
+              gpu.intel.com/xe: "1"
           volumeMounts:
             - name: models
               mountPath: /root/.ollama

@@ -67,7 +67,7 @@ master/worker split is logical rather than a hard workload boundary.
 | `mini-talos-03` | control-plane | NVMe (by-id) | qemu-guest-agent, iscsi-tools |
 | `turing-01` | worker | NVMe | **Coral TPU** (`gasket-driver`, label `capability=coral`), iscsi-tools |
 | `turing-03` | worker | NVMe | iscsi-tools |
-| `mini-talos-04` | worker | `/dev/nvme0n1` | **Intel dGPU** (`i915`), qemu-guest-agent, iscsi-tools |
+| `mini-talos-04` | worker | `/dev/nvme0n1` | **Intel Arc B580** (`xe`), qemu-guest-agent, iscsi-tools |
 | ~~`turing-04` (CM4)~~ | worker | — | commented out |
 
 **Cluster-wide Talos settings** ([`patches/controller/cluster-patch.yaml`](bootstrap/homelab/patches/controller/cluster-patch.yaml)):
@@ -152,7 +152,7 @@ Helm repositories.
 
 | Namespace | Apps | Purpose |
 |-----------|------|---------|
-| `kube-system` | cilium, coredns, metrics-server, reloader, node-feature-discovery, intel-device-plugin | CNI + LB, cluster DNS, HPA metrics, config-change restarts, GPU discovery + `gpu.intel.com/i915` scheduling |
+| `kube-system` | cilium, coredns, metrics-server, reloader, node-feature-discovery, intel-device-plugin | CNI + LB, cluster DNS, HPA metrics, config-change restarts, GPU discovery + `gpu.intel.com/xe` scheduling |
 | `cert-manager` | cert-manager | ACME (Let's Encrypt) + internal CA |
 | `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden (see [docs/secrets-migration.md](docs/secrets-migration.md)) |
 | `kyverno` | kyverno | Policy engine — all ClusterPolicies in Audit mode (PolicyReports), enforce per-policy later |
