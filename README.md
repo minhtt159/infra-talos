@@ -152,13 +152,15 @@ Helm repositories.
 
 | Namespace | Apps | Purpose |
 |-----------|------|---------|
-| `kube-system` | cilium, coredns, metrics-server, reloader | CNI + LB, cluster DNS, HPA metrics, config-change restarts |
+| `kube-system` | cilium, coredns, metrics-server, reloader, node-feature-discovery, intel-device-plugin | CNI + LB, cluster DNS, HPA metrics, config-change restarts, GPU discovery + `gpu.intel.com/i915` scheduling |
 | `cert-manager` | cert-manager | ACME (Let's Encrypt) + internal CA |
+| `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden (see [docs/secrets-migration.md](docs/secrets-migration.md)) |
 | `network` | envoy-gateway, cloudflare-dns, unifi-dns, cloudflare-tunnel | Gateway API ingress, external-dns (Cloudflare + UniFi), Cloudflare tunnel |
 | `observability` | kube-prometheus-stack, grafana | Metrics/alerting stack, Grafana (via grafana-operator) |
 | `democratic-csi` | iscsi, nfs | TrueNAS-backed persistent storage (iSCSI + NFS) |
 | `openebs` | openebs | Local-path persistent volumes |
-| `frigate` | frigate | NVR — uses the Coral TPU; raw manifests (not Helm) |
+| `frigate` | frigate | NVR — detection on the Intel dGPU (OpenVINO); raw manifests (not Helm) |
+| `ai` | ollama | LLM serving on the Intel dGPU (IPEX build) |
 | `flux-system` | flux-operator, flux-instance | Flux itself + monitoring dashboards |
 | `default` | echo | Ingress/connectivity smoke test |
 
@@ -190,6 +192,10 @@ Helm repositories.
 - **democratic-csi** — dynamic PVs backed by a **TrueNAS** appliance over
   **iSCSI** (block) and **NFS** (shared). TrueNAS credentials are in each app's
   `secretstruenas.sops.yaml`. See [`democratic-csi/README.md`](kubernetes/apps/democratic-csi/README.md).
+- **Rebuild survival** — both TrueNAS storage classes use
+  `reclaimPolicy: Retain`; volumes are reclaimed after a full cluster
+  recreation via `task pv:export` + the
+  [cluster-rebuild runbook](docs/runbooks/cluster-rebuild.md).
 
 ---
 
@@ -215,6 +221,11 @@ Flow:
 
 > The public age recipient is committed in `.sops.yaml`; the matching private
 > key is the one secret you must supply out-of-band to bootstrap or decrypt.
+
+> **Transition in progress:** SOPS is being replaced by **External Secrets
+> Operator** backed by **Vaultwarden** (bitwarden-cli webhook bridge). End
+> state: a single SOPS file remains (the bridge credential). Status and
+> per-secret checklist: [docs/secrets-migration.md](docs/secrets-migration.md).
 
 ---
 
