@@ -21,8 +21,8 @@ patches:
 ---
 kind: ControlPlane
 machines:
-  - 4f0f1578-1849-48af-ae41-50b10212a191 # mini-talos-01
-  - a9bc5b76-59d2-4281-97bd-37cf0c320ea0 # mini-talos-02
+  - 66c1d280-4d8a-11f1-9e14-326c0d981000 # mini-talos-01
+  - fe73f080-4d8b-11f1-9061-633102380e00 # mini-talos-02
   - fa4df0b9-6d3b-4194-9e38-4ceec7b7f379 # mini-talos-03
 patches:
   - file: patches/controller/cluster-patch.yaml
@@ -36,8 +36,8 @@ kind: Workers
 machines:
   - 33303734-3966-3030-3966-346234636131 # turing-01
   - 64306566-3266-6634-3566-346632363063 # turing-03
-  # - 30303031-3030-3030-6232-353461303639 # turing-04 (CM4)
   - b1e583f1-b1de-44f9-860b-812e9917f2d0 # mini-talos-04
+  # - 30303031-3030-3030-6232-353461303639 # turing-04 (CM4)
 patches:
   - name: patch-label
     inline:
@@ -47,9 +47,9 @@ patches:
 ---
 kind: Machine
 # mini-talos-01
-name: 4f0f1578-1849-48af-ae41-50b10212a191
+name: 66c1d280-4d8a-11f1-9e14-326c0d981000
 install:
-  disk: /dev/sda # SCSI1 - SATA disk
+  disk: /dev/nvme0n1
 systemExtensions:
   - siderolabs/qemu-guest-agent
   - siderolabs/util-linux-tools
@@ -57,9 +57,9 @@ systemExtensions:
 ---
 kind: Machine
 # mini-talos-02
-name: a9bc5b76-59d2-4281-97bd-37cf0c320ea0
+name: fe73f080-4d8b-11f1-9061-633102380e00
 install:
-  disk: /dev/sda # Proxmox disk
+  disk: /dev/nvme0n1
 systemExtensions:
   - siderolabs/qemu-guest-agent
   - siderolabs/util-linux-tools
