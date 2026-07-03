@@ -155,6 +155,7 @@ Helm repositories.
 | `kube-system` | cilium, coredns, metrics-server, reloader, node-feature-discovery, intel-device-plugin | CNI + LB, cluster DNS, HPA metrics, config-change restarts, GPU discovery + `gpu.intel.com/i915` scheduling |
 | `cert-manager` | cert-manager | ACME (Let's Encrypt) + internal CA |
 | `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden (see [docs/secrets-migration.md](docs/secrets-migration.md)) |
+| `kyverno` | kyverno | Policy engine — all ClusterPolicies in Audit mode (PolicyReports), enforce per-policy later |
 | `network` | envoy-gateway, cloudflare-dns, unifi-dns, cloudflare-tunnel | Gateway API ingress, external-dns (Cloudflare + UniFi), Cloudflare tunnel |
 | `observability` | kube-prometheus-stack, grafana | Metrics/alerting stack, Grafana (via grafana-operator) |
 | `democratic-csi` | iscsi, nfs | TrueNAS-backed persistent storage (iSCSI + NFS) |
