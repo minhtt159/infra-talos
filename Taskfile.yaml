@@ -12,6 +12,7 @@ vars:
 
 env:
   KUBECONFIG: "{{.ROOT_DIR}}/kubeconfig"
+  TALOSCONFIG: "{{.ROOT_DIR}}/talosconfig"
 
 tasks:
   default: task --list
@@ -31,6 +32,24 @@ tasks:
   cluster:kubeconfig:
     desc: Fetch the cluster kubeconfig from Omni into ./kubeconfig
     cmd: omnictl kubeconfig {{.KUBECONFIG}} --cluster {{.CLUSTER_NAME}} --force
+
+  cluster:talosconfig:
+    desc: Fetch the talosconfig from Omni into ./talosconfig
+    cmd: omnictl talosconfig {{.TALOSCONFIG}} --cluster {{.CLUSTER_NAME}}
+
+  disks:
+    desc: Gather disk info from all nodes (model/serial/wwid — for pinning install.disk by-id)
+    cmds:
+      - >-
+        talosctl --nodes
+        $(kubectl get nodes -o jsonpath='{range .items[*]}{.status.addresses[?(@.type=="InternalIP")].address}{","}{end}' | sed 's/,$//')
+        get disks
+      - 'echo "by-id path formula: /dev/disk/by-id/nvme-<MODEL>_<SERIAL> (spaces -> underscores)"'
+    preconditions:
+      - msg: Missing talosconfig — run 'task cluster:talosconfig'
+        sh: test -f {{.TALOSCONFIG}}
+      - msg: Missing kubeconfig — run 'task cluster:kubeconfig'
+        sh: test -f {{.KUBECONFIG}}
 
   cluster:delete:
     desc: Delete the cluster from Omni (DESTRUCTIVE)

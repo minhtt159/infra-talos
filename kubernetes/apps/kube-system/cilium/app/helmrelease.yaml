@@ -18,8 +18,9 @@ spec:
 
     bpf:
       masquerade: true
-      # Ref: https://github.com/siderolabs/talos/issues/10002
-      hostLegacyRouting: true
+      # false = full BPF fastpath. Requires machine-network.yaml
+      # features.hostDNS.forwardKubeDNSToHost: false (talos#10002 pair).
+      hostLegacyRouting: false
       # NOTE: Reconfigure this at some point
       policyMapMax: 16384 # 65536
       lbMapMax: 65536 # 131072
