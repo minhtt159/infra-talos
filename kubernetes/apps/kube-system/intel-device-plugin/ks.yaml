@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: intel-device-plugin
+spec:
+  dependsOn:
+    # operator webhook needs cert-manager; NFD labels gate the gpu plugin
+    - name: cert-manager
+      namespace: cert-manager
+    - name: node-feature-discovery
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: intel-device-plugins-operator
+      namespace: kube-system
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: intel-device-plugins-gpu
+      namespace: kube-system
+  interval: 1h
+  path: ./kubernetes/apps/kube-system/intel-device-plugin/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: kube-system
+  wait: true

@@ -1,0 +1,9 @@
+---
+# Intel publishes no OCI charts — classic Helm repository
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: intel
+spec:
+  interval: 1h
+  url: https://intel.github.io/helm-charts/
