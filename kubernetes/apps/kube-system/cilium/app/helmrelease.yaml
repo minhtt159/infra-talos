@@ -82,7 +82,9 @@ spec:
     # Hubble Configuration
     # ####################
     hubble:
-      enabled: &hubble-state true # NOTE: disable hubble on cluster bootstrap
+      # bootstrap helmfile overrides this to false (01-apps.yaml) — DNS
+      # chicken-egg; Flux enables it once coredns exists. No manual toggle.
+      enabled: &hubble-state true
       metrics:
         enabled:
           - dns:query;ignoreAAAA
