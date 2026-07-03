@@ -103,14 +103,6 @@ install:
 systemExtensions:
   - siderolabs/util-linux-tools
   - siderolabs/iscsi-tools
-# ---
-# kind: Machine
-# # turing-04 (CM4)
-# name: 30303031-3030-3030-6232-353461303639
-# install:
-#   disk: /dev/sda # model: Flash Drive FIT
-# systemExtensions:
-#   - siderolabs/iscsi-tools
 ---
 kind: Machine
 # mini-talos-04
