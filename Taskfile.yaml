@@ -5,8 +5,8 @@ version: "3"
 set: [pipefail]
 
 vars:
-  OMNI_CLUSTER_FILE: "{{.ROOT_DIR}}/bootstrap/temp-cluster/omni-cluster.yaml"
-  CLUSTER_NAME: talos-temp
+  OMNI_CLUSTER_FILE: "{{.ROOT_DIR}}/bootstrap/homelab/omni-cluster.yaml"
+  CLUSTER_NAME: homelab
   HELMFILE_CRDS: "{{.ROOT_DIR}}/bootstrap/helmfile.d/00-crds.yaml"
   HELMFILE_APPS: "{{.ROOT_DIR}}/bootstrap/helmfile.d/01-apps.yaml"
 
