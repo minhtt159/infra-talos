@@ -119,7 +119,7 @@ spec:
           certValidityDuration: 1095
 
     hostFirewall:
-      enabled: false # enable in prod
+      enabled: true # rules: ./host-firewall.yaml — recovery path is Omni console if a port was missed
 
     policyAuditMode: false # disable this for debug
     identityAllocationMode: crd
