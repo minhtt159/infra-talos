@@ -1,0 +1,91 @@
+---
+# Vaultwarden bridge: Bitwarden CLI running `bw serve`, consumed by the
+# ESO webhook ClusterSecretStores. Pattern from
+# https://external-secrets.io/latest/examples/bitwarden/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name bitwarden-cli
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: *name
+  template:
+    metadata:
+      labels:
+        app: *name
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: bitwarden-cli
+          image: ghcr.io/charlesthomas/bitwarden-cli:2026.3.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: bitwarden-cli
+          env:
+            - name: HOME
+              value: /data
+          ports:
+            - name: http
+              containerPort: 8087
+              protocol: TCP
+          # ponytail: liveness doubles as vault sync — probe forces `bw sync` every 2min
+          livenessProbe:
+            exec:
+              command:
+                - wget
+                - -q
+                - http://127.0.0.1:8087/sync?force=true
+                - -O
+                - /dev/null
+            initialDelaySeconds: 60
+            periodSeconds: 120
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bitwarden-cli
+spec:
+  selector:
+    app: bitwarden-cli
+  ports:
+    - name: http
+      port: 8087
+      targetPort: http
+      protocol: TCP

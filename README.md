@@ -34,7 +34,7 @@ Three layers, each owned by a different tool:
 
 | Layer | Tool | Source of truth |
 |-------|------|-----------------|
-| **1. Machine / OS** | Sidero Omni + Talos | [`bootstrap/temp-cluster/omni-cluster.yaml`](bootstrap/temp-cluster/omni-cluster.yaml) + patches under [`bootstrap/temp-cluster/patches/`](bootstrap/temp-cluster/patches) |
+| **1. Machine / OS** | Sidero Omni + Talos | [`bootstrap/homelab/omni-cluster.yaml`](bootstrap/homelab/omni-cluster.yaml) + patches under [`bootstrap/homelab/patches/`](bootstrap/homelab/patches) |
 | **2. Cluster prerequisites** | Helmfile | [`bootstrap/helmfile.d/`](bootstrap/helmfile.d) — CNI, DNS, cert-manager, Flux itself |
 | **3. Applications** | Flux (GitOps) | [`kubernetes/`](kubernetes) |
 
@@ -56,7 +56,7 @@ flowchart TD
 
 ## Cluster topology
 
-Defined in [`bootstrap/temp-cluster/omni-cluster.yaml`](bootstrap/temp-cluster/omni-cluster.yaml).
+Defined in [`bootstrap/homelab/omni-cluster.yaml`](bootstrap/homelab/omni-cluster.yaml).
 Control planes are schedulable (`allowSchedulingOnControlPlanes: true`), so the
 master/worker split is logical rather than a hard workload boundary.
 
@@ -67,10 +67,10 @@ master/worker split is logical rather than a hard workload boundary.
 | `mini-talos-03` | control-plane | NVMe (by-id) | qemu-guest-agent, iscsi-tools |
 | `turing-01` | worker | NVMe | **Coral TPU** (`gasket-driver`, label `capability=coral`), iscsi-tools |
 | `turing-03` | worker | NVMe | iscsi-tools |
-| `mini-talos-04` | worker | `/dev/nvme0n1` | **Intel iGPU** (`i915`), qemu-guest-agent, iscsi-tools |
+| `mini-talos-04` | worker | `/dev/nvme0n1` | **Intel Arc B580** (`xe`), qemu-guest-agent, iscsi-tools |
 | ~~`turing-04` (CM4)~~ | worker | — | commented out |
 
-**Cluster-wide Talos settings** ([`patches/controller/cluster-patch.yaml`](bootstrap/temp-cluster/patches/controller/cluster-patch.yaml)):
+**Cluster-wide Talos settings** ([`patches/controller/cluster-patch.yaml`](bootstrap/homelab/patches/controller/cluster-patch.yaml)):
 
 - **CNI: `none`** and **kube-proxy: disabled** — Cilium replaces both.
 - **CoreDNS: disabled** — deployed as an app instead (`kube-system/coredns`).
@@ -79,7 +79,7 @@ master/worker split is logical rather than a hard workload boundary.
 - Aggregator routing + controller/scheduler/etcd metrics bind on `0.0.0.0`
   (so Prometheus can scrape them).
 
-Global machine patches live in [`patches/global/`](bootstrap/temp-cluster/patches/global):
+Global machine patches live in [`patches/global/`](bootstrap/homelab/patches/global):
 disk encryption, kubelet, network, sysctls, time, and extra files.
 
 ---
@@ -89,7 +89,7 @@ disk encryption, kubelet, network, sysctls, time, and extra files.
 ```
 .
 ├── bootstrap/                     # Layer 1 & 2 — cluster does not exist yet
-│   ├── temp-cluster/
+│   ├── homelab/
 │   │   ├── omni-cluster.yaml        # Omni cluster template (nodes, disks, versions)
 │   │   └── patches/                 # Talos config patches — MUST live under the template dir
 │   │       ├── global/              #   applied to ALL nodes
@@ -152,13 +152,16 @@ Helm repositories.
 
 | Namespace | Apps | Purpose |
 |-----------|------|---------|
-| `kube-system` | cilium, coredns, metrics-server, reloader | CNI + LB, cluster DNS, HPA metrics, config-change restarts |
+| `kube-system` | cilium, coredns, metrics-server, reloader, node-feature-discovery, intel-device-plugin | CNI + LB, cluster DNS, HPA metrics, config-change restarts, GPU discovery + `gpu.intel.com/xe` scheduling |
 | `cert-manager` | cert-manager | ACME (Let's Encrypt) + internal CA |
+| `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden (see [docs/secrets-migration.md](docs/secrets-migration.md)) |
+| `kyverno` | kyverno | Policy engine — all ClusterPolicies in Audit mode (PolicyReports), enforce per-policy later |
 | `network` | envoy-gateway, cloudflare-dns, unifi-dns, cloudflare-tunnel | Gateway API ingress, external-dns (Cloudflare + UniFi), Cloudflare tunnel |
 | `observability` | kube-prometheus-stack, grafana | Metrics/alerting stack, Grafana (via grafana-operator) |
 | `democratic-csi` | iscsi, nfs | TrueNAS-backed persistent storage (iSCSI + NFS) |
 | `openebs` | openebs | Local-path persistent volumes |
-| `frigate` | frigate | NVR — uses the Coral TPU; raw manifests (not Helm) |
+| `frigate` | frigate | NVR — detection on the Intel dGPU (OpenVINO); raw manifests (not Helm) |
+| `ai` | ollama | LLM serving on the Intel dGPU (IPEX build) |
 | `flux-system` | flux-operator, flux-instance | Flux itself + monitoring dashboards |
 | `default` | echo | Ingress/connectivity smoke test |
 
@@ -190,6 +193,10 @@ Helm repositories.
 - **democratic-csi** — dynamic PVs backed by a **TrueNAS** appliance over
   **iSCSI** (block) and **NFS** (shared). TrueNAS credentials are in each app's
   `secretstruenas.sops.yaml`. See [`democratic-csi/README.md`](kubernetes/apps/democratic-csi/README.md).
+- **Rebuild survival** — both TrueNAS storage classes use
+  `reclaimPolicy: Retain`; volumes are reclaimed after a full cluster
+  recreation via `task pv:export` + the
+  [cluster-rebuild runbook](docs/runbooks/cluster-rebuild.md).
 
 ---
 
@@ -216,6 +223,11 @@ Flow:
 > The public age recipient is committed in `.sops.yaml`; the matching private
 > key is the one secret you must supply out-of-band to bootstrap or decrypt.
 
+> **Transition in progress:** SOPS is being replaced by **External Secrets
+> Operator** backed by **Vaultwarden** (bitwarden-cli webhook bridge). End
+> state: a single SOPS file remains (the bridge credential). Status and
+> per-secret checklist: [docs/secrets-migration.md](docs/secrets-migration.md).
+
 ---
 
 ## Bootstrapping a cluster
@@ -225,8 +237,8 @@ Flow:
 ```sh
 # 1. Provision / update Talos nodes via Omni
 omnictl get machine                                                   # list registered machines
-omnictl cluster template validate -f bootstrap/temp-cluster/omni-cluster.yaml
-omnictl cluster template sync     -f bootstrap/temp-cluster/omni-cluster.yaml
+omnictl cluster template validate -f bootstrap/homelab/omni-cluster.yaml
+omnictl cluster template sync     -f bootstrap/homelab/omni-cluster.yaml
 
 # 2. Install CRDs (external-dns, envoy-gateway, kube-prometheus-stack, grafana-operator)
 helmfile --file bootstrap/helmfile.d/00-crds.yaml template \
@@ -242,7 +254,7 @@ After step 3, `flux-instance` clones this repo and Flux reconciles
 
 > **Omni ≥ 1.8 template containment:** since v1.8.0 a cluster template may only
 > include files from within the template file's own directory tree. That is why
-> every patch lives under `bootstrap/temp-cluster/patches/` (referenced as
+> every patch lives under `bootstrap/homelab/patches/` (referenced as
 > `patches/global/…`, not `../global/…`). Because nothing escapes the template
 > dir, `omnictl cluster template sync` needs **no** `--allowed-dir` flag.
 

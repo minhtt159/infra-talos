@@ -1,5 +1,10 @@
 ---
-# Protect Talos nodes with host firewall
+# Protect Talos nodes with host firewall.
+# DETECTION-ONLY while policyAuditMode=true in the cilium HelmRelease.
+# Before enforcing (policyAuditMode: false), review would-be drops for a
+# few days:
+#   hubble observe --verdict AUDIT --identity host
+# Any legit flow showing up there needs a rule added below FIRST.
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
@@ -50,6 +55,42 @@ spec:
             - port: "50000"
               protocol: TCP
             - port: "50001"
+              protocol: TCP
+    # etcd client + peer (control-plane <-> control-plane) — WITHOUT THIS,
+    # enabling hostFirewall breaks etcd quorum
+    - fromEntities:
+        - cluster
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "2379"
+              protocol: TCP
+            - port: "2380"
+              protocol: TCP
+    # Metrics scraped by Prometheus: etcd 2381, controller-manager 10257,
+    # scheduler 10259, kube-proxy-replacement healthz 10256, node-exporter 9100
+    - fromEntities:
+        - cluster
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "2381"
+              protocol: TCP
+            - port: "10256"
+              protocol: TCP
+            - port: "10257"
+              protocol: TCP
+            - port: "10259"
+              protocol: TCP
+            - port: "9100"
+              protocol: TCP
+    # Hubble server (relay -> per-node agent)
+    - fromEntities:
+        - cluster
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "4244"
               protocol: TCP
     # Allow ICMP
     - icmps:

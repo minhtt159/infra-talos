@@ -21,7 +21,7 @@ spec:
       localpv:
         image:
           registry: &registry quay.io/
-        # ref: ../../../../../bootstrap/temp-cluster/omni-cluster.yaml
+        # ref: ../../../../../bootstrap/homelab/omni-cluster.yaml
         basePath: &hostPath /var/mnt/data
       hostpathClass:
         enabled: true

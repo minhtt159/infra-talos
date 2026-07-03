@@ -1,0 +1,51 @@
+---
+# Ollama on the Intel dGPU (mini-talos-04). Upstream ollama has no Intel GPU
+# backend — community IPEX/SYCL build required.
+# TODO: pin a real tag — verify at https://hub.docker.com/r/uberchuckie/ollama-intel-gpu/tags
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name ollama
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: *name
+  template:
+    metadata:
+      labels:
+        app: *name
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        intel.feature.node.kubernetes.io/gpu: "true"
+      containers:
+        - name: ollama
+          image: docker.io/uberchuckie/ollama-intel-gpu:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OLLAMA_HOST
+              value: 0.0.0.0
+          ports:
+            - name: http
+              containerPort: 11434
+          resources:
+            requests:
+              cpu: 500m
+              memory: 4Gi
+            limits:
+              memory: 16Gi
+              gpu.intel.com/xe: "1"
+          volumeMounts:
+            - name: models
+              mountPath: /root/.ollama
+          securityContext:
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: ollama-models

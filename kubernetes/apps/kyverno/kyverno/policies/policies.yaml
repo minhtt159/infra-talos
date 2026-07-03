@@ -1,0 +1,100 @@
+---
+# All policies start in Audit — same detection-first philosophy as the host
+# firewall. Review PolicyReports (kubectl get polr -A), then flip individual
+# policies to Enforce.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/description: >-
+      Mutable image tags make rollbacks and audits impossible.
+      Require a pinned tag (anything but :latest or tagless).
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-pinned-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: "Image tag must be pinned — ':latest' or tagless not allowed."
+        foreach:
+          - list: request.object.spec.containers
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.image }}"
+                    operator: Equals
+                    value: "*:latest"
+                  - key: "{{ contains(element.image, ':') }}"
+                    operator: Equals
+                    value: false
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resource-requests
+  annotations:
+    policies.kyverno.io/description: >-
+      Pods without requests wreck scheduling on a small mixed-arch cluster.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-cpu-memory-requests
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      exclude:
+        any:
+          - resources:
+              namespaces: [kube-system] # CNI/CSI daemonsets managed by charts
+      validate:
+        message: "CPU and memory requests are required."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  requests:
+                    memory: "?*"
+                    cpu: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-sa-token-automount
+  annotations:
+    policies.kyverno.io/description: >-
+      Least privilege: pods that don't talk to the API server shouldn't
+      mount a ServiceAccount token.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-explicit-automount
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - flux-system
+                - kyverno
+                - external-secrets
+                - cert-manager
+                - observability
+                - democratic-csi
+                - openebs
+                - network # controllers legitimately need the API
+      validate:
+        message: "Set automountServiceAccountToken: false unless the workload needs the API."
+        pattern:
+          spec:
+            automountServiceAccountToken: false

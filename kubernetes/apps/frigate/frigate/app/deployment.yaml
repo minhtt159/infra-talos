@@ -1,4 +1,12 @@
 ---
+# Detection moved Coral TPU (turing-01, arm64) → Intel dGPU (mini-talos-04):
+# non-privileged, GPU via device plugin instead of hostPath /dev/apex_0.
+# NOTE: frigate config (in the config PVC / UI) must switch detectors to
+#   detectors:
+#     ov:
+#       type: openvino
+#       device: GPU
+# before this rolls out, or detection stops.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,26 +24,20 @@ spec:
         app: *name
     spec:
       restartPolicy: Always
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: capability
-                    operator: In
-                    values:
-                      - coral
+      automountServiceAccountToken: false
+      nodeSelector:
+        intel.feature.node.kubernetes.io/gpu: "true"
       containers:
         - name: frigate
-          image: ghcr.io/blakeblackshear/frigate:0.17.1-rk@sha256:a2938072c38f0568dc96674f7234a84e91dba886ff432301b63c6baf6ff32b4b # stable-rk
+          # renovate will pin digest; -rk (Rockchip) variant no longer needed off the RK1
+          image: ghcr.io/blakeblackshear/frigate:0.17.1
           imagePullPolicy: IfNotPresent
           resources:
             requests:
               cpu: 100m
               memory: 400Mi
-            # limits:
-            #   cpu: 100m
-            #   memory: 400Mi
+            limits:
+              gpu.intel.com/xe: "1"
           ports:
             - name: webui
               containerPort: 8971
@@ -46,8 +48,6 @@ spec:
             - name: webrtc
               containerPort: 8555
           volumeMounts:
-            - name: coral
-              mountPath: /dev/apex_0
             - name: config
               mountPath: /config
             - name: media
@@ -55,23 +55,10 @@ spec:
             - name: shm-volume
               mountPath: /dev/shm
           securityContext:
-            privileged: true
-          # securityContext:
-          #   capabilities:
-          #     drop:
-          #       - "ALL"
-          #     add:
-          #       - "NET_BIND_SERVICE"
-          #   seccompProfile:
-          #     type: "RuntimeDefault"
-          #   runAsUser: 44
-          #   runAsGroup: 44
-          #   runAsNonRoot: true
-          #   allowPrivilegeEscalation: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
       volumes:
-        - name: coral
-          hostPath:
-            path: /dev/apex_0
         - name: config
           persistentVolumeClaim:
             claimName: frigate-config

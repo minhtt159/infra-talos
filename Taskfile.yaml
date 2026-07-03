@@ -5,8 +5,8 @@ version: "3"
 set: [pipefail]
 
 vars:
-  OMNI_CLUSTER_FILE: "{{.ROOT_DIR}}/bootstrap/temp-cluster/omni-cluster.yaml"
-  CLUSTER_NAME: talos-temp
+  OMNI_CLUSTER_FILE: "{{.ROOT_DIR}}/bootstrap/homelab/omni-cluster.yaml"
+  CLUSTER_NAME: homelab
   HELMFILE_CRDS: "{{.ROOT_DIR}}/bootstrap/helmfile.d/00-crds.yaml"
   HELMFILE_APPS: "{{.ROOT_DIR}}/bootstrap/helmfile.d/01-apps.yaml"
 
@@ -66,3 +66,36 @@ tasks:
   reconcile:
     desc: Force Flux to pull and apply the latest Git revision
     cmd: flux reconcile kustomization cluster-apps -n flux-system --with-source
+
+  pv:export:
+    desc: Export democratic-csi PV/PVC manifests for post-rebuild reclaim
+    cmds:
+      - mkdir -p backups/pv
+      # Strip runtime-only fields so the manifests re-apply cleanly
+      - >-
+        kubectl get pv -o json
+        | yq -P '.items[] | select(.spec.csi.driver | test("^org\.democratic-csi\."))
+        | del(.metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp,
+              .metadata.annotations, .metadata.finalizers, .spec.claimRef.uid,
+              .spec.claimRef.resourceVersion, .status)
+        | split_doc' > backups/pv/persistentvolumes.yaml
+      - >-
+        kubectl get pvc -A -o json
+        | yq -P '.items[] | select(.spec.storageClassName | test("^truenas-"))
+        | del(.metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp,
+              .metadata.annotations, .metadata.finalizers, .status)
+        | split_doc' > backups/pv/persistentvolumeclaims.yaml
+      - echo "Exported to backups/pv/ — commit these before a rebuild"
+    preconditions:
+      - msg: Missing kubeconfig
+        sh: test -f {{.KUBECONFIG}}
+
+  pv:patch-retain:
+    desc: Patch EXISTING PVs to Retain (new reclaimPolicy only affects new PVs)
+    cmd: >-
+      kubectl get pv -o json
+      | yq '.items[] | select(.spec.csi.driver | test("^org\.democratic-csi\.")) | .metadata.name'
+      | xargs -I{} kubectl patch pv {} -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
+    preconditions:
+      - msg: Missing kubeconfig
+        sh: test -f {{.KUBECONFIG}}

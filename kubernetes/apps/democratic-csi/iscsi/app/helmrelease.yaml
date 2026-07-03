@@ -25,7 +25,9 @@ spec:
     storageClasses:
       - name: truenas-iscsi
         defaultClass: false
-        reclaimPolicy: Delete
+        # Retain: TrueNAS zvol survives PVC/cluster deletion; reclaim via
+        # docs/runbooks/cluster-rebuild.md (PV export/reapply)
+        reclaimPolicy: Retain
         volumeBindingMode: Immediate
         allowVolumeExpansion: true
         parameters:
