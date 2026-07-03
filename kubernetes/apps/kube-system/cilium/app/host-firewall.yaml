@@ -1,5 +1,10 @@
 ---
-# Protect Talos nodes with host firewall
+# Protect Talos nodes with host firewall.
+# DETECTION-ONLY while policyAuditMode=true in the cilium HelmRelease.
+# Before enforcing (policyAuditMode: false), review would-be drops for a
+# few days:
+#   hubble observe --verdict AUDIT --identity host
+# Any legit flow showing up there needs a rule added below FIRST.
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:

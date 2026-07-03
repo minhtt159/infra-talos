@@ -119,9 +119,13 @@ spec:
           certValidityDuration: 1095
 
     hostFirewall:
-      enabled: true # rules: ./host-firewall.yaml — recovery path is Omni console if a port was missed
+      enabled: true # rules: ./host-firewall.yaml — currently audit-only via policyAuditMode
 
-    policyAuditMode: false # disable this for debug
+    # Detection-only rollout of the host firewall: policy verdicts are logged
+    # (hubble observe --verdict AUDIT) but NOTHING is dropped. NOTE: global —
+    # pod policies (default-deny-all) also switch to audit while true.
+    # Flip to false to enforce once audit shows no legit traffic would drop.
+    policyAuditMode: true
     identityAllocationMode: crd
 
     ipam:
