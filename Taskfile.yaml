@@ -29,6 +29,10 @@ tasks:
     deps: [cluster:validate]
     cmd: omnictl cluster template sync -f {{.OMNI_CLUSTER_FILE}}
 
+  cluster:status:
+    desc: Show Omni's view of the cluster (machine join/health, K8s API)
+    cmd: omnictl cluster template status -f {{.OMNI_CLUSTER_FILE}}
+
   cluster:kubeconfig:
     desc: Fetch the cluster kubeconfig from Omni into ./kubeconfig
     cmd: omnictl kubeconfig {{.KUBECONFIG}} --cluster {{.CLUSTER_NAME}} --force
