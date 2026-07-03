@@ -16,6 +16,16 @@ releases:
     version: 1.19.5
     values:
       - ./templates/values.yaml.gotmpl
+      # Bootstrap-only override: hubble-relay needs cluster DNS, coredns
+      # `needs` cilium, and helmDefaults wait:true — enabling hubble here
+      # deadlocks the bootstrap. Flux flips hubble on afterwards from the
+      # HelmRelease values (no manual toggle needed anymore).
+      - hubble:
+          enabled: false
+          relay:
+            enabled: false
+          ui:
+            enabled: false
 
   - name: coredns
     namespace: kube-system
