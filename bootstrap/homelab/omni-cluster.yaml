@@ -51,7 +51,6 @@ name: 66c1d280-4d8a-11f1-9e14-326c0d981000
 install:
   disk: /dev/nvme0n1
 systemExtensions:
-  - siderolabs/qemu-guest-agent
   - siderolabs/util-linux-tools
   - siderolabs/iscsi-tools
 ---
@@ -61,7 +60,6 @@ name: fe73f080-4d8b-11f1-9061-633102380e00
 install:
   disk: /dev/nvme0n1
 systemExtensions:
-  - siderolabs/qemu-guest-agent
   - siderolabs/util-linux-tools
   - siderolabs/iscsi-tools
 ---
