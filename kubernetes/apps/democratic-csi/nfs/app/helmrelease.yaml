@@ -25,7 +25,9 @@ spec:
     storageClasses:
       - name: truenas-nfs
         defaultClass: false
-        reclaimPolicy: Delete
+        # Retain: TrueNAS dataset survives PVC/cluster deletion; reclaim via
+        # docs/runbooks/cluster-rebuild.md (PV export/reapply)
+        reclaimPolicy: Retain
         volumeBindingMode: Immediate
         allowVolumeExpansion: true
         parameters:
