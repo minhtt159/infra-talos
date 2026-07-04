@@ -38,6 +38,9 @@ spec:
 
     volumeSnapshotClasses:
       - name: truenas
+        # chart renders `parameters: null` without this — API rejects it
+        parameters:
+          detachedSnapshots: "true"
 
     controller:
       driver: &driver
