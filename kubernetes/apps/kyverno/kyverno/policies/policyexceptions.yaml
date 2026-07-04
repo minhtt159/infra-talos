@@ -25,3 +25,28 @@ spec:
             - Deployment
             - DaemonSet
             - ReplicaSet
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kyverno.io/policyexception_v2.json
+# CNPG operator and postgres instance pods legitimately need the API
+# (controller + instance-manager failover); neither the chart nor the
+# Cluster CRD exposes automountServiceAccountToken to set it explicitly.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: cloudnative-pg-sa-token
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: restrict-sa-token-automount
+      ruleNames:
+        - require-explicit-automount
+  match:
+    any:
+      - resources:
+          namespaces:
+            - database
+          kinds:
+            - Pod
+            - Deployment
+            - ReplicaSet
+            - Job
