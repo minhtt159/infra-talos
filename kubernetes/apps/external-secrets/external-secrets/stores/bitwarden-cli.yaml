@@ -47,6 +47,10 @@ spec:
                 - /dev/null
             initialDelaySeconds: 60
             periodSeconds: 120
+            # forced sync can take seconds; default 1s timeout kill-loops the
+            # pod, and a restarted container hits "Logout required" on the
+            # stale /data session
+            timeoutSeconds: 30
           readinessProbe:
             tcpSocket:
               port: http
