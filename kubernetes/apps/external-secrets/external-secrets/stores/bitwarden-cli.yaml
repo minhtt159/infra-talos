@@ -19,6 +19,9 @@ spec:
         app: *name
     spec:
       automountServiceAccountToken: false
+      # image is amd64-only — keep off the arm64 RK1 workers
+      nodeSelector:
+        kubernetes.io/arch: amd64
       containers:
         - name: bitwarden-cli
           image: ghcr.io/charlesthomas/bitwarden-cli:2026.3.0
