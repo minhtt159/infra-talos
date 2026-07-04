@@ -5,5 +5,4 @@ resources:
   - ./secret.sops.yaml
   - ./bitwarden-cli.yaml
   - ./clustersecretstore.yaml
-  # Enable after filling the Vaultwarden item id inside (see docs/secrets-migration.md)
-  # - ./clusterexternalsecret.yaml
+  - ./clusterexternalsecret.yaml
