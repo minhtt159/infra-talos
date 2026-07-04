@@ -45,4 +45,7 @@ spec:
     type: prometheus
     name: promeo
     access: proxy
+    # explicit false — grafana keeps whichever datasource was marked
+    # default last in its own DB unless told otherwise
+    isDefault: false
     url: https://promeo.${SECRET_DOMAIN}
