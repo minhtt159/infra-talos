@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
+# Test cluster on mini-talos-01's SATA SSD. Single instance, node-local
+# storage — pinned to the node that has /var/mnt/sata (talos-nhb-hr7).
+# ponytail: 1 instance, no backups — bump instances + add scheduledBackup
+# before putting anything real in here.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+spec:
+  instances: 1
+  storage:
+    storageClass: openebs-hostpath-sata
+    size: 20Gi
+  affinity:
+    nodeSelector:
+      kubernetes.io/hostname: talos-nhb-hr7 # mini-talos-01 (hostname changes on reinstall!)
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi

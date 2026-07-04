@@ -51,6 +51,8 @@ kind: Machine
 name: 66c1d280-4d8a-11f1-9e14-326c0d981000
 install:
   disk: /dev/disk/by-id/nvme-ESO512GYLCT-EP3-2L_511221201062002139
+patches:
+  - file: patches/machines/mini-talos-01-sata.yaml
 systemExtensions:
   - siderolabs/util-linux-tools
   - siderolabs/iscsi-tools

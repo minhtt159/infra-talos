@@ -1,0 +1,14 @@
+---
+# Crucial MX500 500GB SATA (sda) on mini-talos-01 — user volume for
+# node-local storage (CNPG postgres via openebs-hostpath-sata).
+# Mounts at /var/mnt/sata.
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: sata
+provisioning:
+  diskSelector:
+    match: disk.transport == "sata" && !system_disk
+  minSize: 400GB
+  grow: true
+filesystem:
+  type: xfs
