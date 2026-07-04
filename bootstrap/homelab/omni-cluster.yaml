@@ -50,7 +50,7 @@ kind: Machine
 # mini-talos-01
 name: 66c1d280-4d8a-11f1-9e14-326c0d981000
 install:
-  disk: /dev/nvme0n1
+  disk: /dev/disk/by-id/nvme-ESO512GYLCT-EP3-2L_511221201062002139
 systemExtensions:
   - siderolabs/util-linux-tools
   - siderolabs/iscsi-tools
@@ -59,7 +59,7 @@ kind: Machine
 # mini-talos-02
 name: fe73f080-4d8b-11f1-9061-633102380e00
 install:
-  disk: /dev/nvme0n1
+  disk: /dev/disk/by-id/nvme-WDC_WDS500G2B0C-00PXH0_210541808900
 systemExtensions:
   - siderolabs/util-linux-tools
   - siderolabs/iscsi-tools
@@ -109,10 +109,7 @@ kind: Machine
 # mini-talos-04
 name: b1e583f1-b1de-44f9-860b-812e9917f2d0
 install:
-  # TODO: pin by-id like mini-talos-03 — run `task disks`, then use
-  # /dev/disk/by-id/nvme-<MODEL>_<SERIAL>. Raw node names can renumber
-  # when PCIe topology changes (the B580 passthrough makes this real).
-  disk: /dev/nvme0n1
+  disk: /dev/disk/by-id/nvme-WDS100T3X0C-00SJG0_21101U465404
 systemExtensions:
   - siderolabs/util-linux-tools
   - siderolabs/iscsi-tools
