@@ -60,12 +60,12 @@ spec:
 
 ## Inventory / checklist
 
-- [ ] `cert-manager/cert-manager/app/secret.sops.yaml` — Cloudflare API token → `bitwarden-fields`
-- [ ] `network/cloudflare-dns/app/secret.sops.yaml` → `bitwarden-fields`
-- [ ] `network/cloudflare-tunnel/app/secret.sops.yaml` → `bitwarden-fields` (or `-notes` if JSON credential blob)
-- [ ] `network/unifi-dns/app/secret.sops.yaml` → `bitwarden-login` (user/pass) or `-fields`
-- [ ] `observability/grafana/instance/grafanasecrets.sops.yaml` → `bitwarden-login`
-- [ ] `democratic-csi/nfs/app/secretstruenas.sops.yaml` — full driver YAML → secure note + `bitwarden-notes`, template the whole blob:
+- [x] `cert-manager/cert-manager/app/secret.sops.yaml` — reuses the `cloudflare-dns` item (same token, two consumers)
+- [x] `network/cloudflare-dns/app/secret.sops.yaml` → `bitwarden-fields` (pilot)
+- [x] `network/cloudflare-tunnel/app/secret.sops.yaml` → `bitwarden-fields` (`tunnel-token`)
+- [x] `network/unifi-dns/app/secret.sops.yaml` → `bitwarden-fields` (VW field `api-token` → k8s key `api-key`)
+- [x] `observability/grafana/instance/grafanasecrets.sops.yaml` → `bitwarden-login`
+- [x] `democratic-csi/nfs/app/secretstruenas.sops.yaml` — full driver YAML → secure note + `bitwarden-notes`, template the whole blob:
   ```yaml
   target:
     name: truenas-nfs-secret-config
@@ -76,8 +76,8 @@ spec:
     - secretKey: config
       remoteRef: {key: <UUID>}
   ```
-- [ ] `democratic-csi/iscsi/app/secretstruenas.sops.yaml` — same pattern
-- [ ] `flux-system/flux-instance/app/secret.sops.yaml` — webhook token → `bitwarden-fields`
+- [x] `democratic-csi/iscsi/app/secretstruenas.sops.yaml` — same pattern
+- [ ] `flux-system/flux-instance/app/secret.sops.yaml` — webhook token → `bitwarden-fields` (deferred)
 - [ ] **cluster-secrets cutover (last):**
   1. Create Vaultwarden item `cluster-secrets` with custom field `SECRET_DOMAIN`.
   2. Put its UUID in `stores/clusterexternalsecret.yaml`, uncomment it in `stores/kustomization.yaml`.
