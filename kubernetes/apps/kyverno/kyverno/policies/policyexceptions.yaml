@@ -6,6 +6,10 @@ apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: democratic-csi-resource-requests
+  # ClusterPolicies around it are cluster-scoped so this Kustomization sets no
+  # targetNamespace; PolicyException is namespaced and must live in kyverno
+  # (features.policyExceptions.namespace restriction)
+  namespace: kyverno
 spec:
   exceptions:
     - policyName: require-resource-requests
