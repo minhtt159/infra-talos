@@ -26,6 +26,10 @@ spec:
         - name: bitwarden-cli
           image: ghcr.io/charlesthomas/bitwarden-cli:2026.3.0
           imagePullPolicy: IfNotPresent
+          # container restarts reuse the pod's emptyDir; stale bw session
+          # wedges the entrypoint ("Logout required before server config
+          # update") — start from a clean slate every time
+          command: ["sh", "-c", "rm -rf /data/.config /data/*; exec /entrypoint.sh"]
           envFrom:
             - secretRef:
                 name: bitwarden-cli
