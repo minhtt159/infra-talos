@@ -53,6 +53,13 @@ install:
   disk: /dev/disk/by-id/nvme-ESO512GYLCT-EP3-2L_511221201062002139
 patches:
   - file: patches/machines/mini-talos-01-sata.yaml
+  - name: sata-label
+    inline:
+      machine:
+        nodeLabels:
+          # stable selector for the SATA user volume — machine-UUID-keyed,
+          # survives reinstalls (unlike the generated hostname)
+          storage: sata
 systemExtensions:
   - siderolabs/util-linux-tools
   - siderolabs/iscsi-tools

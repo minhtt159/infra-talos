@@ -15,7 +15,7 @@ spec:
     size: 20Gi
   affinity:
     nodeSelector:
-      kubernetes.io/hostname: talos-nhb-hr7 # mini-talos-01 (hostname changes on reinstall!)
+      storage: sata # Omni nodeLabel on mini-talos-01 — stable across reinstalls
   resources:
     requests:
       cpu: 100m
