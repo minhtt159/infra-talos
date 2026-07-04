@@ -14,6 +14,14 @@ spec:
         name: kyverno
   interval: 1h
   values:
+    # PolicyExceptions accepted only from the kyverno namespace (git-managed)
+    features:
+      policyExceptions:
+        enabled: true
+        namespace: kyverno
+    # dashboard ConfigMap (kyverno-grafana), imported by grafanadashboard.yaml
+    grafana:
+      enabled: true
     admissionController:
       # don't take the cluster down if kyverno is: fail-open for admission
       webhooks:

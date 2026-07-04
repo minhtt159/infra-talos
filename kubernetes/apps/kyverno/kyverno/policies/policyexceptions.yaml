@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kyverno.io/policyexception_v2.json
+# democratic-csi pods carry 4-5 upstream-tuned sidecars each; setting
+# per-sidecar requests is boilerplate with no operational value.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: democratic-csi-resource-requests
+spec:
+  exceptions:
+    - policyName: require-resource-requests
+      ruleNames:
+        - require-cpu-memory-requests
+  match:
+    any:
+      - resources:
+          namespaces:
+            - democratic-csi
+          kinds:
+            - Pod
+            - Deployment
+            - DaemonSet
+            - ReplicaSet

@@ -39,6 +39,10 @@ spec:
         # alertmanagerConfiguration:
         #   name: alertmanager
         externalUrl: https://alertmanager.${SECRET_DOMAIN}
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
         storage:
           volumeClaimTemplate:
             spec:
@@ -84,6 +88,7 @@ spec:
         resources:
           requests:
             cpu: 100m
+            memory: 512Mi
           limits:
             memory: 2000Mi
         storageSpec:
@@ -96,6 +101,16 @@ spec:
 
     prometheus-node-exporter:
       fullnameOverride: node-exporter
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+
+    prometheusOperator:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 128Mi
 
     # NOTE: see ./kube-state-metrics-config.yaml
     # kube-state-metrics:
