@@ -1,8 +1,7 @@
 ---
 creation_rules:
-  - path_regex: talos/.*\.sops\.ya?ml
-    mac_only_encrypted: true
-    age: "age1ezazx7ck5002pq8qkla2lytrrtfq5hqn9xlwl7wc0ea43qjdle4sllf2g9"
+  # remaining SOPS files: ESO bridge credential, flux-instance webhook
+  # (deferred), bootstrap/sops-age — everything else lives in Vaultwarden
   - path_regex: (bootstrap|kubernetes)/.*\.sops\.ya?ml
     encrypted_regex: "^(data|stringData|driver)$"
     mac_only_encrypted: true

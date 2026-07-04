@@ -83,7 +83,7 @@ spec:
   2. Put its UUID in `stores/clusterexternalsecret.yaml`, uncomment it in `stores/kustomization.yaml`.
   3. Remove `components: [../../components/sops]` from every `kubernetes/apps/*/kustomization.yaml`.
   4. Delete `kubernetes/components/sops/`.
-- [ ] Shrink `.sops.yaml` to a single rule for the bridge secret; drop the stale `talos/*` rule.
+- [x] Shrink `.sops.yaml` — stale `talos/*` rule dropped; one rule remains for the 3 surviving SOPS files.
 - [ ] Local cleanup: age key stays (still decrypts the one bootstrap file); remove any other SOPS tooling habits.
 
 ## Rollback
