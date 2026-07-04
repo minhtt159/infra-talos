@@ -10,5 +10,5 @@ spec:
     matchLabels:
       grafana.internal/instance: grafana
   configMapRef:
-    name: kyverno-grafana # created by the kyverno chart (grafana.enabled)
+    name: kyverno-grafana-grafana # created by the kyverno chart (grafana.enabled); doubled suffix is the chart's fullname quirk
     key: kyverno-dashboard.json
