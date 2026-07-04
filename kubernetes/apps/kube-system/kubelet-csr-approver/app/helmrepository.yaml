@@ -1,0 +1,9 @@
+---
+# postfinance publishes no OCI chart — classic Helm repository
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: postfinance
+spec:
+  interval: 1h
+  url: https://postfinance.github.io/kubelet-csr-approver

@@ -11,7 +11,10 @@ spec:
   interval: 1h
   values:
     args:
-      - --kubelet-insecure-tls
+      # Kubelet serving certs are cluster-CA signed (rotate-server-certificates
+      # + kubelet-csr-approver), so verify them properly instead of
+      # --kubelet-insecure-tls. The SA ca.crt IS the cluster CA on Talos.
+      - --kubelet-certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
       - --kubelet-use-node-status-port
       - --metric-resolution=10s

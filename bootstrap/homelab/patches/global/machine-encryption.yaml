@@ -1,8 +1,9 @@
-# Enable WireGuard for Cilium encryption on Talos
+# Kernel bits for the Cilium datapath. (Was "for Cilium encryption" — that
+# was removed in the July 2026 rework; module kept because it's harmless
+# and JIT benefits all BPF programs.)
 machine:
   kernel:
     modules:
       - name: wireguard
   sysctls:
-    # Required for Cilium encryption
     net.core.bpf_jit_enable: "1"

@@ -3,8 +3,9 @@ machine:
     hostDNS:
       enabled: true
       # Off for Cilium bpf.masquerade: the 169.254 host-DNS forward breaks
-      # under BPF masquerading (siderolabs/talos#10002). With this false,
-      # cilium bpf.hostLegacyRouting can stay false (full BPF fastpath).
+      # under BPF masquerading (siderolabs/talos#10002). Still required while
+      # bpf.masquerade is on, regardless of hostLegacyRouting (true since the
+      # July 2026 rework — BPF host routing ate SideroLink flows).
       forwardKubeDNSToHost: false
   network:
     disableSearchDomain: true
