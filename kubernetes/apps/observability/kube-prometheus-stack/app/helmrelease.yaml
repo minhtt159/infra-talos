@@ -14,11 +14,6 @@ spec:
       - paths: ["/metadata/annotations/prometheus-operator-validated"]
         target:
           kind: PrometheusRule
-  valuesFrom:
-    # Override kube-state-metrics-config for FluxCD
-    - kind: ConfigMap
-      name: flux-kube-state-metrics-config
-      valuesKey: kube-state-metrics-config.yaml
   values:
     # ref: https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
     cleanPrometheusOperatorObjectNames: true
@@ -112,9 +107,14 @@ spec:
           cpu: 10m
           memory: 128Mi
 
-    # NOTE: see ./kube-state-metrics-config.yaml
-    # kube-state-metrics:
-    #   fullnameOverride: kube-state-metrics
+    # Flux resource-state metrics come from flux-operator (flux_resource_info)
+    # — the customResourceState recipe from flux2-monitoring-example is gone.
+    kube-state-metrics:
+      fullnameOverride: kube-state-metrics
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
 
     grafana:
       enabled: false
