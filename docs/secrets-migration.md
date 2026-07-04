@@ -78,7 +78,7 @@ spec:
   ```
 - [x] `democratic-csi/iscsi/app/secretstruenas.sops.yaml` — same pattern
 - [ ] `flux-system/flux-instance/app/secret.sops.yaml` — webhook token → `bitwarden-fields` (deferred)
-- [ ] **cluster-secrets cutover (last):**
+- [x] **cluster-secrets cutover (last):**
   1. Create Vaultwarden item `cluster-secrets` with custom field `SECRET_DOMAIN`.
   2. Put its UUID in `stores/clusterexternalsecret.yaml`, uncomment it in `stores/kustomization.yaml`.
   3. Remove `components: [../../components/sops]` from every `kubernetes/apps/*/kustomization.yaml`.
