@@ -8,8 +8,8 @@ Public GitOps for a home Kubernetes cluster on **Talos Linux** (provisioned by
 **Sidero Omni**), reconciled by **Flux**. This repo owns **cluster prerequisites +
 applications**: `bootstrap/helmfile.d/` (CNI/DNS/cert-manager/Flux seed) and
 `kubernetes/` (everything Flux reconciles). Node/OS provisioning (the Omni cluster
-template) lives in a **separate private repo** — a migration is in progress, so
-**don't add new machine/topology detail here.**
+template) lives in a **separate private repo** — **don't add machine/topology detail
+(UUIDs, disk serials, LAN IPs) here.**
 
 ## Security posture — hard rules
 
@@ -17,15 +17,14 @@ template) lives in a **separate private repo** — a migration is in progress, s
   disk serials, LAN IPs, internal hostnames used as topology, hardware inventory, or
   anything mapping the physical setup. If you're about to write a real internal
   IP/serial/UUID, stop — it belongs in a private repo.
-- **No plaintext secrets, ever.** Two mechanisms, both keep ciphertext or nothing in git:
-  - **ExternalSecret** (preferred for new work) — pulls at runtime from Vaultwarden via
-    `ClusterSecretStore/bitwarden-fields`; reference items by UUID + field, never inline the value.
-  - **SOPS** (`*.sops.yaml`) — only `data`/`stringData`/`driver` are encrypted; the age
-    **private key is not in the repo**. Being phased out in favor of ExternalSecret.
+- **No secrets in git, ever.** Secrets come from **Vaultwarden** at runtime via an
+  `ExternalSecret` (`secretStoreRef` → `ClusterSecretStore/bitwarden-fields`) — reference
+  the Vaultwarden item by UUID + field, never inline the value. This repo has **no SOPS
+  and no age key** (fully decommissioned); the single ESO bootstrap credential
+  (`bitwarden-cli`) is seeded out-of-band from the private Omni repo.
 - Non-secret, cluster-wide values (`${SECRET_DOMAIN}`, …) come from the `cluster-secrets`
   Secret via `postBuild.substituteFrom` — don't hardcode them.
-- **Before every commit:** no secrets, no private topology, and any `*.sops.yaml` is
-  actually encrypted (`sops --encrypt`), not plaintext.
+- **Before every commit:** no secrets, no private topology.
 
 ## Kyverno policies — write compliant manifests
 
