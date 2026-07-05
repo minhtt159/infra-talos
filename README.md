@@ -14,6 +14,7 @@ points at an `app/` directory holding a `HelmRelease` (or raw manifests).
 ## Table of contents
 
 - [Architecture](#architecture)
+- [Cluster shape](#cluster-shape)
 - [Repository layout](#repository-layout)
 - [The application pattern](#the-application-pattern)
 - [Applications](#applications)
@@ -93,7 +94,7 @@ GitOps layer in this repo relies on:
 │           ├── ks.yaml              # Flux Kustomization for this app
 │           └── app/                 # HelmRelease, OCIRepository, secrets, extra manifests
 │
-├── Taskfile.yaml                  # task runner — Omni + helmfile bootstrap helpers
+├── Taskfile.yaml                  # task runner — Omni cred fetch, helmfile bootstrap, Flux/PV ops
 ├── .sops.yaml                     # SOPS encryption rules
 ├── .renovaterc.json5              # Renovate config
 └── .envrc                         # direnv: exports SOPS_AGE_KEY_FILE + KUBECONFIG
@@ -189,9 +190,8 @@ Helm repositories.
 Encryption is handled by [SOPS](https://github.com/getsops/sops) with an
 **age** key. Rules live in [`.sops.yaml`](.sops.yaml):
 
-- `*.sops.yaml` under `bootstrap/` and `kubernetes/` encrypt only
+- `*.sops.yaml` under `kubernetes/` encrypt only
   `data` / `stringData` / `driver` fields (keys stay readable in diffs).
-- `talos/*.sops.yaml` are fully encrypted (see note in Bootstrapping).
 
 Flow:
 
