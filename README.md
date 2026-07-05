@@ -2,8 +2,8 @@
 
 GitOps configuration for a home Kubernetes cluster running on **Talos Linux**,
 provisioned by **Sidero Omni** and continuously reconciled by **Flux**.
-Secrets are encrypted at rest with **SOPS + age**; dependency updates are
-automated with **Renovate**.
+Secrets are pulled from **Vaultwarden** via the **External Secrets Operator**;
+dependency updates are automated with **Renovate**.
 
 The layout follows the [onedr0p / home-operations](https://github.com/onedr0p/cluster-template)
 convention: every application is a self-contained Flux `Kustomization` that
@@ -20,7 +20,7 @@ points at an `app/` directory holding a `HelmRelease` (or raw manifests).
 - [Applications](#applications)
 - [Networking & ingress](#networking--ingress)
 - [Storage](#storage)
-- [Secrets (SOPS)](#secrets-sops)
+- [Secrets (External Secrets Operator)](#secrets-external-secrets-operator)
 - [Bootstrapping a cluster](#bootstrapping-a-cluster)
 - [Automation](#automation)
 - [Common operations](#common-operations)
@@ -95,9 +95,8 @@ GitOps layer in this repo relies on:
 │           └── app/                 # HelmRelease, OCIRepository, secrets, extra manifests
 │
 ├── Taskfile.yaml                  # task runner — Omni cred fetch, helmfile bootstrap, Flux/PV ops
-├── .sops.yaml                     # SOPS encryption rules
 ├── .renovaterc.json5              # Renovate config
-└── .envrc                         # direnv: exports SOPS_AGE_KEY_FILE + KUBECONFIG
+└── .envrc                         # direnv: exports KUBECONFIG
 ```
 
 ---
@@ -109,9 +108,8 @@ example:
 
 1. **Root Kustomization** — [`kubernetes/flux/cluster/ks.yaml`](kubernetes/flux/cluster/ks.yaml)
    defines `cluster-apps`, pointing at `./kubernetes/apps`. It applies **global
-   defaults to every child** via `patches`: SOPS decryption, and a `HelmRelease`
-   patch that sets install/upgrade/rollback remediation (retry, `cleanupOnFail`,
-   `CreateReplace` CRDs).
+   defaults to every child** via `patches`: a `HelmRelease` patch that sets
+   install/upgrade/rollback remediation (retry, `cleanupOnFail`, `CreateReplace` CRDs).
 
 2. **Namespace Kustomization** — [`kubernetes/apps/cert-manager/kustomization.yaml`](kubernetes/apps/cert-manager/kustomization.yaml)
    lists `namespace.yaml` and each app's `ks.yaml`, and pulls in the
@@ -125,8 +123,8 @@ example:
      manifests can reference `${SECRET_DOMAIN}` and friends.
 
 4. **The `app/` directory** holds the actual resources: an `OCIRepository`
-   (the Helm chart, pinned by tag), a `HelmRelease` referencing it, encrypted
-   `*.sops.yaml` secrets, and any extra CRs (ClusterIssuer, HTTPRoute, …).
+   (the Helm chart, pinned by tag), a `HelmRelease` referencing it, an
+   `ExternalSecret` for any secrets, and any extra CRs (ClusterIssuer, HTTPRoute, …).
 
 Charts are pulled as **OCI artifacts** (`OCIRepository`) rather than classic
 Helm repositories.
@@ -139,7 +137,7 @@ Helm repositories.
 |-----------|------|---------|
 | `kube-system` | cilium, coredns, metrics-server, reloader, node-feature-discovery, intel-device-plugin | CNI + LB, cluster DNS, HPA metrics, config-change restarts, GPU discovery + `gpu.intel.com/xe` scheduling |
 | `cert-manager` | cert-manager | ACME (Let's Encrypt) + internal CA |
-| `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden (see [docs/secrets-migration.md](docs/secrets-migration.md)) |
+| `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden |
 | `kyverno` | kyverno | Policy engine — all ClusterPolicies in Audit mode (PolicyReports), enforce per-policy later |
 | `network` | envoy-gateway, cloudflare-dns, unifi-dns, cloudflare-tunnel | Gateway API ingress, external-dns (Cloudflare + UniFi), Cloudflare tunnel |
 | `observability` | kube-prometheus-stack, grafana | Metrics/alerting stack, Grafana (via grafana-operator) |
@@ -176,8 +174,8 @@ Helm repositories.
 
 - **openebs** — node-local volumes for scratch / non-replicated data.
 - **democratic-csi** — dynamic PVs backed by a **TrueNAS** appliance over
-  **iSCSI** (block) and **NFS** (shared). TrueNAS credentials are in each app's
-  `secretstruenas.sops.yaml`. See [`democratic-csi/README.md`](kubernetes/apps/democratic-csi/README.md).
+  **iSCSI** (block) and **NFS** (shared). TrueNAS credentials come from Vaultwarden
+  via an `ExternalSecret`. See [`democratic-csi/README.md`](kubernetes/apps/democratic-csi/README.md).
 - **Rebuild survival** — both TrueNAS storage classes use
   `reclaimPolicy: Retain`; volumes are reclaimed after a full cluster
   recreation via `task pv:export` + the
@@ -185,32 +183,24 @@ Helm repositories.
 
 ---
 
-## Secrets (SOPS)
+## Secrets (External Secrets Operator)
 
-Encryption is handled by [SOPS](https://github.com/getsops/sops) with an
-**age** key. Rules live in [`.sops.yaml`](.sops.yaml):
+Secrets are pulled at runtime from **Vaultwarden** by the **External Secrets
+Operator** (ESO) — nothing secret is committed to this repo (no SOPS, no age key).
 
-- `*.sops.yaml` under `kubernetes/` encrypt only
-  `data` / `stringData` / `driver` fields (keys stay readable in diffs).
+- Each app declares an `ExternalSecret` (`secretStoreRef` →
+  `ClusterSecretStore/bitwarden-fields`) mapping a Vaultwarden item's fields into a
+  Kubernetes `Secret`.
+- Non-secret, cluster-wide values (e.g. `${SECRET_DOMAIN}`) live in the
+  `cluster-secrets` Vaultwarden item, fanned out to every namespace by a
+  `ClusterExternalSecret` and injected via `postBuild.substituteFrom`.
+- ESO reaches Vaultwarden through an in-cluster `bitwarden-cli` bridge. Its login
+  is the one **bootstrap** secret that can't come from ESO itself — seeded
+  out-of-band (SOPS-encrypted in the **private** Omni repo, applied by a seed task;
+  see the [rebuild runbook](docs/runbooks/cluster-rebuild.md)) and **not** stored here.
 
-Flow:
-
-1. The private age key lives **outside the repo**; `.envrc` exports
-   `SOPS_AGE_KEY_FILE` (via direnv) so `sops` can decrypt locally.
-2. In-cluster, the `sops-age` Secret in `flux-system` lets the Flux
-   **kustomize-controller** decrypt at reconcile time
-   (`--sops-age-secret=sops-age`, wired in the flux-instance patches).
-3. Non-secret, cluster-wide values (e.g. `SECRET_DOMAIN`) live in
-   the `cluster-secrets` Vaultwarden item (fanned out by the ClusterExternalSecret)
-   and are injected into manifests via `postBuild.substituteFrom`.
-
-> The public age recipient is committed in `.sops.yaml`; the matching private
-> key is the one secret you must supply out-of-band to bootstrap or decrypt.
-
-> **Transition in progress:** SOPS is being replaced by **External Secrets
-> Operator** backed by **Vaultwarden** (bitwarden-cli webhook bridge). End
-> state: a single SOPS file remains (the bridge credential). Status and
-> per-secret checklist: [docs/secrets-migration.md](docs/secrets-migration.md).
+> If a workload needs a secret, add an `ExternalSecret` — never commit the value
+> (encrypted or not).
 
 ---
 
@@ -288,8 +278,8 @@ flux resume    kustomization <app> -n flux-system
 flux get kustomizations -A
 flux get helmreleases -A
 
-# Edit an encrypted secret in place
-sops kubernetes/apps/<ns>/<app>/app/secret.sops.yaml
+# Change a secret: edit the item in Vaultwarden, then force ESO to re-sync
+flux reconcile kustomization <app> -n flux-system   # or wait for the refreshInterval
 ```
 
 ---
@@ -298,8 +288,8 @@ sops kubernetes/apps/<ns>/<app>/app/secret.sops.yaml
 
 1. Create `kubernetes/apps/<namespace>/<app>/` with an `app/` subdirectory.
 2. In `app/`, add an `OCIRepository` (chart), a `HelmRelease` referencing it,
-   an `app/kustomization.yaml` listing the files, and any secrets as
-   `*.sops.yaml` (encrypt with `sops -e -i`).
+   an `app/kustomization.yaml` listing the files, and any secrets as an
+   `ExternalSecret` (store the value in Vaultwarden, ref it by item UUID + field).
 3. Add `ks.yaml` (Flux `Kustomization`) pointing `path` at the `app/` dir; add
    `healthChecks` and `postBuild.substituteFrom: cluster-secrets` as needed.
 4. Reference the new `ks.yaml` from the namespace's `kustomization.yaml`
