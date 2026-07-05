@@ -116,7 +116,7 @@ spec:
           automountServiceAccountToken: false
           containers:
             - name: sync
-              image: mirror.gcr.io/curlimages/curl:8.17.0
+              image: mirror.gcr.io/curlimages/curl:8.21.0
               # bw serve /sync is POST-only (GET -> 405)
               args: ["-sf", "-X", "POST", "--max-time", "90", "http://bitwarden-cli:8087/sync?force=true"]
               securityContext:
