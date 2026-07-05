@@ -53,16 +53,17 @@ task cluster:kubeconfig
 task bootstrap            # CRDs, then cilium → coredns → cert-manager → flux
 ```
 
-Then seed the SOPS age-key Secret (kustomize-controller needs it to decrypt the
-bitwarden-cli bridge secret). The key is **no longer committed here** — it lives as
-a Forgejo secret (`SOPS_AGE_KEY`); seed it from the private Omni repo
-(`omni-selfhosted`, see its README), or manually with the key in hand:
+Then seed the **ESO bootstrap secret** — the `bitwarden-cli` bridge login that lets
+External Secrets reach Vaultwarden (it can't come from ESO itself). It's not in this
+repo; it's SOPS-encrypted in the private Omni repo (`omni-selfhosted`). From there:
 
 ```sh
-kubectl -n flux-system create secret generic sops-age \
-  --from-literal=age.agekey="$SOPS_AGE_KEY" \
-  --dry-run=client -o yaml | kubectl apply -f -
+task cluster:kubeconfig       # if not already fetched
+task cluster:seed-secrets     # sops-decrypt cluster/eso-secrets.sops.yaml | kubectl apply
 ```
+
+Once that Secret exists, ESO authenticates and every `ExternalSecret` (including
+`cluster-secrets`) resolves. No SOPS or age key is needed in this repo.
 
 ## 4. Reclaim volumes — ORDER MATTERS
 
