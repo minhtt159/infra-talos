@@ -1,13 +1,18 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
+# Envoy Gateway attaches at most ONE BackendTrafficPolicy per Gateway (no
+# merge) — so the common settings are per-gateway, not a shared all-gateways
+# policy. The external policy adds the rate limit; internal stays unmetered
+# (rate-limiting it risks throttling Grafana/Kibana during an incident).
+# The common blocks below are duplicated by necessity — keep the two in sync.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
-  name: envoy
+  name: envoy-internal
 spec:
-  targetSelectors:
+  targetRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
+      name: envoy-internal
   compression:
     - type: Brotli
     - type: Gzip
@@ -18,3 +23,39 @@ spec:
   timeout:
     http:
       requestTimeout: 0s
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: envoy-external
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-external
+  # --- common (keep in sync with envoy-internal) ---
+  compression:
+    - type: Brotli
+    - type: Gzip
+    - type: Zstd
+  connection:
+    bufferLimit: 8Mi
+  tcpKeepalive: {}
+  timeout:
+    http:
+      requestTimeout: 0s
+  # --- external-only: global rate limit ---
+  # 3000 req/min (~50 rps) per distinct client IP — flood protection, not a
+  # usage budget. Behind cloudflared the client IP comes from XFF
+  # (numTrustedHops: 1). Counters in Valkey, fail-open (see app/helmrelease.yaml).
+  rateLimit:
+    type: Global
+    global:
+      rules:
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+          limit:
+            requests: 3000
+            unit: Minute

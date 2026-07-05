@@ -10,5 +10,4 @@ resources:
   - ./backendtrafficpolicy.yaml
   - ./clienttrafficpolicy.yaml
   - ./httpredirect.yaml
-  - ./ratelimit.yaml
   - ./waf.yaml
