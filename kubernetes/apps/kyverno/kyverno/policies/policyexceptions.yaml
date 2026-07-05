@@ -13,8 +13,11 @@ metadata:
 spec:
   exceptions:
     - policyName: require-resource-requests
+      # both the base (Pod) and the autogen (controller) rule variants —
+      # the controllers fail on autogen-require-cpu-memory-requests
       ruleNames:
         - require-cpu-memory-requests
+        - autogen-require-cpu-memory-requests
   match:
     any:
       - resources:
@@ -24,7 +27,6 @@ spec:
             - Pod
             - Deployment
             - DaemonSet
-            - ReplicaSet
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kyverno.io/policyexception_v2.json
 # CNPG operator and postgres instance pods legitimately need the API
@@ -40,6 +42,7 @@ spec:
     - policyName: restrict-sa-token-automount
       ruleNames:
         - require-explicit-automount
+        - autogen-require-explicit-automount
   match:
     any:
       - resources:
@@ -48,5 +51,3 @@ spec:
           kinds:
             - Pod
             - Deployment
-            - ReplicaSet
-            - Job

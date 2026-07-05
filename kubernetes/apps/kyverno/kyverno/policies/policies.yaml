@@ -7,6 +7,12 @@ kind: ClusterPolicy
 metadata:
   name: disallow-latest-tag
   annotations:
+    # Autogen for top-level controllers only — exclude ReplicaSet/
+    # ReplicationController: they are always owned by a Deployment that is
+    # already checked, so reporting them just triples the violation count
+    # (and flags stale zero-replica revisions kept for rollback).
+    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet,Job,CronJob
+  annotations:
     policies.kyverno.io/description: >-
       Mutable image tags make rollbacks and audits impossible.
       Require a pinned tag (anything but :latest or tagless).
@@ -38,6 +44,12 @@ kind: ClusterPolicy
 metadata:
   name: require-resource-requests
   annotations:
+    # Autogen for top-level controllers only — exclude ReplicaSet/
+    # ReplicationController: they are always owned by a Deployment that is
+    # already checked, so reporting them just triples the violation count
+    # (and flags stale zero-replica revisions kept for rollback).
+    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet,Job,CronJob
+  annotations:
     policies.kyverno.io/description: >-
       Pods without requests wreck scheduling on a small mixed-arch cluster.
 spec:
@@ -67,6 +79,12 @@ apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: restrict-sa-token-automount
+  annotations:
+    # Autogen for top-level controllers only — exclude ReplicaSet/
+    # ReplicationController: they are always owned by a Deployment that is
+    # already checked, so reporting them just triples the violation count
+    # (and flags stale zero-replica revisions kept for rollback).
+    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet,Job,CronJob
   annotations:
     policies.kyverno.io/description: >-
       Least privilege: pods that don't talk to the API server shouldn't
