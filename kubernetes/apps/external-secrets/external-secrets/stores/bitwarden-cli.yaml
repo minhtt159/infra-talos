@@ -40,21 +40,14 @@ spec:
             - name: http
               containerPort: 8087
               protocol: TCP
-          # ponytail: liveness doubles as vault sync — probe forces `bw sync` every 2min
+          # Liveness is a plain TCP check — the old sync-in-liveness design
+          # kill-looped the pod whenever Vaultwarden was slow (23 restarts).
+          # Vault refresh is the vault-sync CronJob below instead.
           livenessProbe:
-            exec:
-              command:
-                - wget
-                - -q
-                - http://127.0.0.1:8087/sync?force=true
-                - -O
-                - /dev/null
+            tcpSocket:
+              port: http
             initialDelaySeconds: 60
-            periodSeconds: 120
-            # forced sync can take seconds; default 1s timeout kill-loops the
-            # pod, and a restarted container hits "Logout required" on the
-            # stale /data session
-            timeoutSeconds: 30
+            periodSeconds: 30
           readinessProbe:
             tcpSocket:
               port: http
@@ -100,3 +93,42 @@ spec:
       port: 8087
       targetPort: http
       protocol: TCP
+---
+# Periodic vault refresh, decoupled from pod health. ESO refreshInterval is
+# 1h, so 15m sync freshness is plenty. Failures are retried next tick and
+# never restart the bridge.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bitwarden-cli-sync
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 120
+      template:
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          containers:
+            - name: sync
+              image: mirror.gcr.io/curlimages/curl:8.17.0
+              args: ["-sf", "--max-time", "90", "http://bitwarden-cli:8087/sync?force=true"]
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 65534
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: { drop: ["ALL"] }
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 16Mi
+                limits:
+                  memory: 32Mi
