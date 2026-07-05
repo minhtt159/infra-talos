@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: elasticsearch-exporter
+spec:
+  allowCrossNamespaceImport: true
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+  resyncPeriod: 1h
+  # Dashboard's __input; map it to the kube-prometheus-stack datasource (adjust if
+  # your Prometheus datasource is named differently).
+  datasources:
+    - inputName: "DS_PROMETHEUS"
+      datasourceName: "Prometheus"
+  # https://grafana.com/grafana/dashboards/14191 — Elasticsearch Exporter Quickstart.
+  # grafana-operator fetches this revision from grafana.com; Renovate bumps it via
+  # the custom.grafana-dashboards datasource (see .renovaterc.json5).
+  grafanaCom:
+    id: 14191
+    # renovate: datasource=custom.grafana-dashboards depName=14191
+    revision: 1
