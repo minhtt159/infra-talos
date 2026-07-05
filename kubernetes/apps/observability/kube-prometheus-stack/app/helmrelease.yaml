@@ -113,6 +113,16 @@ spec:
         requests:
           cpu: 10m
           memory: 128Mi
+      # the config-reloader sidecar injected into prometheus/alertmanager pods
+      # — without this those pods fail require-resource-requests (main
+      # containers have requests via {prometheus,alertmanager}Spec.resources)
+      prometheusConfigReloader:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
 
     # Flux resource-state metrics come from flux-operator (flux_resource_info)
     # — the customResourceState recipe from flux2-monitoring-example is gone.
