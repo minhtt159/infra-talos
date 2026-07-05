@@ -1,0 +1,90 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/envoyproxy_v1alpha1.json
+# Dedicated proxy template for the EXTERNAL gateway (attached via
+# Gateway.spec.infrastructure.parametersRef) — log/WAF/limit experiments
+# here never roll the internal proxy.
+#
+# Access logs: ECS field names emitted straight from Envoy — dotted JSON
+# keys land in Elasticsearch as proper ECS objects, so the shipper
+# (fluent-bit) forwards as-is with no rename pipeline. Envoy-specific
+# telemetry that has no clean ECS home lives under the `envoy.*` namespace.
+# Cookie header deliberately dropped (PII). Numeric operators (%DURATION%,
+# %BYTES_*%, %RESPONSE_CODE%) emit as JSON numbers.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: envoy-external-proxy
+spec:
+  logging:
+    level:
+      default: info
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyPDB:
+        minAvailable: 1
+      envoyDeployment:
+        replicas: 2
+        pod:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: DoNotSchedule
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: envoy
+        container:
+          imageRepository: mirror.gcr.io/envoyproxy/envoy
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+      envoyService:
+        externalTrafficPolicy: Local # preserve client IP
+  shutdown:
+    drainTimeout: 180s
+  telemetry:
+    accessLog:
+      settings:
+        - format:
+            type: JSON
+            json:
+              # ── ECS core ────────────────────────────────────────────
+              "@timestamp": "%START_TIME%"
+              event.dataset: envoy.access
+              # client
+              source.ip: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%" # real client via XFF (numTrustedHops)
+              user_agent.original: "%REQ(USER-AGENT)%"
+              # request
+              url.domain: "%REQ(:AUTHORITY)%"
+              url.path: "%REQ(:PATH)%"
+              http.request.method: "%REQ(:METHOD)%"
+              http.request.id: "%REQ(X-REQUEST-ID)%"
+              http.request.referrer: "%REQ(Referer)%"
+              http.request.bytes: "%BYTES_RECEIVED%"
+              # response
+              http.response.status_code: "%RESPONSE_CODE%"
+              http.response.bytes: "%BYTES_SENT%"
+              # upstream
+              destination.address: "%UPSTREAM_REMOTE_ADDRESS%"
+              tls.cipher: "%DOWNSTREAM_TLS_CIPHER%"
+              # ── envoy namespace (no clean ECS equivalent) ───────────
+              envoy.duration_ms: "%DURATION%" # total downstream duration
+              envoy.upstream_ms: "%RESPONSE_DURATION%" # empty if upstream never reached
+              envoy.protocol: "%PROTOCOL%" # HTTP/1.1, HTTP/2 — not ECS http.version shape
+              envoy.response_flags: "%RESPONSE_FLAGS%" # UH/UF/RL/UAEX — key debugging field
+              envoy.response_code_details: "%RESPONSE_CODE_DETAILS%"
+              envoy.upstream_cluster: "%UPSTREAM_CLUSTER%"
+              envoy.route_name: "%ROUTE_NAME%"
+              envoy.tls_version: "%DOWNSTREAM_TLS_VERSION%" # TLSv1.3 — not ECS tls.version shape
+              envoy.x_forwarded_for: "%REQ(X-FORWARDED-FOR)%" # full chain
+          sinks:
+            - type: File
+              file:
+                path: /dev/stdout
+    metrics:
+      prometheus:
+        compression:
+          type: Zstd

@@ -80,6 +80,13 @@ spec:
         serviceMonitorSelectorNilUsesHelmValues: false
         retention: 14d
         retentionSize: 50GB
+        # Mirror all metrics to the TrueNAS shadow prometheus (long-term
+        # archive; cluster gets rebuilt, promeo doesn't). promeo must run
+        # with --web.enable-remote-write-receiver. Native remote_write —
+        # no mirror agent needed; future VictoriaMetrics = same protocol,
+        # different URL.
+        remoteWrite:
+          - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
         resources:
           requests:
             cpu: 100m
