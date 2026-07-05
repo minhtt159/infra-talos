@@ -1,5 +1,5 @@
 ---
-# Areas
+# Areas (must match .github/labeler.yaml)
 - name: area/bootstrap
   color: "0e8a16"
 - name: area/docs
@@ -8,15 +8,7 @@
   color: "0e8a16"
 - name: area/kubernetes
   color: "0e8a16"
-- name: area/mise
-  color: "0e8a16"
 - name: area/renovate
-  color: "0e8a16"
-- name: area/scripts
-  color: "0e8a16"
-- name: area/talos
-  color: "0e8a16"
-- name: area/templates
   color: "0e8a16"
 - name: area/taskfile
   color: "0e8a16"
@@ -24,8 +16,6 @@
 - name: renovate/container
   color: "027fa0"
 - name: renovate/github-action
-  color: "027fa0"
-- name: renovate/grafana-dashboard
   color: "027fa0"
 - name: renovate/github-release
   color: "027fa0"
@@ -39,6 +29,17 @@
 - name: type/minor
   color: "ff9800"
 - name: type/major
+  color: "f6412d"
+# PR size (by diff, set by the pr-size workflow)
+- name: size/XS
+  color: "c2e0c6"
+- name: size/S
+  color: "7ee081"
+- name: size/M
+  color: "ffd966"
+- name: size/L
+  color: "ff922b"
+- name: size/XL
   color: "f6412d"
 # Uncategorized
 - name: community
