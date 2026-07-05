@@ -51,3 +51,30 @@ spec:
           kinds:
             - Pod
             - Deployment
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kyverno.io/policyexception_v2.json
+# kube-prometheus-stack helm-hook Jobs (webhook cert-gen + CRD upgrade) have
+# no chart value to set resources and run on every chart upgrade. Exempt them
+# so require-resource-requests can go Enforce without breaking helm hooks.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: kube-prometheus-stack-hook-jobs
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: require-resource-requests
+      ruleNames:
+        - require-cpu-memory-requests
+        - autogen-require-cpu-memory-requests
+  match:
+    any:
+      - resources:
+          namespaces:
+            - observability
+          kinds:
+            - Job
+            - Pod
+          names:
+            - kube-prometheus-stack-admission-*
+            - kube-prometheus-stack-crds-*
