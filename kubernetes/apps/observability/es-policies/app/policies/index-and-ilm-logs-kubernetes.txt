@@ -47,7 +47,9 @@ PUT _index_template/logs-kubernetes_template
             "namespace_name": { "type": "keyword" },
             "pod_name": { "type": "keyword" },
             "container_name": { "type": "keyword" },
-            "host": { "type": "keyword" }
+            "host": { "type": "keyword" },
+            "labels": { "type": "flattened" },
+            "annotations": { "type": "flattened" }
           }
         }
       }

@@ -91,6 +91,14 @@ PUT _index_template/logs-envoy_template
             "tls_version": { "type": "keyword" },
             "x_forwarded_for": { "type": "keyword" }
           }
+        },
+        "kubernetes": {
+          "properties": {
+            "namespace_name": { "type": "keyword" },
+            "pod_name": { "type": "keyword" },
+            "labels": { "type": "flattened" },
+            "annotations": { "type": "flattened" }
+          }
         }
       }
     }
