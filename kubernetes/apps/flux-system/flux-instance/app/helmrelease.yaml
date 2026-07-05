@@ -38,7 +38,7 @@ spec:
             patch: |
               - op: add
                 path: /spec/template/spec/containers/0/args/-
-                value: --concurrent=20
+                value: --concurrent=10
               - op: replace
                 path: /spec/template/spec/volumes/0
                 value:
@@ -62,25 +62,19 @@ spec:
             target:
               kind: Deployment
               name: source-controller
-          - # Flux near OOM detection for Helm
+          - # Flux near-OOM detection + disable chart digest tracking.
+            # Both feature gates go in ONE --feature-gates arg: a repeated flag can
+            # last-win and silently drop OOMWatch.
             patch: |
               - op: add
                 path: /spec/template/spec/containers/0/args/-
-                value: --feature-gates=OOMWatch=true
+                value: --feature-gates=OOMWatch=true,DisableChartDigestTracking=true
               - op: add
                 path: /spec/template/spec/containers/0/args/-
                 value: --oom-watch-memory-threshold=95
               - op: add
                 path: /spec/template/spec/containers/0/args/-
                 value: --oom-watch-interval=500ms
-            target:
-              kind: Deployment
-              name: helm-controller
-          - # Disable chart digest tracking
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: --feature-gates=DisableChartDigestTracking=true
             target:
               kind: Deployment
               name: helm-controller
