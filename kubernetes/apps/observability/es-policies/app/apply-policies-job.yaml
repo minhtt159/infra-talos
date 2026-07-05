@@ -19,7 +19,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: apply
-          image: python:3.12-alpine
+          image: python:3.14-alpine
           command:
             - python3
             - /scripts/apply_es_policies.py

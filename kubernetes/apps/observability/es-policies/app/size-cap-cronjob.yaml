@@ -24,7 +24,7 @@ spec:
           automountServiceAccountToken: false
           containers:
             - name: cap
-              image: python:3.12-alpine
+              image: python:3.14-alpine
               command:
                 - python3
                 - /scripts/es_size_cap.py
