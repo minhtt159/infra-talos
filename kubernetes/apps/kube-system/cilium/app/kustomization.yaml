@@ -5,6 +5,7 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./networks.yaml
+  - ./grafanadashboard.yaml
   # - ./host-firewall.yaml
   # - ./default-policies.yaml
   # - ./service-mesh-auth.yaml
