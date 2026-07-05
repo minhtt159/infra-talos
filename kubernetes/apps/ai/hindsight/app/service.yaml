@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hindsight
+spec:
+  selector:
+    app: hindsight
+  ports:
+    - name: api
+      port: 8888
+      targetPort: api
+      protocol: TCP
+    - name: ui
+      port: 9999
+      targetPort: ui
+      protocol: TCP
