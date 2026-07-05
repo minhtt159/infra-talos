@@ -11,17 +11,36 @@ vars:
 
 env:
   KUBECONFIG: "{{.ROOT_DIR}}/kubeconfig"
+  TALOSCONFIG: "{{.ROOT_DIR}}/talosconfig"
 
 tasks:
   default: task --list
 
-  # Node provisioning (omnictl cluster template, talosconfig, disks) lives in the
-  # private Omni repo (omni-selfhosted), not here. These tasks fetch the kubeconfig
-  # and bootstrap the GitOps layer against an already-provisioned cluster.
+  # Node provisioning (omnictl cluster template validate/sync/status/delete) lives in
+  # the private Omni repo (omni-selfhosted). Kept here for normal ops against an
+  # already-provisioned cluster: fetch creds, inspect disks, bootstrap, reconcile.
 
   cluster:kubeconfig:
     desc: Fetch the cluster kubeconfig from Omni into ./kubeconfig
     cmd: omnictl kubeconfig {{.KUBECONFIG}} --cluster {{.CLUSTER_NAME}} --force
+
+  cluster:talosconfig:
+    desc: Fetch the talosconfig from Omni into ./talosconfig
+    cmd: omnictl talosconfig {{.TALOSCONFIG}} --cluster {{.CLUSTER_NAME}}
+
+  disks:
+    desc: Gather disk info from all nodes (model/serial/wwid)
+    cmds:
+      - >-
+        talosctl --nodes
+        $(kubectl get nodes -o jsonpath='{range .items[*]}{.status.addresses[?(@.type=="InternalIP")].address}{","}{end}' | sed 's/,$//')
+        get disks
+      - 'echo "by-id path formula: /dev/disk/by-id/nvme-<MODEL>_<SERIAL> (spaces -> underscores)"'
+    preconditions:
+      - msg: Missing talosconfig — run 'task cluster:talosconfig'
+        sh: test -f {{.TALOSCONFIG}}
+      - msg: Missing kubeconfig — run 'task cluster:kubeconfig'
+        sh: test -f {{.KUBECONFIG}}
 
   bootstrap:crds:
     desc: Install CRDs from the bootstrap Helm charts
