@@ -32,7 +32,7 @@ spec:
             - name: HINDSIGHT_API_LLM_BASE_URL
               value: http://ollama.ai.svc.cluster.local:11434
             - name: HINDSIGHT_API_LLM_MODEL
-              value: qwen3:14b # fits B580 12GB @ Q4; drop to qwen3:8b if VRAM tight
+              value: qwen3.5:9b # newest gen fitting B580 12GB @ Q4; qwen3.5:4b if tight
             - name: HINDSIGHT_API_LLM_API_KEY
               value: not-needed # must be set even for local providers
           ports:
