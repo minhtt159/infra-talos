@@ -23,7 +23,7 @@ spec:
   timeout:
     http:
       # Slowloris protection: full request (headers+body) within this
-      # window. Generous on purpose (ported from talos-aws) — tighten
+      # window. Generous on purpose — tighten
       # after watching real upload patterns.
       requestReceivedTimeout: 30s
   tls:

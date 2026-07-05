@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/envoyextensionpolicy_v1alpha1.json
-# Ported from talos-aws: Coraza WAF (ModSecurity-compatible) as a Wasm
+# Coraza WAF (ModSecurity-compatible) as a Wasm
 # filter on the EXTERNAL gateway. Stage 1 = DetectionOnly: log matches,
 # block nothing. Flip to "SecRuleEngine On" after tuning false positives.
 apiVersion: gateway.envoyproxy.io/v1alpha1

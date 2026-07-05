@@ -6,6 +6,9 @@ resources:
   - ./ocirepository.yaml
   - ./networks.yaml
   - ./grafanadashboard.yaml
+  # Deliberately disabled (July 2026 rework): hostFirewall + policyAuditMode
+  # were removed from the helm values; these CCNPs would enforce immediately
+  # if enabled. Re-enable together with a policy rollout plan.
   # - ./host-firewall.yaml
   # - ./default-policies.yaml
   # - ./service-mesh-auth.yaml

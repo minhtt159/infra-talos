@@ -17,7 +17,7 @@ Supporting infrastructure:
 - **Turing Pi 2** board hosts the RK1s — BMC at `10.1.80.99` (`tpi` CLI, creds
   in `.env`). See `docs/runbooks/rk1-nodes.md`.
 - **Proxmox** box hosts mini-talos-03/04 VMs and the **Omni VM**
-  (`omni.hnimn.art` = `10.1.80.15`, repo: `~/stuffs/omni-selfhosted`).
+  (`omni.${SECRET_DOMAIN}` = `10.1.80.15`, deployed from its own compose repo).
 - Network: everything on `10.1.80.0/24` (UniFi UDM SE).
 
 Install disks are pinned by-id (serials via `task disks`) — raw `/dev/nvmeXn1`

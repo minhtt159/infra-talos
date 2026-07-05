@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
-# Ported from talos-aws. Safety-net rate limit on the EXTERNAL gateway only
+# Safety-net rate limit on the EXTERNAL gateway only
 # (internal LAN traffic unmetered). Counters in Valkey (fail-open — see the
 # rateLimit block in app/helmrelease.yaml).
 #
@@ -25,7 +25,7 @@ spec:
     global:
       rules:
         # 3000 req/min (~50 rps) per distinct client IP — flood protection,
-        # not a usage budget. talos-aws learned 300/min starves dashboards.
+        # not a usage budget. 300/min starved dashboards in practice.
         - clientSelectors:
             - sourceCIDR:
                 type: Distinct

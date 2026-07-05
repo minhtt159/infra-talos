@@ -1,6 +1,6 @@
 ---
 # Idempotent replay of ILM policies + index templates against the TrueNAS
-# Elasticsearch. Ported from aws-devops-management (eck-apply-policies).
+# Elasticsearch. Idempotent replay pattern from an ECK production setup.
 # Homelab deviations: external ES via API key (no ECK superuser secret), and
 # the policies define DATA STREAMS (ES 9-native) so the alias-bootstrap
 # special case never triggers — every op is a pure upsert.

@@ -12,7 +12,7 @@ Docs: <https://docs.siderolabs.com/talos/v1.13/platform-specific-installations/s
 
 ## Installation media rules
 
-- Generate media from Omni (omni.hnimn.art) → *Download Installation Media* →
+- Generate media from Omni (omni.${SECRET_DOMAIN}) → *Download Installation Media* →
   **Turing RK1 (arm64)**.
 - **Match the cluster's Talos version** (see `talos.version` in
   `omni-cluster.yaml`). A mismatched (older) image boots but immediately needs
@@ -21,7 +21,7 @@ Docs: <https://docs.siderolabs.com/talos/v1.13/platform-specific-installations/s
   WireGuard is broken on RK1 (`Failed to write packets to TUN device:
   input/output error`) — machine registers with Omni but apid never gets its
   CSR signed and the node never joins. Plain kernel WireGuard (UDP to the Omni
-  VM, `SIDEROLINK_WIREGUARD_ADVERTISED_ADDR` in omni-selfhosted) works.
+  VM, `SIDEROLINK_WIREGUARD_ADVERTISED_ADDR` on the Omni server) works.
 
 ## Install / reinstall
 

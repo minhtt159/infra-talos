@@ -104,10 +104,9 @@ disk encryption, kubelet, network, sysctls, time, and extra files.
 │
 ├── kubernetes/                    # Layer 3 — everything Flux reconciles
 │   ├── flux/cluster/ks.yaml        # ROOT Kustomization "cluster-apps" → ./kubernetes/apps
-│   ├── components/sops/            # reusable Kustomize component injecting cluster-secrets
 │   └── apps/<namespace>/           # one directory per namespace
 │       ├── namespace.yaml
-│       ├── kustomization.yaml       # lists the namespace's apps + sops component
+│       ├── kustomization.yaml       # lists the namespace's apps
 │       └── <app>/
 │           ├── ks.yaml              # Flux Kustomization for this app
 │           └── app/                 # HelmRelease, OCIRepository, secrets, extra manifests
@@ -133,7 +132,7 @@ example:
 
 2. **Namespace Kustomization** — [`kubernetes/apps/cert-manager/kustomization.yaml`](kubernetes/apps/cert-manager/kustomization.yaml)
    lists `namespace.yaml` and each app's `ks.yaml`, and pulls in the
-   `../../components/sops` component so `cluster-secrets` is available.
+   `cluster-secrets` Secret (fanned out to every namespace by the ClusterExternalSecret in `kubernetes/apps/external-secrets/.../stores/`).
 
 3. **App Kustomization (`ks.yaml`)** — [`kubernetes/apps/cert-manager/cert-manager/ks.yaml`](kubernetes/apps/cert-manager/cert-manager/ks.yaml)
    is a Flux `Kustomization` that:
@@ -220,7 +219,7 @@ Flow:
    **kustomize-controller** decrypt at reconcile time
    (`--sops-age-secret=sops-age`, wired in the flux-instance patches).
 3. Non-secret, cluster-wide values (e.g. `SECRET_DOMAIN`) live in
-   [`components/sops/cluster-secrets.sops.yaml`](kubernetes/components/sops/cluster-secrets.sops.yaml)
+   the `cluster-secrets` Vaultwarden item (fanned out by the ClusterExternalSecret)
    and are injected into manifests via `postBuild.substituteFrom`.
 
 > The public age recipient is committed in `.sops.yaml`; the matching private

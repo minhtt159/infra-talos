@@ -11,7 +11,7 @@ spec:
   provider:
     type: Kubernetes
     kubernetes:
-      # node drains may never take both replicas at once (ported from talos-aws)
+      # node drains may never take both replicas at once 
       envoyPDB:
         minAvailable: 1
       envoyDeployment:

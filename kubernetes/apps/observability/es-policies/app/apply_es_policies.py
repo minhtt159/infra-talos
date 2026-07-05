@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 apply_es_policies.py — idempotent replayer for the ECK Elasticsearch ILM /
-index-template definitions under infrastructure/eck/elasticsearch/policy/.
+index-template definitions under the policies directory .
 
 It parses the same Kibana Dev Tools `.txt` blocks that check_es_policies.py lints
 (<VERB> <path>\n{json}) and PUTs them to a live cluster. Designed to be run by a
@@ -21,7 +21,7 @@ are intentionally OUT of scope and applied separately.
 
 Usage:
     python3 apply_es_policies.py --dir /policies --es-url https://host:9200 \
-        --user elastic --password "$ES_PASSWORD" [--insecure] [--wait-healthy] [--dry-run]
+        --user elastic --password "$ES_PASSWORD" [--wait-healthy] [--dry-run]
 
 Credentials may also come from env: ES_USER, ES_PASSWORD.
 Exit codes: 0 = all applied/idempotent, 1 = an apply failed, 2 = usage/parse error.
@@ -31,7 +31,6 @@ import base64
 import json
 import os
 import re
-import ssl
 import sys
 import time
 import urllib.error
@@ -69,15 +68,15 @@ def parse_blocks(text):
 
 
 class ES:
-    def __init__(self, base, user, password, insecure, api_key=None):
+    def __init__(self, base, user, password, api_key=None):
         self.base = base.rstrip("/")
         # homelab: external ES authenticated with an API key (ESO-provided);
-        # basic auth kept for parity with the upstream (aws-devops-management) script
+        # basic auth kept for parity with the upstream script
         if api_key:
             self.auth = "ApiKey " + api_key
         else:
             self.auth = "Basic " + base64.b64encode(f"{user}:{password}".encode()).decode()
-        self.ctx = ssl._create_unverified_context() if insecure else None
+        self.ctx = None  # system CA bundle; TLS always verified
 
     def _req(self, method, path, body=None, allow=(200, 201)):
         url = f"{self.base}/{path.lstrip('/')}"
@@ -129,7 +128,6 @@ def main():
     ap.add_argument("--user", default=os.environ.get("ES_USER", "elastic"))
     ap.add_argument("--password", default=os.environ.get("ES_PASSWORD", ""))
     ap.add_argument("--api-key", default=os.environ.get("ES_API_KEY", ""))
-    ap.add_argument("--insecure", action="store_true")
     ap.add_argument("--wait-healthy", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
@@ -142,7 +140,7 @@ def main():
         print("error: no credentials (set ES_API_KEY / --api-key or ES_PASSWORD)", file=sys.stderr)
         return 2
 
-    es = ES(args.es_url, args.user, args.password, args.insecure, api_key=args.api_key)
+    es = ES(args.es_url, args.user, args.password, api_key=args.api_key)
     if args.wait_healthy and not args.dry_run:
         print("Waiting for Elasticsearch health...", flush=True)
         es.wait_healthy()

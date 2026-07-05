@@ -21,17 +21,16 @@ Exit: 0 ok / under budget, 1 error, 2 usage.
 import argparse
 import json
 import os
-import ssl
 import sys
 import urllib.error
 import urllib.request
 
 
 class ES:
-    def __init__(self, base, api_key, insecure):
+    def __init__(self, base, api_key):
         self.base = base.rstrip("/")
         self.auth = "ApiKey " + api_key
-        self.ctx = ssl._create_unverified_context() if insecure else None
+        self.ctx = None  # system CA bundle; TLS always verified
 
     def _req(self, method, path):
         req = urllib.request.Request(f"{self.base}/{path.lstrip('/')}", method=method)
@@ -57,14 +56,13 @@ def main():
     ap.add_argument("--pattern", default="logs-*")
     ap.add_argument("--max-bytes", type=int, required=True)
     ap.add_argument("--api-key", default=os.environ.get("ES_API_KEY", ""))
-    ap.add_argument("--insecure", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     if not args.api_key:
         print("error: no ES_API_KEY", file=sys.stderr)
         return 2
 
-    es = ES(args.es_url, args.api_key, args.insecure)
+    es = ES(args.es_url, args.api_key)
 
     # write (current) backing index per data stream — never delete these
     streams = es.json("GET", f"_data_stream/{args.pattern}").get("data_streams", [])

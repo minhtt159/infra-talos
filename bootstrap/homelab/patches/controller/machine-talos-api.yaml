@@ -1,4 +1,4 @@
-# Ported from talos-aws: let kube-system workloads read the Talos API
+# Let kube-system workloads read the Talos API
 # (os:reader — inventory/upgrade tooling like talos-backup or CCM later).
 machine:
   features:

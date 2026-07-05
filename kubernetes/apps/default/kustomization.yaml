@@ -6,4 +6,3 @@ namespace: default
 resources:
   - ./namespace.yaml
   - ./echo/ks.yaml
-  # - ./innogeoint/ks.yaml

@@ -2,6 +2,8 @@ cluster:
   allowSchedulingOnControlPlanes: true
   controllerManager:
     extraArgs:
+      # 0.0.0.0 metrics binds (here, scheduler, etcd below) are deliberate:
+      # kube-prometheus-stack scrapes them over the LAN-only node network.
       bind-address: 0.0.0.0
   coreDNS:
     disabled: true
