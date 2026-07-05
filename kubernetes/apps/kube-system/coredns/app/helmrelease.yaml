@@ -21,6 +21,21 @@ spec:
       clusterIP: "10.96.0.10"
     replicaCount: 2
     servers:
+      # Internal domain is split-horizon: only the router (10.1.80.1) knows
+      # *.${SECRET_DOMAIN} (elastic, promeo, truenas...). The default `.`
+      # server forwards to /etc/resolv.conf = [10.1.80.1, 1.1.1.1], so ~half
+      # of cache-miss queries hit 1.1.1.1 -> NXDOMAIN. Pin the internal zone
+      # to the router only.
+      - zones:
+          - zone: ${SECRET_DOMAIN}
+            scheme: dns://
+        port: 53
+        plugins:
+          - name: errors
+          - name: cache
+            parameters: "30"
+          - name: forward
+            parameters: . 10.1.80.1
       - zones:
           - zone: .
             scheme: dns://
