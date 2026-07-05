@@ -1,6 +1,6 @@
 ---
 # Node-local hostpath on mini-talos-01's SATA SSD (Talos UserVolumeConfig
-# `sata` → /var/mnt/sata; see bootstrap/homelab/patches/machines/).
+# `sata` → /var/mnt/sata, defined in the private Omni cluster template).
 # ponytail: only mini-talos-01 has this mount — consumers must pin to that
 # node (WaitForFirstConsumer defers binding until the pod is scheduled).
 apiVersion: storage.k8s.io/v1

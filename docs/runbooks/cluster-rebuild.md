@@ -35,7 +35,9 @@ Sanity-check the export: every expected PV present, each has
 ## 2. Teardown
 
 ```sh
-task cluster:delete   # omnictl cluster template delete (prompts)
+# Teardown = deleting the Omni cluster. That lives in the private Omni repo
+# (omni-selfhosted), not here:
+#   omnictl cluster template delete -f cluster/homelab/omni-cluster.yaml
 ```
 
 TrueNAS check (optional but calming): datasets/zvols still exist under the
@@ -44,16 +46,22 @@ democratic-csi parent dataset.
 ## 3. Rebuild
 
 ```sh
-task cluster:sync         # Omni provisions Talos nodes
+# 1. Re-provision nodes from the private Omni repo (omni-selfhosted):
+#      omnictl cluster template sync -f cluster/homelab/omni-cluster.yaml
+#    (or push to cluster/** → the cluster-sync workflow). Then, back in this repo:
 task cluster:kubeconfig
 task bootstrap            # CRDs, then cilium → coredns → cert-manager → flux
 ```
 
-Then apply the SOPS age key secret if it is not seeded by bootstrap
-(kustomize-controller needs it to decrypt the bitwarden-cli bridge secret):
+Then seed the SOPS age-key Secret (kustomize-controller needs it to decrypt the
+bitwarden-cli bridge secret). The key is **no longer committed here** — it lives as
+a Forgejo secret (`SOPS_AGE_KEY`); seed it from the private Omni repo
+(`omni-selfhosted`, see its README), or manually with the key in hand:
 
 ```sh
-sops -d bootstrap/sops-age.sops.yaml | kubectl apply -f -
+kubectl -n flux-system create secret generic sops-age \
+  --from-literal=age.agekey="$SOPS_AGE_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
 ```
 
 ## 4. Reclaim volumes — ORDER MATTERS
