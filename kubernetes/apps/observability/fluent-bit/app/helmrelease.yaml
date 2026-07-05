@@ -77,8 +77,8 @@ spec:
             Host elastic.${SECRET_DOMAIN}
             Port 443
             Tls On
-            HTTP_User ${ES_USER}
-            HTTP_Passwd ${ES_PASSWORD}
+            HTTP_User $${ES_USER}
+            HTTP_Passwd $${ES_PASSWORD}
             Index logs-envoy.access
             Suppress_Type_Name On
             Write_Operation create
@@ -94,8 +94,8 @@ spec:
             Host elastic.${SECRET_DOMAIN}
             Port 443
             Tls On
-            HTTP_User ${ES_USER}
-            HTTP_Passwd ${ES_PASSWORD}
+            HTTP_User $${ES_USER}
+            HTTP_Passwd $${ES_PASSWORD}
             Index logs-kubernetes
             Suppress_Type_Name On
             Write_Operation create
