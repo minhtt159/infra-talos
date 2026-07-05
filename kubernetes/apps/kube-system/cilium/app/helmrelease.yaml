@@ -59,7 +59,7 @@ spec:
     # PodCIDR. Simpler datapath, line-rate, easy to tcpdump.
     routingMode: native
     autoDirectNodeRoutes: true # requires: all nodes on one L2 segment
-    ipv4NativeRoutingCIDR: "10.69.0.0/16" # = podSubnets in omni-cluster.yaml
+    ipv4NativeRoutingCIDR: "10.69.0.0/16" # must match podSubnets in the Omni cluster template
     ipam:
       mode: kubernetes # node PodCIDRs come from kube-controller-manager
 

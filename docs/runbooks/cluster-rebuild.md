@@ -35,7 +35,9 @@ Sanity-check the export: every expected PV present, each has
 ## 2. Teardown
 
 ```sh
-task cluster:delete   # omnictl cluster template delete (prompts)
+# Teardown = deleting the Omni cluster. That lives in the private Omni repo
+# (omni-selfhosted), not here:
+#   omnictl cluster template delete -f cluster/homelab/omni-cluster.yaml
 ```
 
 TrueNAS check (optional but calming): datasets/zvols still exist under the
@@ -44,7 +46,9 @@ democratic-csi parent dataset.
 ## 3. Rebuild
 
 ```sh
-task cluster:sync         # Omni provisions Talos nodes
+# 1. Re-provision nodes from the private Omni repo (omni-selfhosted):
+#      omnictl cluster template sync -f cluster/homelab/omni-cluster.yaml
+#    (or push to cluster/** → the cluster-sync workflow). Then, back in this repo:
 task cluster:kubeconfig
 task bootstrap            # CRDs, then cilium → coredns → cert-manager → flux
 ```

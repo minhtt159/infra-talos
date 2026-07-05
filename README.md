@@ -14,7 +14,6 @@ points at an `app/` directory holding a `HelmRelease` (or raw manifests).
 ## Table of contents
 
 - [Architecture](#architecture)
-- [Cluster topology](#cluster-topology)
 - [Repository layout](#repository-layout)
 - [The application pattern](#the-application-pattern)
 - [Applications](#applications)
@@ -34,9 +33,12 @@ Three layers, each owned by a different tool:
 
 | Layer | Tool | Source of truth |
 |-------|------|-----------------|
-| **1. Machine / OS** | Sidero Omni + Talos | [`bootstrap/homelab/omni-cluster.yaml`](bootstrap/homelab/omni-cluster.yaml) + patches under [`bootstrap/homelab/patches/`](bootstrap/homelab/patches) |
+| **1. Machine / OS** | Sidero Omni + Talos | Omni cluster template — in a **separate private repo** (node UUIDs, disk serials, LAN topology are not published here) |
 | **2. Cluster prerequisites** | Helmfile | [`bootstrap/helmfile.d/`](bootstrap/helmfile.d) — CNI, DNS, cert-manager, Flux itself |
 | **3. Applications** | Flux (GitOps) | [`kubernetes/`](kubernetes) |
+
+This repo owns layers **2 & 3** (public GitOps). Layer 1 — node provisioning via
+Sidero Omni — lives in a private repo alongside the Omni management plane.
 
 Once layer 3 is up, **Flux owns everything** — including the components that
 were seeded by Helmfile in layer 2. The Helmfile step exists only to break the
@@ -54,36 +56,21 @@ flowchart TD
 
 ---
 
-## Cluster topology
+## Cluster shape
 
-Defined in [`bootstrap/homelab/omni-cluster.yaml`](bootstrap/homelab/omni-cluster.yaml).
-Control planes are schedulable (`allowSchedulingOnControlPlanes: true`), so the
-master/worker split is logical rather than a hard workload boundary.
+Provisioned by Sidero Omni. The node inventory, hardware, disk pinning, and Talos
+machine config live in a **separate private repo** — not published here. What the
+GitOps layer in this repo relies on:
 
-| Node | Role | Hardware | Arch | Install disk | Notable extensions / capability |
-|------|------|----------|------|--------------|---------------------------------|
-| `mini-talos-01` | control-plane | Minisforum UM450 (32GB / 512GB SSD), Proxmox VM | amd64 | `/dev/nvme0n1` | qemu-guest-agent, iscsi-tools |
-| `mini-talos-02` | control-plane | Minisforum UM450 (32GB / 512GB SSD), Proxmox VM | amd64 | `/dev/nvme0n1` | qemu-guest-agent, iscsi-tools |
-| `mini-talos-03` | control-plane | Proxmox VM (host shared with 04) | amd64 | NVMe (by-id) | qemu-guest-agent, iscsi-tools |
-| `turing-01` | worker | Turing Pi RK1 (RK3588) | **arm64** | NVMe (by-id) | **Coral TPU** (`gasket-driver`, label `capability=coral`), iscsi-tools |
-| `turing-03` | worker | Turing Pi RK1 (RK3588) | **arm64** | NVMe (by-id) | iscsi-tools |
-| `mini-talos-04` | worker | Proxmox VM (host shared with 03) | amd64 | `/dev/nvme0n1` | **Intel Arc B580** (`xe` passthrough), qemu-guest-agent, iscsi-tools |
-| ~~`turing-04` (CM4)~~ | worker | Raspberry Pi CM4 | arm64 | — | commented out |
-
-> Mixed-architecture cluster: charts/images must be multi-arch; arch-picky
-> workloads pin `kubernetes.io/arch` via nodeSelector.
-
-**Cluster-wide Talos settings** ([`patches/controller/cluster-patch.yaml`](bootstrap/homelab/patches/controller/cluster-patch.yaml)):
-
-- **CNI: `none`** and **kube-proxy: disabled** — Cilium replaces both.
-- **CoreDNS: disabled** — deployed as an app instead (`kube-system/coredns`).
-- `enableWorkloadProxy` + embedded discovery service (Omni features).
-- etcd metrics exposed on `:2381`, advertised subnet `10.1.80.0/24`.
-- Aggregator routing + controller/scheduler/etcd metrics bind on `0.0.0.0`
-  (so Prometheus can scrape them).
-
-Global machine patches live in [`patches/global/`](bootstrap/homelab/patches/global):
-disk encryption, kubelet, network, sysctls, time, and extra files.
+- **Mixed architecture** (amd64 + arm64) — charts/images must be multi-arch;
+  arch-picky workloads pin `kubernetes.io/arch` via nodeSelector.
+- **CNI `none` + kube-proxy disabled** at the Talos layer — Cilium replaces both
+  (`kube-system/cilium`).
+- **CoreDNS disabled** at the Talos layer — deployed as an app instead
+  (`kube-system/coredns`).
+- Control planes are schedulable, so master/worker is logical, not a hard boundary.
+- A **Coral TPU** (`capability=coral`) and an **Intel Arc B580** (`gpu.intel.com/xe`)
+  are exposed to the workloads that select them (frigate, ollama).
 
 ---
 
@@ -91,12 +78,7 @@ disk encryption, kubelet, network, sysctls, time, and extra files.
 
 ```
 .
-├── bootstrap/                     # Layer 1 & 2 — cluster does not exist yet
-│   ├── homelab/
-│   │   ├── omni-cluster.yaml        # Omni cluster template (nodes, disks, versions)
-│   │   └── patches/                 # Talos config patches — MUST live under the template dir
-│   │       ├── global/              #   applied to ALL nodes
-│   │       └── controller/          #   applied to control planes only
+├── bootstrap/                     # Layer 2 — cluster prerequisites (Flux not up yet)
 │   └── helmfile.d/
 │       ├── 00-crds.yaml            # CRDs only (external-dns, envoy-gateway, grafana, kps)
 │       ├── 01-apps.yaml            # cilium → coredns → cert-manager → flux-operator → flux-instance
@@ -234,31 +216,21 @@ Flow:
 
 ## Bootstrapping a cluster
 
-**Provisioning is done through Sidero Omni** (`omnictl`), not talhelper.
+Nodes are provisioned by **Sidero Omni** from a separate private repo. Once they
+are up and `kubectl` reaches the API, seed the cluster prerequisites:
 
 ```sh
-# 1. Provision / update Talos nodes via Omni
-omnictl get machine                                                   # list registered machines
-omnictl cluster template validate -f bootstrap/homelab/omni-cluster.yaml
-omnictl cluster template sync     -f bootstrap/homelab/omni-cluster.yaml
-
-# 2. Install CRDs (external-dns, envoy-gateway, kube-prometheus-stack, grafana-operator)
+# 1. Install CRDs (external-dns, envoy-gateway, kube-prometheus-stack, grafana-operator)
 helmfile --file bootstrap/helmfile.d/00-crds.yaml template \
   | yq ea 'select(.kind == "CustomResourceDefinition")' \
   | kubectl apply --server-side -f -
 
-# 3. Install cluster prerequisites (cilium → coredns → cert-manager → flux-operator → flux-instance)
+# 2. Install cluster prerequisites (cilium → coredns → cert-manager → flux-operator → flux-instance)
 helmfile --file bootstrap/helmfile.d/01-apps.yaml sync
 ```
 
-After step 3, `flux-instance` clones this repo and Flux reconciles
+After step 2, `flux-instance` clones this repo and Flux reconciles
 `kubernetes/apps/**` on its own.
-
-> **Omni ≥ 1.8 template containment:** since v1.8.0 a cluster template may only
-> include files from within the template file's own directory tree. That is why
-> every patch lives under `bootstrap/homelab/patches/` (referenced as
-> `patches/global/…`, not `../global/…`). Because nothing escapes the template
-> dir, `omnictl cluster template sync` needs **no** `--allowed-dir` flag.
 
 **Why the Helmfile values are never duplicated:**
 [`templates/values.yaml.gotmpl`](bootstrap/helmfile.d/templates/values.yaml.gotmpl)
@@ -273,15 +245,12 @@ to list them:
 
 | Task | Does |
 |------|------|
-| `task cluster:validate` | Validate the Omni cluster template |
-| `task cluster:sync` | Provision / update nodes (validates first) |
-| `task cluster:kubeconfig` | Fetch the kubeconfig into `./kubeconfig` |
+| `task cluster:kubeconfig` | Fetch the kubeconfig into `./kubeconfig` (from Omni) |
 | `task bootstrap` | Install CRDs, then cluster prerequisites |
 | `task reconcile` | Force a Flux sync from Git |
-| `task cluster:delete` | Tear the cluster down (destructive, prompts) |
 
-> The `talos/*` rule in [`.sops.yaml`](.sops.yaml) is an unused leftover from an
-> earlier talhelper setup and can be dropped.
+> Node provisioning (`omnictl cluster template …`) lives in the private Omni repo,
+> not here — this repo picks up once the cluster's API is reachable.
 
 ---
 

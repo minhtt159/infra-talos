@@ -21,7 +21,7 @@ spec:
       localpv:
         image:
           registry: &registry quay.io/
-        # ref: ../../../../../bootstrap/homelab/omni-cluster.yaml
+        # /var/mnt/data = a Talos UserVolume defined in the private Omni cluster template
         basePath: &hostPath /var/mnt/data
         resources:
           requests:

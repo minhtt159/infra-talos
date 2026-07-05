@@ -5,7 +5,6 @@ version: "3"
 set: [pipefail]
 
 vars:
-  OMNI_CLUSTER_FILE: "{{.ROOT_DIR}}/bootstrap/homelab/omni-cluster.yaml"
   CLUSTER_NAME: homelab
   HELMFILE_CRDS: "{{.ROOT_DIR}}/bootstrap/helmfile.d/00-crds.yaml"
   HELMFILE_APPS: "{{.ROOT_DIR}}/bootstrap/helmfile.d/01-apps.yaml"
@@ -17,21 +16,9 @@ env:
 tasks:
   default: task --list
 
-  cluster:validate:
-    desc: Validate the Omni cluster template
-    cmd: omnictl cluster template validate -f {{.OMNI_CLUSTER_FILE}}
-    preconditions:
-      - msg: Missing Omni cluster template
-        sh: test -f {{.OMNI_CLUSTER_FILE}}
-
-  cluster:sync:
-    desc: Provision / update Talos nodes via Omni
-    deps: [cluster:validate]
-    cmd: omnictl cluster template sync -f {{.OMNI_CLUSTER_FILE}}
-
-  cluster:status:
-    desc: Show Omni's view of the cluster (machine join/health, K8s API)
-    cmd: omnictl cluster template status -f {{.OMNI_CLUSTER_FILE}}
+  # Node provisioning (omnictl cluster template validate/sync/status/delete) lives
+  # in the private Omni repo, not here. These tasks fetch creds + bootstrap the
+  # GitOps layer against an already-provisioned cluster.
 
   cluster:kubeconfig:
     desc: Fetch the cluster kubeconfig from Omni into ./kubeconfig
@@ -55,14 +42,6 @@ tasks:
       - msg: Missing kubeconfig — run 'task cluster:kubeconfig'
         sh: test -f {{.KUBECONFIG}}
 
-  cluster:delete:
-    desc: Delete the cluster from Omni (DESTRUCTIVE)
-    prompt: Delete cluster '{{.CLUSTER_NAME}}' from Omni?
-    cmd: omnictl cluster template delete -f {{.OMNI_CLUSTER_FILE}}
-    preconditions:
-      - msg: Missing Omni cluster template
-        sh: test -f {{.OMNI_CLUSTER_FILE}}
-
   bootstrap:crds:
     desc: Install CRDs from the bootstrap Helm charts
     cmd: |
@@ -81,7 +60,7 @@ tasks:
         sh: test -f {{.KUBECONFIG}}
 
   bootstrap:
-    desc: Bootstrap the cluster — CRDs then apps (after cluster:sync + kubeconfig)
+    desc: Bootstrap the cluster — CRDs then apps (after nodes are up + kubeconfig)
     cmds:
       - task: bootstrap:crds
       - task: bootstrap:apps
