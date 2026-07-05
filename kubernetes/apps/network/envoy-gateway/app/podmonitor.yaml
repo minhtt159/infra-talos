@@ -16,3 +16,24 @@ spec:
     matchLabels:
       app.kubernetes.io/component: proxy
       app.kubernetes.io/name: envoy
+---
+# The rate-limit service (RLS) exports ratelimit_service_* prometheus metrics
+# on :19001 (USE_PROMETHEUS=true). Without this the global-ratelimit dashboard
+# is empty — the proxy PodMonitor above only matches component: proxy.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-ratelimit
+spec:
+  jobLabel: envoy-ratelimit
+  namespaceSelector:
+    matchNames:
+      - network
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      honorLabels: true
+  selector:
+    matchLabels:
+      app.kubernetes.io/managed-by: envoy-gateway
+      app.kubernetes.io/component: ratelimit
