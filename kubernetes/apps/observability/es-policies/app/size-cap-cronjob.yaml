@@ -1,0 +1,61 @@
+---
+# Enforces the 50GB TOTAL cap across logs-* data streams (ILM handles the 30d
+# age cap; ES has no total-size ILM action). Deletes globally-oldest non-write
+# backing indices until under budget. Hourly — a log spike can't outrun it long.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: es-size-cap
+spec:
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: es-size-cap
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          containers:
+            - name: cap
+              image: python:3.12-alpine
+              command:
+                - python3
+                - /scripts/es_size_cap.py
+                - --es-url=https://elastic.${SECRET_DOMAIN}
+                - --pattern=logs-*
+                - --max-bytes=53687091200 # 50 GiB total across logs-* streams
+              env:
+                - name: ES_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: es-index-manager
+                      key: api-key
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 65534
+                capabilities: { drop: ["ALL"] }
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: es-size-cap-script

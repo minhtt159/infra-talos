@@ -7,12 +7,16 @@ kind: Kustomization
 
 resources:
   - ./apply-policies-job.yaml
+  - ./size-cap-cronjob.yaml
   - ./externalsecret.yaml
 
 configMapGenerator:
   - name: es-apply-scripts
     files:
       - apply_es_policies.py
+  - name: es-size-cap-script
+    files:
+      - es_size_cap.py
   - name: es-apply-policies
     files:
       - policies/index-and-ilm-logs-envoy.txt

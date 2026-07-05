@@ -23,7 +23,7 @@ PUT _ilm/policy/ilm@logs-envoy
         }
       },
       "delete": {
-        "min_age": "21d",
+        "min_age": "30d",
         "actions": {
           "delete": {}
         }
