@@ -35,10 +35,9 @@ spec:
       namespace: external-secrets
   interval: 1h
   path: ./kubernetes/apps/external-secrets/external-secrets/stores
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
+  # No cluster-secrets postBuild: nothing here uses ${SECRET_DOMAIN}, and the
+  # bitwarden-cli command has literal bash ${BW_HOST}/${BW_SESSION} that
+  # strict-mode envsubst would otherwise fail on ("variable not set").
   prune: true
   sourceRef:
     kind: GitRepository
