@@ -28,7 +28,21 @@
   kustomize: {
     managerFilePatterns: ["/^kustomization\\.ya?ml(?:\\.j2)?$/"],
   },
+  customDatasources: {
+    // Track grafana.com dashboard revisions so `# renovate: datasource=custom.grafana-dashboards`
+    // annotations bump the pinned `revision:` (the API returns the latest as top-level `revision`).
+    "grafana-dashboards": {
+      defaultRegistryUrlTemplate: "https://grafana.com/api/dashboards/{{packageName}}",
+      format: "json",
+      transformTemplates: ['{ "releases": [{ "version": $string(revision) }] }'],
+    },
+  },
   packageRules: [
+    {
+      description: "grafana.com dashboard revisions are plain integers",
+      matchDatasources: ["custom.grafana-dashboards"],
+      versioning: "loose",
+    },
     {
       description: "Kibana must never exceed the ES version on TrueNAS — manual approval only",
       matchDatasources: ["docker"],
