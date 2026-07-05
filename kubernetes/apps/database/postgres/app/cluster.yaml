@@ -2,17 +2,29 @@
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
 # Test cluster on mini-talos-01's SATA SSD. Single instance, node-local
 # storage — pinned to the node that has /var/mnt/sata (talos-nhb-hr7).
-# ponytail: 1 instance, no backups — bump instances + add scheduledBackup
-# before putting anything real in here.
+# ponytail: still 1 instance — bump instances before putting anything real
+# in here. Backups go to Garage S3 via the barman-cloud plugin (ObjectStore
+# postgres-backup + daily ScheduledBackup).
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: postgres
 spec:
   instances: 1
+  # hostpath ignores PVC capacity — sizes are documentation only, real cap is
+  # the 500GB SATA SSD shared by PGDATA + WAL. walStorage keeps a WAL spike
+  # from filling PGDATA.
   storage:
     storageClass: openebs-hostpath-sata
+    size: 100Gi
+  walStorage:
+    storageClass: openebs-hostpath-sata
     size: 20Gi
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: postgres-backup
   affinity:
     nodeSelector:
       storage: sata # Omni nodeLabel on mini-talos-01 — stable across reinstalls

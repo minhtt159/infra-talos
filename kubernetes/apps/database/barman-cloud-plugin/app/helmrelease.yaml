@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: plugin-barman-cloud
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: plugin-barman-cloud
+  interval: 1h
+  values:
+    # cert-manager issues the plugin's gRPC mTLS certs (already in-cluster).
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
