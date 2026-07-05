@@ -1,7 +1,8 @@
 ---
 creation_rules:
   # remaining SOPS files: ESO bridge credential, flux-instance webhook
-  # (deferred), bootstrap/sops-age — everything else lives in Vaultwarden
+  # (deferred) — everything else lives in Vaultwarden. The sops-age key itself is
+  # no longer committed; it's seeded from a Forgejo secret (see omni-selfhosted).
   - path_regex: (bootstrap|kubernetes)/.*\.sops\.ya?ml
     encrypted_regex: "^(data|stringData|driver)$"
     mac_only_encrypted: true

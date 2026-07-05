@@ -53,11 +53,15 @@ task cluster:kubeconfig
 task bootstrap            # CRDs, then cilium → coredns → cert-manager → flux
 ```
 
-Then apply the SOPS age key secret if it is not seeded by bootstrap
-(kustomize-controller needs it to decrypt the bitwarden-cli bridge secret):
+Then seed the SOPS age-key Secret (kustomize-controller needs it to decrypt the
+bitwarden-cli bridge secret). The key is **no longer committed here** — it lives as
+a Forgejo secret (`SOPS_AGE_KEY`); seed it from the private Omni repo
+(`omni-selfhosted`, see its README), or manually with the key in hand:
 
 ```sh
-sops -d bootstrap/sops-age.sops.yaml | kubectl apply -f -
+kubectl -n flux-system create secret generic sops-age \
+  --from-literal=age.agekey="$SOPS_AGE_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
 ```
 
 ## 4. Reclaim volumes — ORDER MATTERS
