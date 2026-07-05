@@ -1,8 +1,7 @@
 ---
-# Ollama on the Intel dGPU (mini-talos-04). Upstream ollama has no Intel GPU
-# backend — community IPEX/SYCL build required.
-# Upstream publishes only floating tags — stable+digest is the tightest pin
-# available; Renovate bumps the digest.
+# Ollama on the Intel dGPU (mini-talos-04) via upstream's Vulkan backend
+# (bundled in the official image). Replaces the community IPEX-LLM build —
+# intel/ipex-llm was archived upstream on 2026-01-28.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,11 +23,13 @@ spec:
         intel.feature.node.kubernetes.io/gpu: "true"
       containers:
         - name: ollama
-          image: docker.io/uberchuckie/ollama-intel-gpu:stable@sha256:efb26abb98f3d376147e49ea556d24cfc63873c48780b696bd89a184f1ad67bf
+          image: docker.io/ollama/ollama:0.31.1
           imagePullPolicy: IfNotPresent
           env:
             - name: OLLAMA_HOST
               value: 0.0.0.0
+            - name: OLLAMA_VULKAN
+              value: "1"
           ports:
             - name: http
               containerPort: 11434
