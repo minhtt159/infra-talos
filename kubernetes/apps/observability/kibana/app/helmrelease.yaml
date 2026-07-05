@@ -1,0 +1,72 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# Kibana UI for the TrueNAS Elasticsearch. Stateless — saved objects live in
+# ES. Version MUST NOT exceed the ES version on TrueNAS (currently 9.4.3);
+# Renovate is configured to hold this image for manual approval.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kibana
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: kibana
+  interval: 1h
+  values:
+    controllers:
+      kibana:
+        strategy: RollingUpdate
+        containers:
+          app:
+            image:
+              repository: docker.elastic.co/kibana/kibana
+              tag: 9.4.3
+            env:
+              ELASTICSEARCH_HOSTS: https://elastic.${SECRET_DOMAIN}
+              ELASTICSEARCH_USERNAME: kibana_system
+              SERVER_PUBLICBASEURL: https://kibana.${SECRET_DOMAIN}
+              TELEMETRY_ENABLED: "false"
+            envFrom:
+              - secretRef:
+                  name: kibana-es-credentials
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/status
+                    port: &port 5601
+                  initialDelaySeconds: 30
+                  periodSeconds: 15
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *probes
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 100m
+                memory: 1Gi
+              limits:
+                memory: 1536Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames: ["kibana.${SECRET_DOMAIN}"]
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+            sectionName: https

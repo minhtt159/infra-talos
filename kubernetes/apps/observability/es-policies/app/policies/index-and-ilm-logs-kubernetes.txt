@@ -1,0 +1,56 @@
+# All other container logs (fluent-bit kubernetes filter metadata).
+# DATA STREAM (ES 9). Short retention — this is a debugging stream, not an archive.
+PUT _ilm/policy/ilm@logs-kubernetes
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {
+          "rollover": {
+            "max_age": "7d",
+            "max_primary_shard_size": "10gb"
+          }
+        }
+      },
+      "delete": {
+        "min_age": "14d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    },
+    "_meta": {
+      "description": "k8s container logs — homelab",
+      "managed": true
+    }
+  }
+}
+PUT _index_template/logs-kubernetes_template
+{
+  "index_patterns": [
+    "logs-kubernetes*"
+  ],
+  "data_stream": {},
+  "priority": 200,
+  "template": {
+    "settings": {
+      "index.number_of_replicas": 0,
+      "index.lifecycle.name": "ilm@logs-kubernetes"
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "log": { "type": "text" },
+        "kubernetes": {
+          "properties": {
+            "namespace_name": { "type": "keyword" },
+            "pod_name": { "type": "keyword" },
+            "container_name": { "type": "keyword" },
+            "host": { "type": "keyword" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# Replays ILM policies / index templates onto the TrueNAS Elasticsearch via an
+# idempotent Job (mechanism inherited from aws-devops-management). force:true
+# is REQUIRED: Jobs are immutable — Flux delete+recreates the Job when the
+# policy/script content hash changes, which is the only time the replay re-runs.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: es-policies
+spec:
+  interval: 1h
+  path: ./kubernetes/apps/observability/es-policies/app
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
+  prune: true
+  force: true # recreate the immutable Job on content-hash change
+  wait: true
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: observability

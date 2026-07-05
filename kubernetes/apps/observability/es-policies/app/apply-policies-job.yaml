@@ -1,0 +1,62 @@
+---
+# Idempotent replay of ILM policies + index templates against the TrueNAS
+# Elasticsearch. Ported from aws-devops-management (eck-apply-policies).
+# Homelab deviations: external ES via API key (no ECK superuser secret), and
+# the policies define DATA STREAMS (ES 9-native) so the alias-bootstrap
+# special case never triggers — every op is a pure upsert.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: es-apply-policies
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: es-apply-policies
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      containers:
+        - name: apply
+          image: python:3.12-alpine
+          command:
+            - python3
+            - /scripts/apply_es_policies.py
+            - --dir=/policies
+            - --es-url=https://elastic.${SECRET_DOMAIN}
+            - --wait-healthy
+          env:
+            - name: ES_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: es-index-manager
+                  key: api-key
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            capabilities: { drop: ["ALL"] }
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            - name: policies
+              mountPath: /policies
+              readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: es-apply-scripts
+        - name: policies
+          configMap:
+            name: es-apply-policies

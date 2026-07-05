@@ -30,6 +30,13 @@
   },
   packageRules: [
     {
+      description: "Kibana must never exceed the ES version on TrueNAS — manual approval only",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["docker.elastic.co/kibana/kibana"],
+      dependencyDashboardApproval: true,
+      automerge: false,
+    },
+    {
       description: "Override Helmfile Dependency Name",
       matchDatasources: ["docker"],
       matchManagers: ["helmfile"],

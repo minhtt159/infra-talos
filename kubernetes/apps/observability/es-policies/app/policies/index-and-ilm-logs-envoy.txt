@@ -1,0 +1,98 @@
+# Envoy gateway access logs (ECS JSON from envoyproxy-external.yaml).
+# DATA STREAM (ES 9): no bootstrap index, rollover managed by the stream.
+# replicas=0: single-node ES on TrueNAS — durability is the ZFS pool, not a replica.
+PUT _ilm/policy/ilm@logs-envoy
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {
+          "rollover": {
+            "max_age": "7d",
+            "max_primary_shard_size": "10gb"
+          }
+        }
+      },
+      "warm": {
+        "min_age": "2d",
+        "actions": {
+          "forcemerge": {
+            "max_num_segments": 1
+          }
+        }
+      },
+      "delete": {
+        "min_age": "21d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    },
+    "_meta": {
+      "description": "envoy access logs — homelab",
+      "managed": true
+    }
+  }
+}
+PUT _index_template/logs-envoy_template
+{
+  "index_patterns": [
+    "logs-envoy.access*"
+  ],
+  "data_stream": {},
+  "priority": 200,
+  "template": {
+    "settings": {
+      "index.number_of_replicas": 0,
+      "index.lifecycle.name": "ilm@logs-envoy"
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "source": { "properties": { "ip": { "type": "ip" } } },
+        "destination": { "properties": { "address": { "type": "keyword" } } },
+        "url": {
+          "properties": {
+            "domain": { "type": "keyword" },
+            "path": { "type": "keyword" }
+          }
+        },
+        "http": {
+          "properties": {
+            "request": {
+              "properties": {
+                "method": { "type": "keyword" },
+                "id": { "type": "keyword" },
+                "referrer": { "type": "keyword" },
+                "bytes": { "type": "long" }
+              }
+            },
+            "response": {
+              "properties": {
+                "status_code": { "type": "integer" },
+                "bytes": { "type": "long" }
+              }
+            }
+          }
+        },
+        "user_agent": { "properties": { "original": { "type": "keyword" } } },
+        "tls": { "properties": { "cipher": { "type": "keyword" } } },
+        "event": { "properties": { "dataset": { "type": "keyword" } } },
+        "envoy": {
+          "properties": {
+            "duration_ms": { "type": "long" },
+            "upstream_ms": { "type": "long", "ignore_malformed": true },
+            "protocol": { "type": "keyword" },
+            "response_flags": { "type": "keyword" },
+            "response_code_details": { "type": "keyword" },
+            "upstream_cluster": { "type": "keyword" },
+            "route_name": { "type": "keyword" },
+            "tls_version": { "type": "keyword" },
+            "x_forwarded_for": { "type": "keyword" }
+          }
+        }
+      }
+    }
+  }
+}

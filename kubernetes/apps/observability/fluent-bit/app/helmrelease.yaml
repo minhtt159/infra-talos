@@ -1,0 +1,105 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# Log shipper: container stdout -> TrueNAS Elasticsearch (data streams).
+# Envoy external-gateway access logs (ECS JSON) get their own stream via
+# rewrite_tag; everything else lands in logs-kubernetes. Index templates/ILM
+# are owned by the es-policies replay Job.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: fluent-bit
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: fluent-bit
+  interval: 1h
+  values:
+    serviceMonitor:
+      enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+    envFrom:
+      - secretRef:
+          name: fluent-bit-es-credentials
+    config:
+      service: |
+        [SERVICE]
+            Daemon Off
+            Flush 5
+            Log_Level info
+            Parsers_File /fluent-bit/etc/parsers.conf
+            HTTP_Server On
+            HTTP_Listen 0.0.0.0
+            HTTP_Port 2020
+            Health_Check On
+            storage.path /var/log/flb-storage/
+            storage.sync normal
+            storage.checksum off
+            storage.backlog.mem_limit 16M
+
+      inputs: |
+        [INPUT]
+            Name tail
+            Path /var/log/containers/*.log
+            multiline.parser cri
+            Tag kube.*
+            Mem_Buf_Limit 16MB
+            storage.type filesystem
+            Skip_Long_Lines On
+
+      filters: |
+        [FILTER]
+            Name kubernetes
+            Match kube.*
+            Merge_Log On
+            Merge_Log_Trim On
+            Keep_Log Off
+            K8S-Logging.Parser Off
+            K8S-Logging.Exclude On
+            Labels On
+            Annotations Off
+
+        # envoy-external access logs (ECS JSON) -> own tag/stream
+        [FILTER]
+            Name rewrite_tag
+            Match kube.*
+            Rule $kubernetes['labels']['gateway.envoyproxy.io/owning-gateway-name'] ^envoy-external$ envoy.access false
+
+      outputs: |
+        # ECS envoy access logs -> data stream logs-envoy.access
+        [OUTPUT]
+            Name es
+            Match envoy.access
+            Host elastic.${SECRET_DOMAIN}
+            Port 443
+            Tls On
+            HTTP_User ${ES_USER}
+            HTTP_Passwd ${ES_PASSWORD}
+            Index logs-envoy.access
+            Suppress_Type_Name On
+            Write_Operation create
+            Generate_ID Off
+            Logstash_Format Off
+            Trace_Error On
+            storage.total_limit_size 512M
+
+        # everything else -> data stream logs-kubernetes
+        [OUTPUT]
+            Name es
+            Match kube.*
+            Host elastic.${SECRET_DOMAIN}
+            Port 443
+            Tls On
+            HTTP_User ${ES_USER}
+            HTTP_Passwd ${ES_PASSWORD}
+            Index logs-kubernetes
+            Suppress_Type_Name On
+            Write_Operation create
+            Generate_ID Off
+            Logstash_Format Off
+            Trace_Error On
+            storage.total_limit_size 512M

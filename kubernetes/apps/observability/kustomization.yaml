@@ -7,3 +7,6 @@ resources:
   - ./namespace.yaml
   - ./kube-prometheus-stack/ks.yaml
   - ./grafana/ks.yaml
+  - ./kibana/ks.yaml
+  - ./fluent-bit/ks.yaml
+  - ./es-policies/ks.yaml
