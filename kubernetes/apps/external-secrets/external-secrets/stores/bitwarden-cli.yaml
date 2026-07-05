@@ -117,7 +117,8 @@ spec:
           containers:
             - name: sync
               image: mirror.gcr.io/curlimages/curl:8.17.0
-              args: ["-sf", "--max-time", "90", "http://bitwarden-cli:8087/sync?force=true"]
+              # bw serve /sync is POST-only (GET -> 405)
+              args: ["-sf", "-X", "POST", "--max-time", "90", "http://bitwarden-cli:8087/sync?force=true"]
               securityContext:
                 runAsNonRoot: true
                 runAsUser: 65534
