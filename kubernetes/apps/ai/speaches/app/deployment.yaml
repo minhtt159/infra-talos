@@ -1,0 +1,54 @@
+---
+# Speaches — OpenAI-compatible speech API (faster-whisper STT + Kokoro/Piper
+# TTS) with a Gradio UI at /. CPU-only: faster-whisper is CTranslate2, which
+# has no Intel GPU backend — the B580 stays dedicated to ollama.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name speaches
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: *name
+  template:
+    metadata:
+      labels:
+        app: *name
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: speaches
+          image: ghcr.io/speaches-ai/speaches:0.8.3-cpu
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: HF_HUB_DISABLE_TELEMETRY
+              value: "1"
+            - name: GRADIO_ANALYTICS_ENABLED
+              value: "False"
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: 1
+              memory: 2Gi
+            limits:
+              memory: 6Gi
+          volumeMounts:
+            - name: models
+              mountPath: /home/ubuntu/.cache/huggingface
+          securityContext:
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: speaches-models

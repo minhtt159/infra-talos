@@ -8,3 +8,4 @@ resources:
   - ./ollama/ks.yaml
   - ./hindsight/ks.yaml
   - ./litellm/ks.yaml
+  - ./speaches/ks.yaml
