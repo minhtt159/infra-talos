@@ -4,6 +4,7 @@
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white)
 ![Flux](https://img.shields.io/badge/GitOps-Flux-5468FF?logo=flux&logoColor=white)
 ![Renovate](https://img.shields.io/badge/Renovate-enabled-1A1F6C?logo=renovatebot&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 GitOps configuration for a home Kubernetes cluster running on **Talos Linux**,
 provisioned by **Sidero Omni** and continuously reconciled by **Flux**.
