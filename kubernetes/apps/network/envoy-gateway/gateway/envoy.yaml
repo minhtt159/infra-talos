@@ -11,6 +11,9 @@ spec:
   provider:
     type: Kubernetes
     kubernetes:
+      # node drains may never take both replicas at once (ported from talos-aws)
+      envoyPDB:
+        minAvailable: 1
       envoyDeployment:
         replicas: 2
         pod:
@@ -48,37 +51,49 @@ spec:
   shutdown:
     drainTimeout: 180s
   telemetry:
-    # accessLog:
-    #   settings:
-    #     - format:
-    #         type: JSON
-    #         json:
-    #           start_time: "%START_TIME%"
-    #           method: "%REQ(:METHOD)%"
-    #           path: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
-    #           protocol: "%PROTOCOL%"
-    #           response_code: "%RESPONSE_CODE%"
-    #           response_flags: "%RESPONSE_FLAGS%"
-    #           bytes_received: "%BYTES_RECEIVED%"
-    #           bytes_sent: "%BYTES_SENT%"
-    #           duration: "%DURATION%"
-    #           upstream_service_time: "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%"
-    #           x_forwarded_for: "%REQ(X-FORWARDED-FOR)%"
-    #           user_agent: "%REQ(USER-AGENT)%"
-    #           request_id: "%REQ(X-REQUEST-ID)%"
-    #           authority: "%REQ(:AUTHORITY)%"
-    #           upstream_host: "%UPSTREAM_HOST%"
-    #           upstream_cluster: "%UPSTREAM_CLUSTER%"
-    #           # Security-relevant fields
-    #           downstream_remote_address: "%DOWNSTREAM_REMOTE_ADDRESS%"
-    #           downstream_local_address: "%DOWNSTREAM_LOCAL_ADDRESS%"
-    #           tls_version: "%DOWNSTREAM_TLS_VERSION%"
-    #           tls_cipher: "%DOWNSTREAM_TLS_CIPHER%"
-    #       sinks:
-    #         - type: OpenTelemetry
-    #           openTelemetry:
-    #             host: otel-collector.monitoring.svc.cluster.local
-    #             port: 4317
+    # JSON access logs to stdout, one object per request (ported from
+    # talos-aws). Backend-agnostic: any shipper can tail container stdout.
+    # nginx-style field names; Envoy emits keys alphabetically sorted.
+    # Cookie header deliberately dropped (PII).
+    accessLog:
+      settings:
+        - format:
+            type: JSON
+            json:
+              # timing
+              time: "%START_TIME%"
+              time_epoch_ms: "%START_TIME(%s%3f)%"
+              request_time: "%DURATION%" # total downstream duration, ms
+              upstream_response_time: "%RESPONSE_DURATION%" # empty if never reached upstream
+              # client
+              remote_addr: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%" # real client IP via XFF numTrustedHops
+              x_forwarded_for: "%REQ(X-FORWARDED-FOR)%"
+              user_agent: "%REQ(USER-AGENT)%"
+              referer: "%REQ(Referer)%"
+              # request
+              vhost: "%REQ(:AUTHORITY)%"
+              request_method: "%REQ(:METHOD)%"
+              request_uri: "%REQ(:PATH)%"
+              full_request: "%REQ(:METHOD)% %REQ(:PATH)% %PROTOCOL%"
+              protocol: "%PROTOCOL%"
+              request_id: "%REQ(X-REQUEST-ID)%" # correlate retries/upstream logs
+              request_length: "%BYTES_RECEIVED%"
+              # response
+              status: "%RESPONSE_CODE%"
+              response_code_details: "%RESPONSE_CODE_DETAILS%" # why Envoy chose this code
+              response_flags: "%RESPONSE_FLAGS%" # UH/UF/RL/UAEX... key debugging field
+              bytes_sent: "%BYTES_SENT%"
+              # tls
+              tls_version: "%DOWNSTREAM_TLS_VERSION%"
+              tls_cipher: "%DOWNSTREAM_TLS_CIPHER%"
+              # upstream / routing
+              proxy_upstream_name: "%UPSTREAM_CLUSTER%"
+              upstream_addr: "%UPSTREAM_REMOTE_ADDRESS%"
+              route_name: "%ROUTE_NAME%"
+          sinks:
+            - type: File
+              file:
+                path: /dev/stdout
     metrics:
       prometheus:
         compression:

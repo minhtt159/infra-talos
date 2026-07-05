@@ -1,0 +1,21 @@
+---
+# Only the envoy-ratelimit service may talk to Valkey. Plain NetworkPolicy
+# (enforced by Cilium). Same-namespace only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: valkey-ratelimit-only
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: valkey
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: envoy-ratelimit
+      ports:
+        - protocol: TCP
+          port: 6379

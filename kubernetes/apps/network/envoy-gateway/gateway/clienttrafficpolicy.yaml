@@ -22,7 +22,10 @@ spec:
   tcpKeepalive: {}
   timeout:
     http:
-      requestReceivedTimeout: 0s
+      # Slowloris protection: full request (headers+body) within this
+      # window. Generous on purpose (ported from talos-aws) — tighten
+      # after watching real upload patterns.
+      requestReceivedTimeout: 30s
   tls:
     minVersion: "1.2"
     alpnProtocols:

@@ -1,0 +1,73 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# Ported from talos-aws: rate-limit counter store for envoy-gateway.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: valkey
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: valkey
+  interval: 1h
+  values:
+    controllers:
+      valkey:
+        strategy: RollingUpdate
+        containers:
+          app:
+            image:
+              repository: mirror.gcr.io/valkey/valkey
+              tag: 8.1.8
+            # Rate-limit counters only: ephemeral by design (no persistence).
+            # A restart resets in-flight windows — acceptable trade-off here.
+            args:
+              - --save
+              - ""
+              - --appendonly
+              - "no"
+              - --maxmemory
+              - 64mb
+              - --maxmemory-policy
+              - allkeys-lru
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 6379
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
+              readiness: *probes
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 96Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+    persistence:
+      data:
+        type: emptyDir
+        globalMounts:
+          - path: /data
+    service:
+      app:
+        ports:
+          redis:
+            port: 6379

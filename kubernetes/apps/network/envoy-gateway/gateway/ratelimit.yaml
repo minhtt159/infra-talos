@@ -1,0 +1,35 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
+# Ported from talos-aws. Safety-net rate limit on the EXTERNAL gateway only
+# (internal LAN traffic unmetered). Counters in Valkey (fail-open — see the
+# rateLimit block in app/helmrelease.yaml).
+#
+# Behind cloudflared the "client IP" is what XFF says (numTrustedHops: 1 in
+# clienttrafficpolicy.yaml) — Cloudflare fills it with the real client, so
+# buckets are per-visitor-IP.
+#
+# NOTE: gateway-attached limits are enforced PER ROUTE — each HTTPRoute gets
+# its own bucket per IP. A route-attached BackendTrafficPolicy REPLACES this
+# one entirely for that route (use mergeType: StrategicMerge to combine).
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: envoy-external-rate-limit
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-external
+  rateLimit:
+    type: Global
+    global:
+      rules:
+        # 3000 req/min (~50 rps) per distinct client IP — flood protection,
+        # not a usage budget. talos-aws learned 300/min starves dashboards.
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+          limit:
+            requests: 3000
+            unit: Minute

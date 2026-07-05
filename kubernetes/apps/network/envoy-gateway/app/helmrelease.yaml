@@ -19,3 +19,14 @@ spec:
           kubernetes:
             deploy:
               type: GatewayNamespace
+        # Global rate limiting: controller deploys envoy-ratelimit once a
+        # backend is configured; counters in Valkey, shared across replicas.
+        # Consumed by gateway/ratelimit.yaml (BackendTrafficPolicy).
+        rateLimit:
+          backend:
+            type: Redis
+            redis:
+              url: valkey.network.svc.cluster.local:6379
+          # If ratelimit service or Valkey is down, traffic PASSES
+          # un-throttled — availability over strictness at the edge.
+          failClosed: false
