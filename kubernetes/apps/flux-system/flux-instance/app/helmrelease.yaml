@@ -34,11 +34,10 @@ spec:
           app.kubernetes.io/name: flux
       kustomize:
         patches:
-          - # Enable in-memory kustomize builds
+          - # In-memory (tmpfs) kustomize builds. Concurrency and Helm caching are
+            # left to cluster.size (medium: --concurrent=10, helm cache 50/720m/60m) —
+            # only the tmpfs build dir is customised here.
             patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: --concurrent=10
               - op: replace
                 path: /spec/template/spec/volumes/0
                 value:
@@ -48,20 +47,6 @@ spec:
             target:
               kind: Deployment
               name: kustomize-controller
-          - # Enable Helm repositories caching
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: --helm-cache-max-size=10
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: --helm-cache-ttl=60m
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: --helm-cache-purge-interval=5m
-            target:
-              kind: Deployment
-              name: source-controller
           - # Flux near-OOM detection + disable chart digest tracking.
             # Both feature gates go in ONE --feature-gates arg: a repeated flag can
             # last-win and silently drop OOMWatch.
