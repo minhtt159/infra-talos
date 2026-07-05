@@ -74,91 +74,56 @@
       minimumReleaseAge: "3 days",
       ignoreTests: true,
     },
-    // {
-    //   description: "Auto-merge Mise Tools",
-    //   matchManagers: ["mise"],
-    //   automerge: true,
-    //   automergeType: "branch",
-    //   matchUpdateTypes: ["minor", "patch"],
-    //   ignoreTests: true,
-    // },
+    // Commit type + label, per update type
     {
       matchUpdateTypes: ["major"],
       semanticCommitType: "feat",
       commitMessagePrefix: "{{semanticCommitType}}({{semanticCommitScope}})!:",
       commitMessageExtra: "( {{currentVersion}} ➔ {{newVersion}} )",
+      labels: ["type/major"],
     },
     {
       matchUpdateTypes: ["minor"],
       semanticCommitType: "feat",
       commitMessageExtra: "( {{currentVersion}} ➔ {{newVersion}} )",
+      labels: ["type/minor"],
     },
     {
       matchUpdateTypes: ["patch"],
       semanticCommitType: "fix",
       commitMessageExtra: "( {{currentVersion}} ➔ {{newVersion}} )",
+      labels: ["type/patch"],
     },
     {
       matchUpdateTypes: ["digest"],
       semanticCommitType: "chore",
       commitMessageExtra: "( {{currentDigestShort}} ➔ {{newDigestShort}} )",
+      labels: ["type/digest"],
     },
+    // Commit scope + topic + label, per datasource/manager
     {
       matchDatasources: ["docker"],
       semanticCommitScope: "container",
       commitMessageTopic: "image {{depName}}",
+      addLabels: ["renovate/container"],
     },
     {
       matchDatasources: ["helm"],
       semanticCommitScope: "helm",
       commitMessageTopic: "chart {{depName}}",
+      addLabels: ["renovate/helm"],
     },
     {
       matchManagers: ["github-actions"],
       semanticCommitType: "ci",
       semanticCommitScope: "github-action",
       commitMessageTopic: "action {{depName}}",
+      addLabels: ["renovate/github-action"],
     },
     {
       matchDatasources: ["github-releases"],
       semanticCommitScope: "github-release",
       commitMessageTopic: "release {{depName}}",
-    },
-    // {
-    //   matchManagers: ["mise"],
-    //   semanticCommitScope: "mise",
-    //   commitMessageTopic: "tool {{depName}}",
-    // },
-    {
-      matchUpdateTypes: ["major"],
-      labels: ["type/major"],
-    },
-    {
-      matchUpdateTypes: ["minor"],
-      labels: ["type/minor"],
-    },
-    {
-      matchUpdateTypes: ["patch"],
-      labels: ["type/patch"],
-    },
-    {
-      matchUpdateTypes: ["digest"],
-      labels: ["type/digest"],
-    },
-    {
-      matchDatasources: ["docker"],
-      addLabels: ["renovate/container"],
-    },
-    {
-      matchDatasources: ["helm"],
-      addLabels: ["renovate/helm"],
-    },
-    {
-      matchManagers: ["github-actions"],
-      addLabels: ["renovate/github-action"],
-    },
-    {
-      matchDatasources: ["github-releases"],
       addLabels: ["renovate/github-release"],
     },
   ],
