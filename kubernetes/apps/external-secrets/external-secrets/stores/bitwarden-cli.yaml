@@ -26,10 +26,22 @@ spec:
         - name: bitwarden-cli
           image: ghcr.io/charlesthomas/bitwarden-cli:2026.6.0
           imagePullPolicy: IfNotPresent
-          # container restarts reuse the pod's emptyDir; stale bw session
-          # wedges the entrypoint ("Logout required before server config
-          # update") — start from a clean slate every time
-          command: ["sh", "-c", "rm -rf /data/.config /data/*; exec /entrypoint.sh"]
+          # Replaces the image entrypoint: it hardcodes `bw serve --hostname
+          # 0.0.0.0`, but bitwarden-cli 2026.6+ added DNS-rebinding protection
+          # that then rejects the service FQDN ("disallowed Host"). `--hostname
+          # all` disables host binding. Also wipes the emptyDir first — a stale
+          # bw session wedges login on container restart.
+          command:
+            - bash
+            - -c
+            - |
+              set -e
+              rm -rf /data/.config /data/* || true
+              bw config server "${BW_HOST}"
+              bw login --apikey --raw
+              export BW_SESSION=$(bw unlock --passwordenv BW_PASSWORD --raw)
+              bw unlock --check
+              exec bw serve --hostname all
           envFrom:
             - secretRef:
                 name: bitwarden-cli
