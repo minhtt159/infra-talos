@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: elasticsearch-exporter
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: prometheus-elasticsearch-exporter
+  interval: 1h
+  values:
+    # ref: https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-elasticsearch-exporter/values.yaml
+    es:
+      uri: https://elastic.${SECRET_DOMAIN}
+      # elastic.${SECRET_DOMAIN} is fronted with a valid cert; flip to true only on x509 errors
+      sslSkipVerify: false
+      all: true
+      indices: true
+      indices_settings: true
+      shards: true
+    # API key (base64 "id:api_key"); the ExternalSecret pulls it from Vaultwarden
+    extraEnvSecrets:
+      ES_API_KEY:
+        secret: elasticsearch-exporter-secret
+        key: ES_API_KEY
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: kube-prometheus-stack
+      interval: 30s
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
