@@ -11,6 +11,17 @@ metadata:
   name: postgres
 spec:
   instances: 1
+  # -standard flavor bundles pgvector (needed by Hindsight). Major is fixed —
+  # CNPG does no in-place major upgrades; bump minor only.
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.1-standard-trixie
+  managed:
+    roles:
+      - name: hindsight
+        ensure: present
+        login: true
+        passwordSecret:
+          name: hindsight-db-auth
   # hostpath ignores PVC capacity — sizes are documentation only, real cap is
   # the 500GB SATA SSD shared by PGDATA + WAL. walStorage keeps a WAL spike
   # from filling PGDATA.
