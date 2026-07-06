@@ -1,11 +1,12 @@
 ---
-# Detection moved Coral TPU (turing-01, arm64) → Intel dGPU (mini-talos-04):
-# non-privileged, GPU via device plugin instead of hostPath /dev/apex_0.
-# NOTE: frigate config (in the config PVC / UI) must switch detectors to
+# Detection back on the Coral TPU (turing-01, arm64/Rockchip) — frees the Intel
+# dGPU (mini-talos-04) for Ollama only. Coral = PCIe /dev/apex_0 via hostPath,
+# which needs a privileged pod (no Coral device plugin) + PSA privileged ns.
+# NOTE: frigate config (config PVC / UI) must switch detectors back to
 #   detectors:
-#     ov:
-#       type: openvino
-#       device: GPU
+#     coral:
+#       type: edgetpu
+#       device: pci
 # before this rolls out, or detection stops.
 apiVersion: apps/v1
 kind: Deployment
@@ -25,19 +26,24 @@ spec:
     spec:
       restartPolicy: Always
       automountServiceAccountToken: false
-      nodeSelector:
-        intel.feature.node.kubernetes.io/gpu: "true"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: capability # Omni nodeLabel on turing-01 (Coral PCIe)
+                    operator: In
+                    values:
+                      - coral
       containers:
         - name: frigate
-          # renovate will pin digest; -rk (Rockchip) variant no longer needed off the RK1
-          image: ghcr.io/blakeblackshear/frigate:0.17.2
+          # -rk (Rockchip) variant: hardware video decode on the RK1
+          image: ghcr.io/blakeblackshear/frigate:0.17.2-rk
           imagePullPolicy: IfNotPresent
           resources:
             requests:
               cpu: 100m
               memory: 400Mi
-            limits:
-              gpu.intel.com/xe: "1"
           ports:
             - name: webui
               containerPort: 8971
@@ -48,6 +54,8 @@ spec:
             - name: webrtc
               containerPort: 8555
           volumeMounts:
+            - name: coral
+              mountPath: /dev/apex_0
             - name: config
               mountPath: /config
             - name: media
@@ -55,10 +63,11 @@ spec:
             - name: shm-volume
               mountPath: /dev/shm
           securityContext:
-            allowPrivilegeEscalation: false
-            seccompProfile:
-              type: RuntimeDefault
+            privileged: true # required for the Coral hostPath device
       volumes:
+        - name: coral
+          hostPath:
+            path: /dev/apex_0
         - name: config
           persistentVolumeClaim:
             claimName: frigate-config
