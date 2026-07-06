@@ -9,3 +9,4 @@ resources:
   - ./service.yaml
   - ./httproute.yaml
   - ./httproute-external.yaml
+  - ./backendtrafficpolicy.yaml
