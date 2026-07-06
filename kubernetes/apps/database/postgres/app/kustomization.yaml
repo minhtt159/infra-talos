@@ -4,7 +4,9 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./externalsecret-hindsight.yaml
+  - ./externalsecret-litellm.yaml
   - ./objectstore.yaml
   - ./cluster.yaml
   - ./scheduledbackup.yaml
   - ./database-hindsight.yaml
+  - ./database-litellm.yaml

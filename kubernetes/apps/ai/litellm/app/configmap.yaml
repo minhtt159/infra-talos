@@ -1,0 +1,13 @@
+---
+# LiteLLM proxy config. Deliberately holds no model_list / backends — models and
+# their endpoints are added through the admin UI and persisted in the CNPG
+# `litellm` database (store_model_in_db). Keeps GPU/backend topology out of this
+# public repo.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config-yaml
+data:
+  config.yaml: |
+    general_settings:
+      store_model_in_db: true

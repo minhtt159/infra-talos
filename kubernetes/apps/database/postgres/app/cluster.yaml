@@ -23,6 +23,11 @@ spec:
         login: true
         passwordSecret:
           name: hindsight-db-auth
+      - name: litellm
+        ensure: present
+        login: true
+        passwordSecret:
+          name: litellm-db-auth
   # hostpath ignores PVC capacity — sizes are documentation only, real cap is
   # the 500GB SATA SSD shared by PGDATA + WAL. walStorage keeps a WAL spike
   # from filling PGDATA.

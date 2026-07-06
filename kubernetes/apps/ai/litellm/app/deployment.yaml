@@ -1,0 +1,67 @@
+---
+# LiteLLM proxy + admin UI — OpenAI/Ollama-compatible gateway to the GPU fleet.
+# All state (models, virtual keys, spend) lives in the CNPG `litellm` database;
+# no PVC. The -database image variant ships the Prisma client needed to run the
+# DB migrations on startup (the plain image can't).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name litellm
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: *name
+  template:
+    metadata:
+      labels:
+        app: *name
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: litellm
+          image: ghcr.io/berriai/litellm-database:main-v1.74.3-stable
+          args:
+            - "--config"
+            - "/app/config.yaml"
+          envFrom:
+            - secretRef:
+                name: litellm-config # DATABASE_URL
+            - secretRef:
+                name: litellm-auth # LITELLM_MASTER_KEY
+          ports:
+            - name: http
+              containerPort: 4000
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: 4000
+            # generous delay: first boot runs prisma migrate before serving.
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/liveliness
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+          securityContext:
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: config
+          configMap:
+            name: litellm-config-yaml
