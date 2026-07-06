@@ -7,3 +7,4 @@ resources:
   - ./namespace.yaml
   - ./ollama/ks.yaml
   - ./hindsight/ks.yaml
+  - ./litellm/ks.yaml
