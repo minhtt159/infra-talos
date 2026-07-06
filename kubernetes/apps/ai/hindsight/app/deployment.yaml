@@ -33,6 +33,17 @@ spec:
             # gated by Cloudflare Access, but this holds even if CF is bypassed.
             - name: HINDSIGHT_API_TENANT_EXTENSION
               value: hindsight_api.extensions.builtin.tenant:ApiKeyTenantExtension
+            # Control Plane (UI) -> dataplane API auth. Same key. NOTE: this does
+            # NOT gate the UI itself — Cloudflare Access (Entra) does that.
+            - name: HINDSIGHT_CP_DATAPLANE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hindsight-auth
+                  key: HINDSIGHT_API_TENANT_API_KEY
+            # stable worker id: default is the pod hostname (changes on recreate),
+            # which orphans in-flight async tasks. replicas=1 so a fixed id is safe.
+            - name: HINDSIGHT_API_WORKER_ID
+              value: hindsight-0
             - name: HINDSIGHT_API_LLM_PROVIDER
               value: ollama
             - name: HINDSIGHT_API_LLM_BASE_URL
