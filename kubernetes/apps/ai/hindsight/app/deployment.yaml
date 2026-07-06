@@ -30,7 +30,7 @@ spec:
             - name: HINDSIGHT_API_LLM_PROVIDER
               value: ollama
             - name: HINDSIGHT_API_LLM_BASE_URL
-              value: http://ollama.ai.svc.cluster.local:11434
+              value: http://ollama.ai.svc.cluster.local:11434/v1 # OpenAI-compat path
             - name: HINDSIGHT_API_LLM_MODEL
               value: qwen3.5:9b # newest gen fitting B580 12GB @ Q4; qwen3.5:4b if tight
             - name: HINDSIGHT_API_LLM_API_KEY
