@@ -32,7 +32,9 @@ spec:
             - name: HINDSIGHT_API_LLM_BASE_URL
               value: http://ollama.ai.svc.cluster.local:11434/v1 # OpenAI-compat path
             - name: HINDSIGHT_API_LLM_MODEL
-              value: qwen3.5:9b # newest gen fitting B580 12GB @ Q4; qwen3.5:4b if tight
+              # qwen3.x are thinking models -> empty content on JSON extraction.
+              # Non-thinking, JSON-solid model needed. Fits B580 12GB @ Q4.
+              value: qwen2.5:14b
             - name: HINDSIGHT_API_LLM_API_KEY
               value: not-needed # must be set even for local providers
           ports:
