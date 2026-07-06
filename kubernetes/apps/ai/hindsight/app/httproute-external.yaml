@@ -1,15 +1,19 @@
 ---
-# LAN route (break-glass / fast local). Public exposure is httproute-external.yaml.
+# Public via the Cloudflare tunnel (wildcard *.${SECRET_DOMAIN} -> envoy-external).
+# Gated at the edge by Cloudflare Access:
+#   hindsight.${SECRET_DOMAIN}     (UI)       -> Entra SSO policy
+#   hindsight-api.${SECRET_DOMAIN} (API/MCP)  -> service-token policy (+ Entra for UI->API)
+# AND at the app by Hindsight's Bearer key (hindsight-auth). See the runbook.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: hindsight
+  name: hindsight-external
 spec:
   hostnames:
     - "hindsight.${SECRET_DOMAIN}" # UI
     - "hindsight-api.${SECRET_DOMAIN}" # REST + MCP
   parentRefs:
-    - name: envoy-internal
+    - name: envoy-external
       namespace: network
       sectionName: https
   rules:

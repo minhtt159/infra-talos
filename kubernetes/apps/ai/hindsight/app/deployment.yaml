@@ -26,7 +26,13 @@ spec:
           envFrom:
             - secretRef:
                 name: hindsight-config # HINDSIGHT_API_DATABASE_URL
+            - secretRef:
+                name: hindsight-auth # TENANT_API_KEY + MCP_AUTH_TOKEN (Bearer)
           env:
+            # App-level auth: require Bearer on all HTTP API + MCP. Edge is also
+            # gated by Cloudflare Access, but this holds even if CF is bypassed.
+            - name: HINDSIGHT_API_TENANT_EXTENSION
+              value: hindsight_api.extensions.builtin.tenant:ApiKeyTenantExtension
             - name: HINDSIGHT_API_LLM_PROVIDER
               value: ollama
             - name: HINDSIGHT_API_LLM_BASE_URL
