@@ -1,6 +1,6 @@
 ---
 # Hindsight — Claude Code memory backend (web UI + streamable-HTTP MCP).
-# Postgres = the CNPG cluster (rides its barman/Garage backups); LLM = ollama.
+# Postgres = the CNPG cluster (rides its barman/Garage backups); LLM = litellm.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -44,16 +44,17 @@ spec:
             # which orphans in-flight async tasks. replicas=1 so a fixed id is safe.
             - name: HINDSIGHT_API_WORKER_ID
               value: hindsight-0
+            # LLM via the LiteLLM gateway (openai-compatible). Backend routing
+            # lives in litellm's DB, not here. API key: envFrom hindsight-auth
+            # (HINDSIGHT_API_LLM_API_KEY, a scoped litellm virtual key).
             - name: HINDSIGHT_API_LLM_PROVIDER
-              value: ollama
+              value: openai
             - name: HINDSIGHT_API_LLM_BASE_URL
-              value: http://ollama.ai.svc.cluster.local:11434/v1 # OpenAI-compat path
+              value: http://litellm.ai.svc.cluster.local:4000/v1
             - name: HINDSIGHT_API_LLM_MODEL
-              # qwen3.x are thinking models -> empty content on JSON extraction.
-              # Non-thinking, JSON-solid model needed. Fits B580 12GB @ Q4.
-              value: qwen2.5:14b
-            - name: HINDSIGHT_API_LLM_API_KEY
-              value: not-needed # must be set even for local providers
+              # thinking models break JSON extraction (empty content) — this
+              # alias pins think:false on the litellm deployment.
+              value: qwen3.5:9b-json
           ports:
             - name: api # REST + MCP
               containerPort: 8888
