@@ -37,6 +37,8 @@ spec:
   walStorage:
     storageClass: openebs-hostpath-sata
     size: 20Gi
+  monitoring:
+    enablePodMonitor: true
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
