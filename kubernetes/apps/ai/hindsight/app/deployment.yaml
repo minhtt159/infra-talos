@@ -58,6 +58,10 @@ spec:
               # thinking models break JSON extraction (empty content) — this
               # alias pins think:false on the litellm deployment.
               value: qwen3.5:9b-json
+            # reflect runs at temp 0.9 ("thinking") and tolerates thinking
+            # models — bigger MoE model here; other ops keep the global default.
+            - name: HINDSIGHT_API_REFLECT_LLM_MODEL
+              value: qwen3.6:35b-a3b
           ports:
             - name: api # REST + MCP
               containerPort: 8888
