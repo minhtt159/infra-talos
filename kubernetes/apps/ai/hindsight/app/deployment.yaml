@@ -5,6 +5,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: &name hindsight
+  annotations:
+    # bounce on configmap/secret change
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
