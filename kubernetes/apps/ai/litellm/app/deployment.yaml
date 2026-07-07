@@ -34,18 +34,24 @@ spec:
           ports:
             - name: http
               containerPort: 4000
+          # entrypoint runs prisma migrate before serving — can take minutes.
+          # startupProbe carries that window (30×10s = 5min) so the tight
+          # liveness probe doesn't kill the pod mid-migration.
+          startupProbe:
+            httpGet:
+              path: /health/readiness
+              port: 4000
+            failureThreshold: 30
+            periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health/readiness
               port: 4000
-            # generous delay: first boot runs prisma migrate before serving.
-            initialDelaySeconds: 30
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /health/liveliness
               port: 4000
-            initialDelaySeconds: 30
             periodSeconds: 10
           resources:
             requests:
