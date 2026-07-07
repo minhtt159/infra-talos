@@ -43,12 +43,6 @@
       versioning: "loose",
     },
     {
-      description: "litellm tags (main-vX.Y.Z-stable) aren't semver — teach Renovate the shape",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/berriai/litellm-database"],
-      versioning: "regex:^main-v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-stable$",
-    },
-    {
       description: "Kibana must never exceed the ES version on TrueNAS — manual approval only",
       matchDatasources: ["docker"],
       matchPackageNames: ["docker.elastic.co/kibana/kibana"],
