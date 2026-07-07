@@ -7,6 +7,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: &name litellm
+  annotations:
+    # bounce on configmap/secret change — subPath mounts never update in-place.
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
