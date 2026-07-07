@@ -41,6 +41,10 @@ spec:
               value: "1"
             - name: OLLAMA_KV_CACHE_TYPE
               value: q8_0 # halves KV cache — more context headroom on 12GB
+            # litellm routes max 1 in-flight request here; "auto" could
+            # pre-allocate KV for slots that never get traffic.
+            - name: OLLAMA_NUM_PARALLEL
+              value: "1"
           ports:
             - name: http
               containerPort: 11434
