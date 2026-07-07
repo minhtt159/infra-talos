@@ -9,6 +9,11 @@ spec:
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
+  datasources:
+    - inputName: DS_PROMETHEUS
+      datasourceName: prometheus
+    - inputName: DS_EXPRESSION
+      datasourceName: __expr__
   configMapRef:
     name: cnpg-grafana-dashboard # created by the chart (monitoring.grafanaDashboard.create)
     key: cnp.json
