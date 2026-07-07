@@ -55,6 +55,10 @@ spec:
         [FILTER]
             Name kubernetes
             Match kube.*
+            # kube-apiserver metadata responses for pods with many labels/annotations
+            # exceed the 32k default HTTP client buffer ("cannot increase buffer:
+            # requested=64768 max=32000") -> enrich silently fails for that pod. Raise it.
+            Buffer_Size 1M
             Merge_Log On
             # Nest parsed app JSON under a single key instead of the doc root.
             # The es template maps `app` as `flattened` (one mapping for any
