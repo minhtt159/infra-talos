@@ -29,9 +29,14 @@ spec:
             - DaemonSet
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kyverno.io/policyexception_v2.json
-# CNPG operator and postgres instance pods legitimately need the API
-# (controller + instance-manager failover); neither the chart nor the
-# Cluster CRD exposes automountServiceAccountToken to set it explicitly.
+# Covers every workload in the `database` namespace that legitimately needs the
+# API token and can't disable it declaratively:
+#   - CNPG operator + postgres instance pods (controller + instance-manager
+#     failover); neither the chart nor the Cluster CRD exposes
+#     automountServiceAccountToken.
+#   - Strimzi cluster operator, entity operator (topic + user operators) and
+#     KafkaNodePool/StrimziPodSet broker pods; the Strimzi CRDs don't expose
+#     automountServiceAccountToken either.
 apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:

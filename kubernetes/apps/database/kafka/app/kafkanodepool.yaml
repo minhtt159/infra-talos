@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kafka.strimzi.io/kafkanodepool_v1.json
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: dual
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  # Single dual-role KRaft node (controller + broker in one pod). RF=1 everywhere
+  # — pod restart is a short outage, node loss is data loss. Acceptable for
+  # transient homelab messaging; scale out by adding a broker-only pool + raising RF.
+  replicas: 1
+  roles:
+    - controller
+    - broker
+  storage:
+    type: persistent-claim
+    size: 20Gi
+    # Local disk (same class as postgres) — Kafka best practice for latency.
+    # Not NFS (corruption risk). Durability comes from RF, deliberately given up.
+    class: openebs-hostpath-sata
+    deleteClaim: false
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1536Mi
+    limits:
+      memory: 2Gi
