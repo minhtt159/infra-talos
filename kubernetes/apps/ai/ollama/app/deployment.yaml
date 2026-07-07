@@ -33,6 +33,18 @@ spec:
               value: 0.0.0.0
             - name: OLLAMA_VULKAN
               value: "1"
+            # server-scoped tuning; request-scoped knobs (num_ctx, think,
+            # keep_alive) come from litellm deployment params instead.
+            # FA on Vulkan may fall back silently on some drivers — check
+            # startup logs; KV quantization only applies while FA is active.
+            - name: OLLAMA_FLASH_ATTENTION
+              value: "1"
+            - name: OLLAMA_KV_CACHE_TYPE
+              value: q8_0 # halves KV cache — more context headroom on 12GB
+            # litellm routes max 1 in-flight request here; "auto" could
+            # pre-allocate KV for slots that never get traffic.
+            - name: OLLAMA_NUM_PARALLEL
+              value: "1"
           ports:
             - name: http
               containerPort: 11434
