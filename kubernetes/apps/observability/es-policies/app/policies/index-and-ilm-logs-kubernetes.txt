@@ -1,5 +1,16 @@
 # All other container logs (fluent-bit kubernetes filter metadata).
 # DATA STREAM (ES 9). Short retention — this is a debugging stream, not an archive.
+#
+# Field-explosion guard (do not "fix" by raising index.mapping.total_fields.limit):
+#   dynamic:false at the root  -> stray top-level keys are stored but never mapped.
+#   app: flattened             -> fluent-bit nests merged app JSON here (Merge_Log_Key
+#                                 app); any per-app structure is ONE mapping, queryable
+#                                 as app.<field>. This is what stops the 1000-field cap.
+#   kubernetes: dynamic:true   -> the bounded kube-meta set (container_image, etc.) still
+#                                 maps; labels/annotations stay flattened.
+# Template changes only apply to NEW backing indices, so after this lands force a
+# rollover: POST logs-kubernetes/_rollover (else the current index keeps exploding
+# until ILM rolls it at 7d).
 PUT _ilm/policy/ilm@logs-kubernetes
 {
   "policy": {
@@ -39,10 +50,14 @@ PUT _index_template/logs-kubernetes_template
       "index.lifecycle.name": "ilm@logs-kubernetes"
     },
     "mappings": {
+      "dynamic": false,
       "properties": {
         "@timestamp": { "type": "date" },
+        "stream": { "type": "keyword" },
         "log": { "type": "text" },
+        "app": { "type": "flattened" },
         "kubernetes": {
+          "dynamic": true,
           "properties": {
             "namespace_name": { "type": "keyword" },
             "pod_name": { "type": "keyword" },

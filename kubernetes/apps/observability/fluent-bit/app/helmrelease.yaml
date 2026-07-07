@@ -56,6 +56,11 @@ spec:
             Name kubernetes
             Match kube.*
             Merge_Log On
+            # Nest parsed app JSON under a single key instead of the doc root.
+            # The es template maps `app` as `flattened` (one mapping for any
+            # structure) so unpredictable per-app keys can't explode the
+            # logs-kubernetes field count. Query in Kibana as `app.<field>`.
+            Merge_Log_Key app
             Merge_Log_Trim On
             Keep_Log Off
             K8S-Logging.Parser Off
