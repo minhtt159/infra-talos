@@ -1,0 +1,50 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gatus
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: gatus
+  interval: 1h
+  values:
+    deploymentAnnotations:
+      reloader.stakater.com/auto: "true"
+    sidecar:
+      kinds:
+        httproute:
+          enable: true
+          auto: true
+        service:
+          enable: true
+    config:
+      existingConfigMap: gatus-configmap
+      items:
+        - key: config.yaml
+          path: config.yaml
+    httpRoute:
+      enabled: true
+      annotations:
+        # don't let the sidecar generate an endpoint for gatus itself
+        gatus.home-operations.com/enabled: "false"
+      hostnames:
+        - status.${SECRET_DOMAIN}
+      parentRefs:
+        - name: envoy-internal
+          namespace: network
+    monitoring:
+      serviceMonitor:
+        enabled: true
+    persistence:
+      enabled: true
+      storageClass: truenas-iscsi
+      accessMode: ReadWriteOnce
+      size: 1Gi
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
