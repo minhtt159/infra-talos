@@ -37,11 +37,6 @@ spec:
     monitoring:
       serviceMonitor:
         enabled: true
-    persistence:
-      enabled: true
-      storageClass: truenas-nfs
-      accessMode: ReadWriteOnce
-      size: 1Gi
     resources:
       requests:
         cpu: 10m

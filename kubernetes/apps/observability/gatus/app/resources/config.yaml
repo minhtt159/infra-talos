@@ -21,11 +21,7 @@ endpoints:
 
 metrics: true
 
-storage:
-  type: sqlite
-  caching: true
-  path: ${GATUS_CONFIG_PATH}/gatus.db
-
+# no storage block: gatus defaults to in-memory; history rebuilds as checks run
 ui:
   title: Status | Gatus
   header: Status
