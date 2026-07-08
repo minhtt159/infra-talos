@@ -21,11 +21,10 @@ spec:
       privileged: true
       allowPrivilegeEscalation: true
       readOnlyRootFilesystem: true
-    # only schedule on nodes NFD-labeled with an Intel display controller;
-    # image is amd64-only
+    # only schedule on nodes NFD-labeled with an Intel GPU; image is amd64-only
     nodeSelector:
       kubernetes.io/arch: amd64
-      feature.node.kubernetes.io/pci-0300_8086.present: "true"
+      intel.feature.node.kubernetes.io/gpu: "true"
     monitoring:
       serviceMonitor:
         enabled: true

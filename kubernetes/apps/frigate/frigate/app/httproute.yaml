@@ -3,6 +3,8 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: frigate
+  # NOTE: frigate's config (PVC/UI, not git) must keep `tls: enabled: false` —
+  # envoy terminates TLS and speaks plaintext to 8971
 spec:
   hostnames:
     - "frigate.${SECRET_DOMAIN}"
