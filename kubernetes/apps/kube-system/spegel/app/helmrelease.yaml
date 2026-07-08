@@ -35,3 +35,21 @@ spec:
         memory: 128Mi
       limits:
         memory: 128Mi
+  # The chart-rendered GrafanaDashboard doesn't expose spec.datasources, so its
+  # ${DS_PROMETHEUS} input never resolves (panels query a literal datasource).
+  # Patch the remap in post-render, matching the repo convention (→ prometheus).
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: GrafanaDashboard
+              name: spegel
+            patch: |-
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: spegel
+              spec:
+                datasources:
+                  - inputName: DS_PROMETHEUS
+                    datasourceName: prometheus
