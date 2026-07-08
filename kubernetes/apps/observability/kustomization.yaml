@@ -11,3 +11,5 @@ resources:
   - ./fluent-bit/ks.yaml
   - ./es-policies/ks.yaml
   - ./elasticsearch-exporter/ks.yaml
+  - ./gatus/ks.yaml
+  - ./smartctl-exporter/ks.yaml

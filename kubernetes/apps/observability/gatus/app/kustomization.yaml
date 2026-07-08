@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./helmrelease.yaml
+  - ./ocirepository.yaml
+configMapGenerator:
+  - name: gatus-configmap
+    files:
+      - config.yaml=./resources/config.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    # config uses ${GATUS_*} env vars gatus expands itself — keep Flux's
+    # postBuild substitution away from them
+    kustomize.toolkit.fluxcd.io/substitute: disabled
