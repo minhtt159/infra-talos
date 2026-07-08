@@ -39,7 +39,7 @@ spec:
         enabled: true
     persistence:
       enabled: true
-      storageClass: truenas-iscsi
+      storageClass: truenas-nfs
       accessMode: ReadWriteOnce
       size: 1Gi
     resources:
