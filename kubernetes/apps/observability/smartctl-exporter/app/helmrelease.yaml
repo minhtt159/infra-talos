@@ -11,6 +11,9 @@ spec:
   interval: 1h
   values:
     fullnameOverride: smartctl-exporter
+    # upstream publishes no arm64 image — RK1 node NVMe stays uncovered
+    nodeSelector:
+      kubernetes.io/arch: amd64
     serviceMonitor:
       enabled: true
     resources:
