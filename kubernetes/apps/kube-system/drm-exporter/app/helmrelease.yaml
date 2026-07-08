@@ -14,17 +14,17 @@ spec:
     # plugin, not DRA
     hostAccess:
       devDri: /dev/dri
+    # privileged: the device cgroup denies /dev/dri to non-privileged
+    # containers (EPERM at "discovering DRM devices"); capabilities alone
+    # don't get past it
     securityContext:
-      privileged: false
-      allowPrivilegeEscalation: false
+      privileged: true
+      allowPrivilegeEscalation: true
       readOnlyRootFilesystem: true
-      capabilities:
-        drop: ["ALL"]
-        # chart default also adds SYS_RAWIO for /dev/cpu MSR reads; Talos ships
-        # no msr module, so PERFMON (engine utilization via perf PMU) suffices
-        add: ["PERFMON"]
-    # only schedule on nodes NFD-labeled with an Intel display controller
+    # only schedule on nodes NFD-labeled with an Intel display controller;
+    # image is amd64-only
     nodeSelector:
+      kubernetes.io/arch: amd64
       feature.node.kubernetes.io/pci-0300_8086.present: "true"
     monitoring:
       serviceMonitor:
