@@ -25,7 +25,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: litellm
-          image: ghcr.io/berriai/litellm-database:1.91.0
+          image: ghcr.io/berriai/litellm-database:v1.91.2
           args:
             - "--config"
             - "/app/config.yaml"
