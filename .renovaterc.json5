@@ -66,6 +66,15 @@
       minimumGroupSize: 3,
     },
     {
+      description: "kube-prometheus-stack Group — chart + its prompp subchart image",
+      groupName: "kube-prometheus-stack",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/kube-prometheus-stack/", "/prompp/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+    {
       description: "Auto-merge GitHub Actions",
       matchManagers: ["github-actions"],
       automerge: true,
