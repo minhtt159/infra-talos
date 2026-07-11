@@ -8,6 +8,7 @@ spec:
   dependsOn:
     - name: cloudnative-pg
     - name: barman-cloud-plugin
+    - name: democratic-iscsi # provides the truenas-iscsi StorageClass
   interval: 1h
   path: ./kubernetes/apps/database/postgres/app
   postBuild:

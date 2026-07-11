@@ -1,7 +1,11 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
-# Test cluster on mini-talos-01's SATA SSD. Single instance, node-local
-# storage — pinned to the node that has /var/mnt/sata (talos-nhb-hr7).
+# Single instance on TrueNAS iSCSI (network-attached), so on node brownout the
+# pod reschedules to any node and the volume reattaches — not glued to one node
+# like node-local hostpath was. Reattach off a dead node waits on RWO
+# force-detach (~6min default) + Postgres crash recovery, so expect minutes of
+# downtime, not seconds. For seconds-scale failover bump instances (>=2) with
+# pod anti-affinity — CNPG promotes a standby live.
 # ponytail: still 1 instance — bump instances before putting anything real
 # in here. Backups go to Garage S3 via the barman-cloud plugin (ObjectStore
 # postgres-backup + daily ScheduledBackup).
@@ -28,14 +32,15 @@ spec:
         login: true
         passwordSecret:
           name: litellm-db-auth
-  # hostpath ignores PVC capacity — sizes are documentation only, real cap is
-  # the 500GB SATA SSD shared by PGDATA + WAL. walStorage keeps a WAL spike
-  # from filling PGDATA.
+  # iSCSI honors these sizes — each provisions a real TrueNAS zvol (100Gi PGDATA
+  # + 20Gi WAL). Separate walStorage keeps a WAL spike from filling PGDATA.
+  # truenas-iscsi is Retain + allowVolumeExpansion; zvols survive cluster
+  # deletion (reclaim via docs/runbooks/cluster-rebuild.md).
   storage:
-    storageClass: openebs-hostpath-sata
+    storageClass: truenas-iscsi
     size: 100Gi
   walStorage:
-    storageClass: openebs-hostpath-sata
+    storageClass: truenas-iscsi
     size: 20Gi
   monitoring:
     enablePodMonitor: true
@@ -44,9 +49,6 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: postgres-backup
-  affinity:
-    nodeSelector:
-      storage: sata # Omni nodeLabel on mini-talos-01 — stable across reinstalls
   resources:
     requests:
       cpu: 100m
