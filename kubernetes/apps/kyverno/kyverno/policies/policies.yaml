@@ -116,3 +116,38 @@ spec:
         pattern:
           spec:
             automountServiceAccountToken: false
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-litellm-signature
+  annotations:
+    policies.kyverno.io/description: >-
+      LiteLLM images are cosign-signed with a static key pinned at commit
+      0112e53 (github.com/BerriAI/litellm/cosign.pub). Verify the signature so
+      a tampered/typosquatted image can't run. Audit-only for now — flip to
+      Enforce once PolicyReports are clean.
+spec:
+  # verifyImages honours a per-rule failureAction; Audit reports, doesn't block.
+  background: false
+  rules:
+    - name: check-litellm-cosign
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/berriai/litellm*"
+          failureAction: Audit
+          # don't rewrite tag→digest in the live manifest; just verify.
+          mutateDigest: false
+          verifyDigest: false
+          attestors:
+            - entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKi4ivqGpE231OGH50PKbqy1Y1Kkb
+                      POJC8+i2Wko82gBOUCe3M0Vw86H/4rhUhfoYEti4gdJ9wZbYmK0I2EE96g==
+                      -----END PUBLIC KEY-----
