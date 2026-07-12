@@ -3,6 +3,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: litellm
+  labels:
+    app: litellm # ServiceMonitor selects on this
 spec:
   selector:
     app: litellm
