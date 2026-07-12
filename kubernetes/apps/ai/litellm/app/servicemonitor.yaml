@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/servicemonitor_v1.json
+# /metrics requires LiteLLM API-key auth (default since v1.85.0) — scrape with the
+# master key. prometheus-operator reads the credentials Secret from this
+# ServiceMonitor's own namespace (ai), where litellm-auth already lives.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: litellm
+spec:
+  jobLabel: app
+  selector:
+    matchLabels:
+      app: litellm
+  endpoints:
+    - port: http
+      path: /metrics
+      authorization:
+        type: Bearer
+        credentials:
+          name: litellm-auth
+          key: LITELLM_MASTER_KEY

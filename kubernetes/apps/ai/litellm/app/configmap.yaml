@@ -15,6 +15,7 @@ data:
       maximum_spend_logs_retention_period: "30d" # else the spend-logs table grows forever
       allow_requests_on_db_unavailable: true # CNPG restart != LLM outage (keys served from cache)
     litellm_settings:
+      callbacks: ["prometheus"] # expose /metrics on the proxy port for the ServiceMonitor
       drop_params: true # strip OpenAI params a backend doesn't support instead of 400ing
       request_timeout: 600 # match the proxy/ollama timeout budget end-to-end
       num_retries: 2 # retry transient backend failures before surfacing to the client
