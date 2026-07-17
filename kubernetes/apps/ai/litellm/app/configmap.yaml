@@ -29,3 +29,7 @@ data:
       fallbacks:
         - qwen2.5:14b: ["qwen2.5:14b-pc"]
         - qwen3.5:9b-json: ["qwen3.5:9b-json-pc"]
+        # interactive chat (3080Ti 35b-a3b) degrades to the B580 9b when the
+        # pc is busy/down, instead of stalling. research-deep gets no auto
+        # fallback (gpt-oss:120b escalation is deliberate-invoke only).
+        - qwen3.6:35b-a3b: ["chat-fast"]
