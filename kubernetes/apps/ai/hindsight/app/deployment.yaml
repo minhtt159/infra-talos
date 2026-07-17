@@ -59,9 +59,10 @@ spec:
               # alias pins think:false on the litellm deployment.
               value: qwen3.5:9b-json
             # reflect runs at temp 0.9 ("thinking") and tolerates thinking
-            # models — bigger MoE model here; other ops keep the global default.
+            # models. r1:14b (9GB) fits the 3080ti's 12GB VRAM fully — far
+            # faster than the 24GB 35b-a3b MoE thrashing to system RAM.
             - name: HINDSIGHT_API_REFLECT_LLM_MODEL
-              value: qwen3.6:35b-a3b
+              value: deepseek-r1:14b
           ports:
             - name: api # REST + MCP
               containerPort: 8888
