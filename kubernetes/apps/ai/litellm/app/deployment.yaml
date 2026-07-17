@@ -24,13 +24,14 @@ spec:
     spec:
       automountServiceAccountToken: false
       initContainers:
-        # Migration guard: prisma migrate deploy silently falls back to `db push`
-        # on failure, so a wedged migration (P3009) stays invisible while the app
-        # keeps serving on a drifting schema. This makes it loud — refuse to start
-        # if a migration is in the failed state, turning it into a CrashLoop the
-        # existing kube-prometheus-stack KubePodCrashLooping alert catches.
-        # Pending (not failed) migrations pass through; the app applies them.
-        - name: migration-guard
+        # Single source of DB migrations (upstream's production pattern). The app
+        # container has DISABLE_SCHEMA_UPDATE=true, so it never touches the schema
+        # — otherwise litellm's entrypoint reconciles drift via `prisma db push`
+        # on every boot, which silently masked a wedged migration (P3009) while
+        # serving on a drifting schema. Here `migrate deploy` is the only writer:
+        # it applies pending migrations and, on a failed one, exits non-zero →
+        # CrashLoop the kube-prometheus-stack KubePodCrashLooping alert catches.
+        - name: db-migrate
           image: &image ghcr.io/berriai/litellm-database:v1.92.0
           envFrom:
             - secretRef:
@@ -39,18 +40,13 @@ spec:
           args:
             - |
               cd /app/.venv/lib/python*/site-packages/litellm_proxy_extras
-              out=$(python -m prisma migrate status 2>&1) || true
-              printf '%s\n' "$out"
-              if printf '%s' "$out" | grep -qiE 'have failed|P3009'; then
-                echo 'FATAL: failed prisma migration present, refusing to start. See https://pris.ly/d/migrate-resolve'
-                exit 1
-              fi
+              exec python -m prisma migrate deploy
           resources:
             requests:
               cpu: 50m
               memory: 256Mi
             # prisma's node schema engine spikes well past 256Mi; less OOM-kills
-            # the guard into a CrashLoop before it can check anything.
+            # the migrator into a CrashLoop before it can apply anything.
             limits:
               memory: 1Gi
           securityContext:
@@ -68,12 +64,17 @@ spec:
                 name: litellm-config # DATABASE_URL
             - secretRef:
                 name: litellm-auth # LITELLM_MASTER_KEY
+          env:
+            # the db-migrate initContainer owns migrations; keep the serving pod
+            # from running prisma db push / diff-reconcile on every boot.
+            - name: DISABLE_SCHEMA_UPDATE
+              value: "true"
           ports:
             - name: http
               containerPort: 4000
-          # entrypoint runs prisma migrate before serving — can take minutes.
-          # startupProbe carries that window (30×10s = 5min) so the tight
-          # liveness probe doesn't kill the pod mid-migration.
+          # migrations run in the db-migrate initContainer, but first boot can
+          # still be slow (model load, cache warm). startupProbe carries that
+          # window (30×10s = 5min) so the tight liveness probe doesn't kill it.
           startupProbe:
             httpGet:
               path: /health/readiness
