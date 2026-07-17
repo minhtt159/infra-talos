@@ -58,11 +58,12 @@ spec:
               # thinking models break JSON extraction (empty content) — this
               # alias pins think:false on the litellm deployment.
               value: qwen3.5:9b-json
-            # gemma4:12b-it-qat (7.2GB QAT, Apache 2.0): English-native, fits
-            # the 3080ti's 12GB fully with q8 KV. Replaces deepseek-r1:14b,
-            # whose R1-distill lineage leaked Chinese into reflect output.
+            # gemma4:26b-a4b-it-qat: MoE (4B active) — wins every EQ-Bench/LMArena
+            # board vs the 12b for synthesis, spills to the pc's 96GB RAM for free
+            # (reflect is night-batch, latency-tolerant). English-native. Replaced
+            # gemma4:12b-it-qat (2026-07-18, rigorous-board re-validation).
             - name: HINDSIGHT_API_REFLECT_LLM_MODEL
-              value: gemma4:12b-it-qat
+              value: gemma4:26b-a4b-it-qat
           ports:
             - name: api # REST + MCP
               containerPort: 8888

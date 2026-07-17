@@ -26,10 +26,12 @@ data:
       # hidden); this map wires the client-facing name to its overflow pool.
       # Endpoints stay in the DB (topology out of this public repo); only the
       # routing policy lives here. Add a line per model that has a `-pc` twin.
+      # qwen2.5:14b and qwen3.5:9b-json are now single-name model GROUPS spanning
+      # both ollama servers (B580 weight 4 + pc weight 1) — litellm auto-routes,
+      # leaning in-cluster and spilling to pc when the B580 slot is busy. So they
+      # no longer need explicit `-pc` fallbacks (the group self-handles it).
       fallbacks:
-        - qwen2.5:14b: ["qwen2.5:14b-pc"]
-        - qwen3.5:9b-json: ["qwen3.5:9b-json-pc"]
-        # interactive chat (3080Ti 35b-a3b) degrades to the B580 9b when the
-        # pc is busy/down, instead of stalling. research-deep gets no auto
-        # fallback (gpt-oss:120b escalation is deliberate-invoke only).
+        # interactive chat (3080Ti 35b-a3b, pc-only) degrades to the B580 9b
+        # (chat-fast) when the pc is busy/down. research-deep gets no auto
+        # fallback (gpt-oss/qwen-122b escalation is deliberate-invoke only).
         - qwen3.6:35b-a3b: ["chat-fast"]
