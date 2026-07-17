@@ -20,3 +20,12 @@ data:
       request_timeout: 600 # match the proxy/ollama timeout budget end-to-end
       num_retries: 2 # retry transient backend failures before surfacing to the client
       json_logs: true # structured logs for the observability stack
+      # Prefer the in-cluster B580 (1 concurrent), spill to ollama-pc / 3080ti
+      # (2 concurrent) only when the primary is busy or failing. Primary and
+      # fallback are separate deployments in the DB (the `-pc` entries are
+      # hidden); this map wires the client-facing name to its overflow pool.
+      # Endpoints stay in the DB (topology out of this public repo); only the
+      # routing policy lives here. Add a line per model that has a `-pc` twin.
+      fallbacks:
+        - qwen2.5:14b: ["qwen2.5:14b-pc"]
+        - qwen3.5:9b-json: ["qwen3.5:9b-json-pc"]
