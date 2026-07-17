@@ -48,9 +48,11 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
-            limits:
               memory: 256Mi
+            # prisma's node schema engine spikes well past 256Mi; less OOM-kills
+            # the guard into a CrashLoop before it can check anything.
+            limits:
+              memory: 1Gi
           securityContext:
             allowPrivilegeEscalation: false
             seccompProfile:
