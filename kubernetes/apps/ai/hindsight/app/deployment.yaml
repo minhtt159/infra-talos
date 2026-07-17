@@ -58,12 +58,12 @@ spec:
               # thinking models break JSON extraction (empty content) — this
               # alias pins think:false on the litellm deployment.
               value: qwen3.5:9b-json
-            # gemma4:26b-a4b-it-qat: MoE (4B active) — wins every EQ-Bench/LMArena
-            # board vs the 12b for synthesis, spills to the pc's 96GB RAM for free
-            # (reflect is night-batch, latency-tolerant). English-native. Replaced
-            # gemma4:12b-it-qat (2026-07-18, rigorous-board re-validation).
+            # qwen3.6:35b-a3b: reuses the chat+research model (already resident on
+            # the 3080Ti) — so reflect adds NO separate model and NO 3080Ti swap.
+            # On-task benchmark (bank0 mental model) it gave the deepest, faithful,
+            # English-clean synthesis; ~56s is fine for night-batch reflect.
             - name: HINDSIGHT_API_REFLECT_LLM_MODEL
-              value: gemma4:26b-a4b-it-qat
+              value: qwen3.6:35b-a3b
           ports:
             - name: api # REST + MCP
               containerPort: 8888
