@@ -42,9 +42,12 @@ spec:
                   failureThreshold: 3
               readiness: *probes
             securityContext:
-              # root (steel needs Xvfb/dbus) but no caps, no priv-esc.
+              # root (Xvfb/dbus + nginx front). Drop ALL, add back only the caps
+              # nginx-as-root needs to set up its dirs + drop to the worker user.
               allowPrivilegeEscalation: false
-              capabilities: { drop: ["ALL"] }
+              capabilities:
+                drop: ["ALL"]
+                add: ["CHOWN", "SETGID", "SETUID", "DAC_OVERRIDE", "NET_BIND_SERVICE"]
               seccompProfile:
                 type: RuntimeDefault
             resources:
@@ -75,8 +78,11 @@ spec:
                   failureThreshold: 3
               readiness: *uprobes
             securityContext:
+              # nginx-as-root: same minimal cap set as api.
               allowPrivilegeEscalation: false
-              capabilities: { drop: ["ALL"] }
+              capabilities:
+                drop: ["ALL"]
+                add: ["CHOWN", "SETGID", "SETUID", "DAC_OVERRIDE", "NET_BIND_SERVICE"]
               seccompProfile:
                 type: RuntimeDefault
             resources:
