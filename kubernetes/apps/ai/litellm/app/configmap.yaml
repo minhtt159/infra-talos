@@ -1,8 +1,7 @@
 ---
-# LiteLLM proxy config. Deliberately holds no model_list / backends — models and
-# their endpoints are added through the admin UI and persisted in the CNPG
-# `litellm` database (store_model_in_db). Keeps GPU/backend topology out of this
-# public repo.
+# LiteLLM proxy config. No model_list here — models, endpoints, routing, pricing
+# all live in the CNPG `litellm` DB (store_model_in_db). Keeps topology out of
+# this public repo. Ops detail: homelab-platform/litellm-ops-notes.md.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -11,27 +10,16 @@ data:
   config.yaml: |
     general_settings:
       store_model_in_db: true
-      store_prompts_in_spend_logs: true # request/response bodies in UI Logs (debugging)
-      maximum_spend_logs_retention_period: "30d" # else the spend-logs table grows forever
-      allow_requests_on_db_unavailable: true # CNPG restart != LLM outage (keys served from cache)
+      store_prompts_in_spend_logs: true # log req/resp bodies
+      maximum_spend_logs_retention_period: "30d" # cap table growth
+      allow_requests_on_db_unavailable: true # DB restart != LLM outage
     litellm_settings:
-      callbacks: ["prometheus"] # expose /metrics on the proxy port for the ServiceMonitor
-      drop_params: true # strip OpenAI params a backend doesn't support instead of 400ing
-      request_timeout: 600 # match the proxy/ollama timeout budget end-to-end
-      num_retries: 2 # retry transient backend failures before surfacing to the client
-      json_logs: true # structured logs for the observability stack
-      # Prefer the in-cluster B580 (1 concurrent), spill to ollama-pc / 3080ti
-      # (2 concurrent) only when the primary is busy or failing. Primary and
-      # fallback are separate deployments in the DB (the `-pc` entries are
-      # hidden); this map wires the client-facing name to its overflow pool.
-      # Endpoints stay in the DB (topology out of this public repo); only the
-      # routing policy lives here. Add a line per model that has a `-pc` twin.
-      # qwen2.5:14b and qwen3.5:9b-json are now single-name model GROUPS spanning
-      # both ollama servers (B580 weight 4 + pc weight 1) — litellm auto-routes,
-      # leaning in-cluster and spilling to pc when the B580 slot is busy. So they
-      # no longer need explicit `-pc` fallbacks (the group self-handles it).
+      callbacks: ["prometheus"] # /metrics for the ServiceMonitor
+      drop_params: true # drop unsupported params, don't 400
+      request_timeout: 600 # ollama budget
+      num_retries: 2 # retry transient fails
+      json_logs: true
+      # shared models are DB model-groups spanning both ollama servers — litellm
+      # auto-routes (B580-weighted, spills to pc). only cross-model fallback here:
       fallbacks:
-        # interactive chat (3080Ti 35b-a3b, pc-only) degrades to the B580 9b
-        # (chat-fast) when the pc is busy/down. research-deep gets no auto
-        # fallback (gpt-oss/qwen-122b escalation is deliberate-invoke only).
-        - qwen3.6:35b-a3b: ["chat-fast"]
+        - qwen3.6:35b-a3b: ["chat-fast"] # chat -> B580 9b when pc busy/down
