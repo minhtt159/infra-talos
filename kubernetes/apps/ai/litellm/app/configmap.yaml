@@ -20,18 +20,26 @@ data:
       request_timeout: 600 # match the proxy/ollama timeout budget end-to-end
       num_retries: 2 # retry transient backend failures before surfacing to the client
       json_logs: true # structured logs for the observability stack
-      # Prefer the in-cluster B580 (1 concurrent), spill to ollama-pc / 3080ti
-      # (2 concurrent) only when the primary is busy or failing. Primary and
-      # fallback are separate deployments in the DB (the `-pc` entries are
-      # hidden); this map wires the client-facing name to its overflow pool.
-      # Endpoints stay in the DB (topology out of this public repo); only the
-      # routing policy lives here. Add a line per model that has a `-pc` twin.
-      # qwen2.5:14b and qwen3.5:9b-json are now single-name model GROUPS spanning
-      # both ollama servers (B580 weight 4 + pc weight 1) — litellm auto-routes,
-      # leaning in-cluster and spilling to pc when the B580 slot is busy. So they
-      # no longer need explicit `-pc` fallbacks (the group self-handles it).
+      # Routing lives in the DB (endpoints out of this public repo). Shared
+      # models are single-name GROUPS across both ollama servers (B580 weight 4
+      # + pc weight 1) — litellm auto-routes, leaning in-cluster and spilling to
+      # pc when the B580 slot is busy; no explicit `-pc` fallback needed. Only
+      # cross-model fallbacks (a *different* model on failure) live here:
       fallbacks:
         # interactive chat (3080Ti 35b-a3b, pc-only) degrades to the B580 9b
         # (chat-fast) when the pc is busy/down. research-deep gets no auto
-        # fallback (gpt-oss/qwen-122b escalation is deliberate-invoke only).
+        # fallback (qwen3.5:122b-a10b escalation is deliberate-invoke only).
         - qwen3.6:35b-a3b: ["chat-fast"]
+      # Auto model-switch by prompt size: a request too big for chat-fast's
+      # 16k window (e.g. a big Hindsight-context Telegram turn) auto-escalates
+      # to qwen3.6:35b-a3b (32k). Per-deployment max_input_tokens live in the DB;
+      # pricing (input/output_cost_per_token) is set from BerriAI's
+      # model_prices_and_context_window.json (nearest hosted equivalent) so
+      # spend + these context checks reflect reality.
+      context_window_fallbacks:
+        - chat-fast: ["qwen3.6:35b-a3b"]
+    router_settings:
+      # pre-count prompt tokens vs each deployment's max_input_tokens and route
+      # accordingly — required for context_window_fallbacks to fire (ollama would
+      # otherwise silently truncate instead of erroring).
+      enable_pre_call_checks: true
