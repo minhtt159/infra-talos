@@ -95,5 +95,18 @@ spec:
                 path: /dev/stdout
     metrics:
       prometheus:
+        # Gzip not Zstd: Prometheus only sends Accept-Encoding: gzip, so a
+        # zstd-only response never compresses — it negotiates to identity.
         compression:
-          type: Zstd
+          type: Gzip
+    # ── tier-3 scaffold: distributed tracing (disabled) ──────────────────
+    # Uncomment once an OTel collector exists in-cluster. Sampling low on the
+    # public edge; x-request-id already links traces to the ECS access logs.
+    # tracing:
+    #   samplingRate: 5
+    #   provider:
+    #     type: OpenTelemetry
+    #     backendRefs:
+    #       - name: otel-collector
+    #         namespace: observability
+    #         port: 4317

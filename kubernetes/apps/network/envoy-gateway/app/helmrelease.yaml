@@ -19,9 +19,14 @@ spec:
           kubernetes:
             deploy:
               type: GatewayNamespace
+        # EnvoyPatchPolicy: the only way to inject a gateway-wide response
+        # header (HSTS) in EG — no native Gateway-API field for it.
+        # Consumed by gateway/envoypatchpolicy.yaml.
+        extensionApis:
+          enableEnvoyPatchPolicy: true
         # Global rate limiting: controller deploys envoy-ratelimit once a
         # backend is configured; counters in Valkey, shared across replicas.
-        # Consumed by gateway/ratelimit.yaml (BackendTrafficPolicy).
+        # Consumed by gateway/backendtrafficpolicy.yaml.
         rateLimit:
           backend:
             type: Redis

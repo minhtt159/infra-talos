@@ -1,0 +1,51 @@
+---
+# Client-IP trust differs by edge shape, so each gateway gets its own
+# ClientTrafficPolicy (one attaches per gateway). Everything except
+# clientIPDetection + connectionLimit is duplicated — KEEP IN SYNC with
+# ../internal/clienttrafficpolicy.yaml.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/clienttrafficpolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: envoy-external
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-external
+  # cloudflared sits in front → trust exactly one XFF hop for the real client
+  # IP (feeds source.ip logging + the per-IP rate-limit key).
+  clientIPDetection:
+    xForwardedFor:
+      numTrustedHops: 1
+  connection:
+    bufferLimit: 8Mi
+    maxAcceptPerSocketEvent: 0
+    # Absolute concurrent-connection ceiling per proxy replica. With the 8Mi
+    # buffer, ~120 fully-buffering conns exhaust the 1Gi limit; 100 keeps
+    # worst-case buffering under it while staying way above real cloudflared-
+    # fronted concurrency. Raise if legit clients get connection-refused.
+    connectionLimit:
+      value: 100
+      closeDelay: 1s
+  http2:
+    initialStreamWindowSize: 2Mi
+    initialConnectionWindowSize: 32Mi
+    onInvalidMessage: TerminateStream
+    # Cap concurrent streams per connection — bounds HTTP/2 Rapid Reset
+    # (CVE-2023-44487) stream-churn abuse. 100 is Envoy's own default; set
+    # explicit so it can't drift.
+    maxConcurrentStreams: 100
+  http3: {}
+  tcpKeepalive: {}
+  timeout:
+    http:
+      # Slowloris protection: full request (headers+body) within this
+      # window. Generous on purpose — tighten
+      # after watching real upload patterns.
+      requestReceivedTimeout: 30s
+  tls:
+    minVersion: "1.3"
+    alpnProtocols:
+      - h2
+      - http/1.1

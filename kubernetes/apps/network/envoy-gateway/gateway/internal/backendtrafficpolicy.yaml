@@ -1,0 +1,50 @@
+---
+# See ../external/backendtrafficpolicy.yaml — KEEP IN SYNC (common blocks).
+# Internal stays unmetered: rate-limiting it risks throttling Grafana/Kibana
+# during an incident.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: envoy-internal
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-internal
+  compressor:
+    - type: Brotli
+    - type: Gzip
+    - type: Zstd
+  connection:
+    bufferLimit: 8Mi
+  tcpKeepalive: {}
+  # Resilience block — keep in sync with ../external.
+  circuitBreaker:
+    maxConnections: 1024
+    maxPendingRequests: 256
+    maxParallelRequests: 1024
+    maxParallelRetries: 10
+  healthCheck:
+    passive:
+      interval: 10s
+      consecutive5XxErrors: 5
+      consecutiveGatewayErrors: 5
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+  retry:
+    numRetries: 2
+    retryOn:
+      triggers:
+        - connect-failure
+        - refused-stream
+        - reset
+    perRetry:
+      backOff:
+        baseInterval: 100ms
+        maxInterval: 1s
+  timeout:
+    http:
+      # unmetered: internal carries LLM token streams (ollama/litellm) that
+      # legitimately hold a response open for minutes.
+      requestTimeout: 0s

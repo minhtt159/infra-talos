@@ -7,16 +7,12 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/target: &hostname external.${SECRET_DOMAIN}
 spec:
-  gatewayClassName: envoy
+  # class envoy-external → EnvoyProxy envoy-external-proxy (ECS logs, WAF).
+  gatewayClassName: envoy-external
   infrastructure:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: *hostname
       lbipam.cilium.io/ips: "10.1.80.12"
-    # dedicated proxy template: ECS access logs, isolated from internal
-    parametersRef:
-      group: gateway.envoyproxy.io
-      kind: EnvoyProxy
-      name: envoy-external-proxy
   listeners:
     - name: http
       protocol: HTTP

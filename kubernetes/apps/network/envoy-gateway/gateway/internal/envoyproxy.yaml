@@ -1,9 +1,12 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/envoyproxy_v1alpha1.json
+# Proxy template for the INTERNAL gateway (via GatewayClass envoy-internal).
+# No access logs here — the external gateway's proxy (../external/envoyproxy.yaml)
+# emits ECS JSON logs; internal is LAN-only and quiet.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
-  name: envoy
+  name: envoy-internal-proxy
 spec:
   logging:
     level:
@@ -51,9 +54,8 @@ spec:
   shutdown:
     drainTimeout: 180s
   telemetry:
-    # No access logs on the shared/internal template — the external gateway
-    # has its own EnvoyProxy (envoyproxy-external.yaml) with ECS JSON logs.
     metrics:
       prometheus:
+        # Gzip not Zstd: Prometheus only sends Accept-Encoding: gzip.
         compression:
-          type: Zstd
+          type: Gzip
