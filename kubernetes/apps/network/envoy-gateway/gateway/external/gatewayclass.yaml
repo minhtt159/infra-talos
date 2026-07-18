@@ -1,13 +1,16 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/gatewayclass_v1.json
+# One GatewayClass per gateway (same controller, different proxy template) so
+# each Gateway names its own class — no per-Gateway infrastructure.parametersRef
+# override, no implicit inheritance.
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: envoy
+  name: envoy-external
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
   parametersRef:
     group: gateway.envoyproxy.io
     kind: EnvoyProxy
-    name: envoy
+    name: envoy-external-proxy
     namespace: network
