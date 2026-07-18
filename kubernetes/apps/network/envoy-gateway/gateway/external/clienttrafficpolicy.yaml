@@ -13,6 +13,13 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: envoy-external
+  # HSTS as a native late response header — replaces the EnvoyPatchPolicy
+  # (no extensionApi, no controller restart, no fragile xDS route-config name).
+  headers:
+    lateResponseHeaders:
+      set:
+        - name: Strict-Transport-Security
+          value: "max-age=31536000; includeSubDomains"
   # cloudflared sits in front → trust exactly one XFF hop for the real client
   # IP (feeds source.ip logging + the per-IP rate-limit key).
   clientIPDetection:

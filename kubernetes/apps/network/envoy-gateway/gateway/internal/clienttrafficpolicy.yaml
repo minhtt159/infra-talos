@@ -11,6 +11,12 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: envoy-internal
+  # HSTS as a native late response header (see ../external for rationale).
+  headers:
+    lateResponseHeaders:
+      set:
+        - name: Strict-Transport-Security
+          value: "max-age=31536000; includeSubDomains"
   # No proxy in front on the LAN — the connection remote address IS the real
   # client. Omit XFF trust entirely so a LAN client can't forge source.ip by
   # sending its own X-Forwarded-For.
