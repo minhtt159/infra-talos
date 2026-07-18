@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: _
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  labels:
+    # steel-browser runs as root (Xvfb/dbus/nginx) → baseline, not restricted.
+    # Bounded by no-SA-token + egress-lockdown NetworkPolicy + dropped caps.
+    pod-security.kubernetes.io/enforce: baseline
