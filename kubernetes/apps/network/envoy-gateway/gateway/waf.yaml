@@ -1,8 +1,9 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/envoyextensionpolicy_v1alpha1.json
 # Coraza WAF (ModSecurity-compatible) as a Wasm
-# filter on the EXTERNAL gateway. Stage 1 = DetectionOnly: log matches,
-# block nothing. Flip to "SecRuleEngine On" after tuning false positives.
+# filter on the EXTERNAL gateway. Enforcing (SecRuleEngine On) since
+# 2026-07: 8 days of DetectionOnly showed zero matches outside the flux
+# webhook FPs carved out below.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyExtensionPolicy
 metadata:
@@ -29,7 +30,7 @@ spec:
         directives_map:
           default:
             - Include @recommended-conf
-            - SecRuleEngine DetectionOnly
+            - SecRuleEngine On
             - Include @crs-setup-conf
             - Include @owasp_crs/*.conf
             # Request-side inspection only: response body inspection breaks
@@ -37,7 +38,13 @@ spec:
             # buffers responses. Must come AFTER the includes to override
             # @recommended-conf's SecResponseBodyAccess On.
             - SecResponseBodyAccess Off
+          # GitHub push payloads trip CRS SQLI rules (942140/151/190 →
+          # anomaly 949110) on commit-message text ("database", …) — every
+          # DetectionOnly match ever logged was this. The receiver already
+          # HMAC-verifies the payload (X-Hub-Signature), inspection adds
+          # nothing there.
+          flux-webhook:
+            - SecRuleEngine Off
         default_directives: default
-        # Per-host tuning if one app needs different rules:
-        # per_authority_directives:
-        #   grafana.example.com: relaxed
+        per_authority_directives:
+          flux-webhook.${SECRET_DOMAIN}: flux-webhook

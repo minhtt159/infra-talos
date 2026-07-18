@@ -5,11 +5,14 @@
 # here never roll the internal proxy.
 #
 # Access logs: ECS field names emitted straight from Envoy — dotted JSON
-# keys land in Elasticsearch as proper ECS objects, so the shipper
-# (fluent-bit) forwards as-is with no rename pipeline. Envoy-specific
-# telemetry that has no clean ECS home lives under the `envoy.*` namespace.
-# Cookie header deliberately dropped (PII). Numeric operators (%DURATION%,
-# %BYTES_*%, %RESPONSE_CODE%) emit as JSON numbers.
+# keys land in Elasticsearch as proper ECS objects. fluent-bit parses the
+# line under app.* (Merge_Log_Key), retags on event.dataset, and lifts the
+# keys back to the doc root for the logs-envoy template. @timestamp is
+# owned by fluent-bit's es output (CRI record time); Envoy's %START_TIME%
+# ships as ECS event.start. Envoy-specific telemetry with no clean ECS
+# home lives under the `envoy.*` namespace. Cookie header deliberately
+# dropped (PII). Numeric operators (%DURATION%, %BYTES_*%,
+# %RESPONSE_CODE%) emit as JSON numbers.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
@@ -17,7 +20,10 @@ metadata:
 spec:
   logging:
     level:
-      default: info
+      # warn (EG default): silences coraza-wasm per-request info chatter
+      # (was outvolumining access logs ~2:1). Coraza rule MATCHES log at
+      # error and survive.
+      default: warn
   provider:
     type: Kubernetes
     kubernetes:
@@ -52,7 +58,10 @@ spec:
             type: JSON
             json:
               # ── ECS core ────────────────────────────────────────────
-              "@timestamp": "%START_TIME%"
+              # NOT @timestamp: fluent-bit's es output injects that from the
+              # CRI record time; a root @timestamp here would duplicate the
+              # key after the lift filter and get the bulk request rejected.
+              event.start: "%START_TIME%"
               event.dataset: envoy.access
               # client
               source.ip: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%" # real client via XFF (numTrustedHops)
