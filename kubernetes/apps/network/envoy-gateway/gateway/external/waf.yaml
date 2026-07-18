@@ -38,6 +38,14 @@ spec:
             # buffers responses. Must come AFTER the includes to override
             # @recommended-conf's SecResponseBodyAccess On.
             - SecResponseBodyAccess Off
+            # Body limits aligned to Cloudflare's 100MB Free/Pro upload cap
+            # (CF rejects larger at the edge before it reaches us — bump both
+            # if you move to Business/Enterprise). ProcessPartial: inspect up
+            # to the limit, then pass rather than 413 a legit large upload.
+            # NoFilesLimit keeps non-upload bodies (JSON/form) fully inspected.
+            - SecRequestBodyLimit 104857600
+            - SecRequestBodyNoFilesLimit 1048576
+            - SecRequestBodyLimitAction ProcessPartial
           # GitHub push payloads trip CRS SQLI rules (942140/151/190 →
           # anomaly 949110) on commit-message text ("database", …) — every
           # DetectionOnly match ever logged was this. The receiver already
