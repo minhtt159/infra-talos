@@ -6,3 +6,4 @@ namespace: research
 resources:
   - ./namespace.yaml
   - ./searxng/ks.yaml
+  - ./browserless/ks.yaml

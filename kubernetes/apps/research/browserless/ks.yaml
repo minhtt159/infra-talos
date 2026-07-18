@@ -6,7 +6,7 @@ metadata:
   name: browserless
 spec:
   interval: 1h
-  path: ./kubernetes/apps/research-browser/browserless/app
+  path: ./kubernetes/apps/research/browserless/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
@@ -16,5 +16,5 @@ spec:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: research-browser
+  targetNamespace: research
   wait: false
