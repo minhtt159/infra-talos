@@ -2,13 +2,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./envoy.yaml
-  - ./envoyproxy-external.yaml
+  # per-gateway config
+  - ./external
+  - ./internal
+  # shared by both gateways
   - ./gatewayclass.yaml
-  - ./envoyexternal.yaml
-  - ./envoyinternal.yaml
-  - ./backendtrafficpolicy.yaml
-  - ./clienttrafficpolicy.yaml
+  - ./envoy.yaml # GatewayClass default EnvoyProxy — internal inherits it
   - ./httpredirect.yaml
-  - ./waf.yaml
-  - ./envoypatchpolicy.yaml

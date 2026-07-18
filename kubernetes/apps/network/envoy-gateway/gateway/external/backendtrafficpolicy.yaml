@@ -1,31 +1,8 @@
 ---
-# Envoy Gateway attaches at most ONE BackendTrafficPolicy per Gateway (no
-# merge) — so the common settings are per-gateway, not a shared all-gateways
-# policy. The external policy adds the rate limit; internal stays unmetered
-# (rate-limiting it risks throttling Grafana/Kibana during an incident).
-# The common blocks below are duplicated by necessity — keep the two in sync.
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: BackendTrafficPolicy
-metadata:
-  name: envoy-internal
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: envoy-internal
-  compressor:
-    - type: Brotli
-    - type: Gzip
-    - type: Zstd
-  connection:
-    bufferLimit: 8Mi
-  tcpKeepalive: {}
-  timeout:
-    http:
-      # unmetered: internal carries LLM token streams (ollama/litellm) that
-      # legitimately hold a response open for minutes.
-      requestTimeout: 0s
----
+# One BackendTrafficPolicy per gateway (EG attaches at most one, no merge).
+# Compression + connection settings are duplicated — KEEP IN SYNC with
+# ../internal/backendtrafficpolicy.yaml. External-only: the global rate limit.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
@@ -35,7 +12,7 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: envoy-external
-  # --- common (keep in sync with envoy-internal) ---
+  # --- common (keep in sync with ../internal) ---
   compressor:
     - type: Brotli
     - type: Gzip
