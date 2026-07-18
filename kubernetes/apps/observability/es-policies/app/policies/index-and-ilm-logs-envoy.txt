@@ -77,7 +77,13 @@ PUT _index_template/logs-envoy_template
           }
         },
         "user_agent": { "properties": { "original": { "type": "keyword" } } },
-        "tls": { "properties": { "cipher": { "type": "keyword" } } },
+        "tls": {
+          "properties": {
+            "cipher": { "type": "keyword" },
+            "client": { "properties": { "server_name": { "type": "keyword" } } }
+          }
+        },
+        "observer": { "properties": { "name": { "type": "keyword" } } },
         "event": {
           "properties": {
             "dataset": { "type": "keyword" },
@@ -88,6 +94,8 @@ PUT _index_template/logs-envoy_template
           "properties": {
             "duration_ms": { "type": "long" },
             "upstream_ms": { "type": "long", "ignore_malformed": true },
+            "request_ms": { "type": "long", "ignore_malformed": true },
+            "response_tx_ms": { "type": "long", "ignore_malformed": true },
             "protocol": { "type": "keyword" },
             "response_flags": { "type": "keyword" },
             "response_code_details": { "type": "keyword" },
