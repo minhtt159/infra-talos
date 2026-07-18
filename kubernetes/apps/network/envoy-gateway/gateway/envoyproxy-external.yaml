@@ -95,5 +95,7 @@ spec:
                 path: /dev/stdout
     metrics:
       prometheus:
+        # Gzip not Zstd: Prometheus only sends Accept-Encoding: gzip, so a
+        # zstd-only response never compresses — it negotiates to identity.
         compression:
-          type: Zstd
+          type: Gzip

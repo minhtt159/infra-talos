@@ -26,6 +26,11 @@ metadata:
   name: envoy-gateway
 spec:
   interval: 1h
+  # GatewayClass/EnvoyProxy/policies need the controller + its CRDs from the
+  # app HelmRelease first — on a fresh bootstrap this ks hard-fails until the
+  # app one reconciles.
+  dependsOn:
+    - name: envoy
   path: ./kubernetes/apps/network/envoy-gateway/gateway
   postBuild:
     substituteFrom:

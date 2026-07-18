@@ -1,13 +1,63 @@
 ---
+# Split per gateway: client-IP trust differs by edge shape and can't be
+# expressed per-target in a single kind-selected policy. Everything else is
+# duplicated by necessity (one CTP per gateway) — KEEP THE TWO IN SYNC.
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/clienttrafficpolicy_v1alpha1.json
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: ClientTrafficPolicy
 metadata:
-  name: envoy
+  name: envoy-external
 spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-external
+  # cloudflared sits in front → trust exactly one XFF hop for the real client
+  # IP (feeds source.ip logging + the per-IP rate-limit key).
   clientIPDetection:
     xForwardedFor:
       numTrustedHops: 1
+  connection:
+    bufferLimit: 8Mi
+    maxAcceptPerSocketEvent: 0
+    # Absolute concurrent-connection ceiling per proxy replica. With the 8Mi
+    # buffer, ~120 fully-buffering conns exhaust the 1Gi limit; 100 keeps
+    # worst-case buffering under it while staying way above real cloudflared-
+    # fronted concurrency. Raise if legit clients get connection-refused.
+    connectionLimit:
+      value: 100
+      closeDelay: 1s
+  http2:
+    initialStreamWindowSize: 2Mi
+    initialConnectionWindowSize: 32Mi
+    onInvalidMessage: TerminateStream
+  http3: {}
+  tcpKeepalive: {}
+  timeout:
+    http:
+      # Slowloris protection: full request (headers+body) within this
+      # window. Generous on purpose — tighten
+      # after watching real upload patterns.
+      requestReceivedTimeout: 30s
+  tls:
+    minVersion: "1.2"
+    alpnProtocols:
+      - h2
+      - http/1.1
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: envoy-internal
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-internal
+  # No proxy in front on the LAN — the connection remote address IS the real
+  # client. Omit XFF trust entirely so a LAN client can't forge source.ip by
+  # sending its own X-Forwarded-For.
+  # --- common (keep in sync with envoy-external, minus connectionLimit) ---
   connection:
     bufferLimit: 8Mi
     maxAcceptPerSocketEvent: 0
@@ -16,15 +66,9 @@ spec:
     initialConnectionWindowSize: 32Mi
     onInvalidMessage: TerminateStream
   http3: {}
-  targetSelectors:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
   tcpKeepalive: {}
   timeout:
     http:
-      # Slowloris protection: full request (headers+body) within this
-      # window. Generous on purpose — tighten
-      # after watching real upload patterns.
       requestReceivedTimeout: 30s
   tls:
     minVersion: "1.2"

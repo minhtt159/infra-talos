@@ -13,7 +13,7 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: envoy-internal
-  compression:
+  compressor:
     - type: Brotli
     - type: Gzip
     - type: Zstd
@@ -22,6 +22,8 @@ spec:
   tcpKeepalive: {}
   timeout:
     http:
+      # unmetered: internal carries LLM token streams (ollama/litellm) that
+      # legitimately hold a response open for minutes.
       requestTimeout: 0s
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -34,7 +36,7 @@ spec:
       kind: Gateway
       name: envoy-external
   # --- common (keep in sync with envoy-internal) ---
-  compression:
+  compressor:
     - type: Brotli
     - type: Gzip
     - type: Zstd
@@ -43,7 +45,11 @@ spec:
   tcpKeepalive: {}
   timeout:
     http:
-      requestTimeout: 0s
+      # Finite upstream timeout on the internet-facing edge: a hung backend
+      # otherwise ties up a connection until Envoy's 5m stream-idle default.
+      # No streaming routes ride external. Scope a per-route 0s BTP if one
+      # ever does.
+      requestTimeout: 300s
   # --- external-only: global rate limit ---
   # 3000 req/min (~50 rps) per distinct client IP — flood protection, not a
   # usage budget. Behind cloudflared the client IP comes from XFF
