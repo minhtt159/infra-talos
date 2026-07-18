@@ -1,0 +1,36 @@
+---
+# UI console — session list, live view, replay.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: steel-ui
+spec:
+  hostnames:
+    - "steel.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-internal
+      namespace: network
+      sectionName: https
+  rules:
+    - backendRefs:
+        - name: steel-ui
+          port: 80
+---
+# API + CDP WebSocket (browserWSEndpoint). Hermes + Playwright connect here.
+# WS upgrade is on by default in Envoy Gateway. If long CDP sessions get cut,
+# add a BackendTrafficPolicy raising the stream idle timeout.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: steel-api
+spec:
+  hostnames:
+    - "steel-api.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-internal
+      namespace: network
+      sectionName: https
+  rules:
+    - backendRefs:
+        - name: steel-api
+          port: 3000

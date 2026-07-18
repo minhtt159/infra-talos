@@ -1,0 +1,61 @@
+---
+# steel drives a real browser to arbitrary internet sites → treat as hostile.
+# Egress: DNS + public internet + in-cluster searxng ONLY. Denies every
+# RFC1918 range → no reaching k8s API, other apps, the LAN, or cloud metadata.
+# Ingress: gateway (network ns) + same-ns (ui→api) only.
+# Plain NetworkPolicy, enforced by Cilium.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: steel-egress-lockdown
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: steel
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # gateway (envoy-internal) → ui:80 + api:3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+    # ui → api, same namespace
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: steel
+  egress:
+    # cluster DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # in-cluster searxng (research ns)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: research
+      ports:
+        - protocol: TCP
+          port: 8080
+    # public internet only — every private range excluded
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
