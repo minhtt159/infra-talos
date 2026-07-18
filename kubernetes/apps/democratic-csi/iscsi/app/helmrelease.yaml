@@ -47,7 +47,21 @@ spec:
           detachedSnapshots: "true"
 
     controller:
+      # chart defaults sidecars to --v=5, which floods logs with per-5s
+      # "successfully renewed lease" + reflector watch-close noise. v=2 keeps
+      # provision/attach/resize/error events. Driver's own log is unaffected.
+      externalAttacher:
+        verbosityLevel: 2
+      externalProvisioner:
+        verbosityLevel: 2
+      externalResizer:
+        verbosityLevel: 2
+      externalSnapshotter:
+        verbosityLevel: 2
       driver:
+        # warn: silences per-60s Probe (liveness) + NodeGetVolumeStats shell-exec
+        # traces (findmnt/df/lsblk) logged at info. Keeps warnings + errors.
+        logLevel: warn
         image: &image
           registry: ghcr.io/democratic-csi/democratic-csi
           tag: next
@@ -56,7 +70,10 @@ spec:
         image: *image
     node:
       hostPID: true
+      driverRegistrar:
+        verbosityLevel: 2
       driver:
+        logLevel: warn
         image: *image
         extraEnv:
           - name: ISCSIADM_HOST_STRATEGY
