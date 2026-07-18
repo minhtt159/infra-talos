@@ -6,6 +6,7 @@ metadata:
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
   labels:
-    # steel-browser runs as root (Xvfb/dbus/nginx) → baseline, not restricted.
-    # Bounded by no-SA-token + egress-lockdown NetworkPolicy + dropped caps.
-    pod-security.kubernetes.io/enforce: baseline
+    # browserless runs non-root (uid 999, no caps) → restricted. Still its own
+    # ns: a browser is semi-untrusted egress, bounded by no-SA-token +
+    # egress-lockdown NetworkPolicy.
+    pod-security.kubernetes.io/enforce: restricted
