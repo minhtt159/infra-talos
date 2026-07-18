@@ -59,6 +59,9 @@ spec:
       externalSnapshotter:
         verbosityLevel: 2
       driver:
+        # warn: silences per-60s Probe (liveness) + NodeGetVolumeStats shell-exec
+        # traces (findmnt/df/lsblk) logged at info. Keeps warnings + errors.
+        logLevel: warn
         image: &image
           registry: ghcr.io/democratic-csi/democratic-csi
           tag: next
@@ -70,6 +73,7 @@ spec:
       driverRegistrar:
         verbosityLevel: 2
       driver:
+        logLevel: warn
         image: *image
         extraEnv:
           - name: ISCSIADM_HOST_STRATEGY

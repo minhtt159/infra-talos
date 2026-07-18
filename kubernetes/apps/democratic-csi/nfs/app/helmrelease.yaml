@@ -55,6 +55,9 @@ spec:
       externalSnapshotter:
         verbosityLevel: 2
       driver: &driver
+        # warn: silences per-60s Probe (liveness) + NodeGetVolumeStats shell-exec
+        # traces (findmnt/df/lsblk) logged at info. Keeps warnings + errors.
+        logLevel: warn
         image:
           registry: ghcr.io/democratic-csi/democratic-csi
           tag: next
