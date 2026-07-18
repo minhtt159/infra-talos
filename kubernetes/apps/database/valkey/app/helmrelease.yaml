@@ -1,0 +1,73 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# Shared cache / limiter store (searxng now; firecrawl later). Separate from
+# network/valkey (that one is envoy rate-limiting only). Ephemeral by design.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: valkey
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: valkey
+  interval: 1h
+  values:
+    controllers:
+      valkey:
+        strategy: RollingUpdate
+        containers:
+          app:
+            image:
+              repository: mirror.gcr.io/valkey/valkey
+              tag: 9.1.0
+            # Cache/limiter only: ephemeral (no persistence); LRU-evict.
+            args:
+              - --save
+              - ""
+              - --appendonly
+              - "no"
+              - --maxmemory
+              - 256mb
+              - --maxmemory-policy
+              - allkeys-lru
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 6379
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
+              readiness: *probes
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 320Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+    persistence:
+      data:
+        type: emptyDir
+        globalMounts:
+          - path: /data
+    service:
+      app:
+        ports:
+          redis:
+            port: 6379

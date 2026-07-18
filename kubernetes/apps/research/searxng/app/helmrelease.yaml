@@ -1,0 +1,77 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# SearXNG meta-search — private, LAN-only. Serves Hermes's `web` toolset
+# (SEARXNG_URL). settings.yml comes from the searxng-settings Secret (ESO
+# renders it with a generated secret_key). Cache/limiter store: research valkey.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: searxng
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: searxng
+  interval: 1h
+  values:
+    controllers:
+      searxng:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        strategy: RollingUpdate
+        containers:
+          app:
+            image:
+              repository: ghcr.io/searxng/searxng
+              tag: 2026.7.17-81c9c2386
+            env:
+              SEARXNG_SETTINGS_PATH: /etc/searxng/settings.yml
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: 8080
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+                  timeoutSeconds: 3
+                  failureThreshold: 3
+              readiness: *probes
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 977
+        runAsGroup: 977
+        fsGroup: 977
+        seccompProfile:
+          type: RuntimeDefault
+    persistence:
+      settings:
+        type: secret
+        name: searxng-settings
+        globalMounts:
+          - path: /etc/searxng/settings.yml
+            subPath: settings.yml
+            readOnly: true
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+    service:
+      app:
+        ports:
+          http:
+            port: 8080
