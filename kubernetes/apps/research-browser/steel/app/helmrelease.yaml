@@ -84,8 +84,9 @@ spec:
                 memory: 256Mi
     defaultPodOptions:
       automountServiceAccountToken: false
-      seccompProfile:
-        type: RuntimeDefault
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
     persistence:
       # Chrome crashes with the default 64MB /dev/shm.
       dshm:
