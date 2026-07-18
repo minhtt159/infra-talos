@@ -54,6 +54,56 @@ spec:
   shutdown:
     drainTimeout: 180s
   telemetry:
+    accessLog:
+      settings:
+        - format:
+            type: JSON
+            # Same ECS shape as the external proxy (../external/envoyproxy.yaml)
+            # → same fluent-bit retag (event.dataset) → same logs-envoy.access
+            # stream. observer.name distinguishes the two gateways. Difference:
+            # source.ip here is the direct L4 client (no proxy in front on the
+            # LAN; eTP:Local preserves it) — NOT XFF — so there is no
+            # x_forwarded_for field.
+            json:
+              event.start: "%START_TIME%" # NOT @timestamp (out_es owns that)
+              event.dataset: envoy.access
+              observer.name: envoy-internal
+              # client (real LAN client, direct L4)
+              source.ip: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
+              user_agent.original: "%REQ(USER-AGENT)%"
+              # request
+              url.domain: "%REQ(:AUTHORITY)%"
+              url.path: "%REQ(:PATH)%"
+              http.request.method: "%REQ(:METHOD)%"
+              http.request.id: "%REQ(X-REQUEST-ID)%"
+              http.request.referrer: "%REQ(Referer)%"
+              http.request.bytes: "%BYTES_RECEIVED%"
+              # response
+              http.response.status_code: "%RESPONSE_CODE%"
+              http.response.bytes: "%BYTES_SENT%"
+              # upstream
+              destination.address: "%UPSTREAM_REMOTE_ADDRESS%"
+              tls.cipher: "%DOWNSTREAM_TLS_CIPHER%"
+              tls.client.server_name: "%REQUESTED_SERVER_NAME%" # SNI
+              # ── envoy namespace ─────────────────────────────────────
+              envoy.duration_ms: "%DURATION%"
+              envoy.upstream_ms: "%RESPONSE_DURATION%"
+              envoy.request_ms: "%REQUEST_DURATION%"
+              envoy.response_tx_ms: "%RESPONSE_TX_DURATION%"
+              envoy.protocol: "%PROTOCOL%"
+              envoy.response_flags: "%RESPONSE_FLAGS%"
+              envoy.response_code_details: "%RESPONSE_CODE_DETAILS%"
+              envoy.upstream_cluster: "%UPSTREAM_CLUSTER%"
+              envoy.route_name: "%ROUTE_NAME%"
+              envoy.tls_version: "%DOWNSTREAM_TLS_VERSION%"
+          # Internal is hammered by Gatus probes on every service — drop them
+          # from the log (monitoring unaffected).
+          matches:
+            - "!request.useragent.startsWith('Gatus')"
+          sinks:
+            - type: File
+              file:
+                path: /dev/stdout
     metrics:
       prometheus:
         # Gzip not Zstd: Prometheus only sends Accept-Encoding: gzip.

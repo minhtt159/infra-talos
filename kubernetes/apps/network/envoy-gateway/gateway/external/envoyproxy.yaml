@@ -63,6 +63,7 @@ spec:
               # key after the lift filter and get the bulk request rejected.
               event.start: "%START_TIME%"
               event.dataset: envoy.access
+              observer.name: envoy-external # which gateway (one ES stream, filter by this)
               # client
               source.ip: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%" # real client via XFF (numTrustedHops)
               user_agent.original: "%REQ(USER-AGENT)%"
@@ -79,9 +80,12 @@ spec:
               # upstream
               destination.address: "%UPSTREAM_REMOTE_ADDRESS%"
               tls.cipher: "%DOWNSTREAM_TLS_CIPHER%"
+              tls.client.server_name: "%REQUESTED_SERVER_NAME%" # SNI
               # ── envoy namespace (no clean ECS equivalent) ───────────
               envoy.duration_ms: "%DURATION%" # total downstream duration
               envoy.upstream_ms: "%RESPONSE_DURATION%" # empty if upstream never reached
+              envoy.request_ms: "%REQUEST_DURATION%" # time to receive the full request
+              envoy.response_tx_ms: "%RESPONSE_TX_DURATION%" # time to stream the response back
               envoy.protocol: "%PROTOCOL%" # HTTP/1.1, HTTP/2 — not ECS http.version shape
               envoy.response_flags: "%RESPONSE_FLAGS%" # UH/UF/RL/UAEX — key debugging field
               envoy.response_code_details: "%RESPONSE_CODE_DETAILS%"
@@ -89,6 +93,10 @@ spec:
               envoy.route_name: "%ROUTE_NAME%"
               envoy.tls_version: "%DOWNSTREAM_TLS_VERSION%" # TLSv1.3 — not ECS tls.version shape
               envoy.x_forwarded_for: "%REQ(X-FORWARDED-FOR)%" # full chain
+          # Drop Gatus health-probe spam from the access log (monitoring still
+          # works — this only suppresses logging). Emitted only when true.
+          matches:
+            - "!request.useragent.startsWith('Gatus')"
           sinks:
             - type: File
               file:
