@@ -78,7 +78,12 @@ PUT _index_template/logs-envoy_template
         },
         "user_agent": { "properties": { "original": { "type": "keyword" } } },
         "tls": { "properties": { "cipher": { "type": "keyword" } } },
-        "event": { "properties": { "dataset": { "type": "keyword" } } },
+        "event": {
+          "properties": {
+            "dataset": { "type": "keyword" },
+            "start": { "type": "date" }
+          }
+        },
         "envoy": {
           "properties": {
             "duration_ms": { "type": "long" },

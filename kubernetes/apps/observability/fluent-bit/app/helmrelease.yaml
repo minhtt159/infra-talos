@@ -72,11 +72,24 @@ spec:
             Labels On
             Annotations Off
 
-        # envoy-external access logs (ECS JSON) -> own tag/stream
+        # envoy-external access logs -> own tag/stream. Match on the parsed
+        # event.dataset marker, NOT the pod label: the same pods also emit
+        # coraza-wasm chatter and startup logs that must stay in
+        # logs-kubernetes, not pollute the access stream.
         [FILTER]
             Name rewrite_tag
             Match kube.*
-            Rule $kubernetes['labels']['gateway.envoyproxy.io/owning-gateway-name'] ^envoy-external$ envoy.access false
+            Rule $app['event.dataset'] ^envoy\.access$ envoy.access false
+
+        # Merge_Log_Key nested the parsed ECS JSON under app.* (right for
+        # logs-kubernetes, wrong here) — lift it back to the doc root where
+        # the logs-envoy template maps it. @timestamp stays out_es-owned
+        # (CRI record time); Envoy emits its %START_TIME% as event.start.
+        [FILTER]
+            Name nest
+            Match envoy.access
+            Operation lift
+            Nested_under app
 
       outputs: |
         # ECS envoy access logs -> data stream logs-envoy.access
@@ -94,6 +107,10 @@ spec:
             Generate_ID Off
             Logstash_Format Off
             Trace_Error On
+            # default Retry_Limit is 1 — a chunk is DISCARDED after one failed
+            # retry; ES is external (TrueNAS), so reboots/upgrades would punch
+            # holes in the stream. False = retry until the 512M backlog fills.
+            Retry_Limit False
             storage.total_limit_size 512M
 
         # everything else -> data stream logs-kubernetes
@@ -111,4 +128,5 @@ spec:
             Generate_ID Off
             Logstash_Format Off
             Trace_Error On
+            Retry_Limit False
             storage.total_limit_size 512M
