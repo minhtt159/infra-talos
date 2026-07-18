@@ -32,7 +32,7 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # in-cluster searxng (research ns)
+    # in-cluster searxng (same ns)
     - to:
         - namespaceSelector:
             matchLabels:
