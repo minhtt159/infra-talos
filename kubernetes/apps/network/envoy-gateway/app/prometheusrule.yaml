@@ -1,0 +1,66 @@
+---
+# NOC baseline for the edge. job labels are the PodMonitor fallback names
+# (<namespace>/<podmonitor>) — none of the monitors set a valid jobLabel.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: envoy-gateway
+spec:
+  groups:
+    - name: envoy-proxy
+      rules:
+        - alert: EnvoyProxyDown
+          expr: up{job="network/envoy-proxy"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Envoy proxy {{ $labels.pod }} scrape target down.
+        - alert: EnvoyHigh5xxRate
+          expr: |
+            sum by (pod) (rate(envoy_http_downstream_rq_xx{job="network/envoy-proxy", envoy_response_code_class="5"}[5m]))
+              / sum by (pod) (rate(envoy_http_downstream_rq_total{job="network/envoy-proxy"}[5m])) > 0.05
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.pod }} serving >5% 5xx for 10m."
+        - alert: EnvoyXdsDisconnected
+          expr: envoy_control_plane_connected_state{job="network/envoy-proxy"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.pod }} lost xDS to envoy-gateway — config updates stalled."
+        - alert: EnvoyUpstreamUnhealthy
+          expr: |
+            envoy_cluster_membership_healthy{job="network/envoy-proxy"}
+              < envoy_cluster_membership_total{job="network/envoy-proxy"}
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Cluster {{ $labels.envoy_cluster_name }} has unhealthy endpoints on {{ $labels.pod }}."
+    - name: envoy-control-plane
+      rules:
+        - alert: EnvoyGatewayReconcileErrors
+          expr: sum(rate(controller_runtime_reconcile_errors_total{job="network/envoy-gateway"}[5m])) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: envoy-gateway controller reconcile errors for 15m (route/config likely rejected).
+        - alert: EnvoyRatelimitDown
+          expr: up{job="network/envoy-ratelimit"} == 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: envoy-ratelimit down — failClosed=false means the edge is now UNTHROTTLED.
+        - alert: GatewayCertExpiringSoon
+          expr: certmanager_certificate_expiration_timestamp_seconds - time() < 14 * 24 * 3600
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Certificate {{ $labels.name }}/{{ $labels.namespace }} expires in <14d — renewal stuck."

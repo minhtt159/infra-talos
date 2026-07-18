@@ -37,3 +37,21 @@ spec:
     matchLabels:
       app.kubernetes.io/managed-by: envoy-gateway
       app.kubernetes.io/component: ratelimit
+---
+# envoy-gateway controller self-metrics (reconcile errors, xDS snapshot /
+# status updates) on :19001/metrics — powers the envoy-gateway-global
+# dashboard, which renders empty without this.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-gateway
+spec:
+  namespaceSelector:
+    matchNames:
+      - network
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+  selector:
+    matchLabels:
+      control-plane: envoy-gateway
