@@ -7,4 +7,3 @@ resources:
   - ./envoyproxy.yaml
   - ./clienttrafficpolicy.yaml
   - ./backendtrafficpolicy.yaml
-  - ./envoypatchpolicy.yaml

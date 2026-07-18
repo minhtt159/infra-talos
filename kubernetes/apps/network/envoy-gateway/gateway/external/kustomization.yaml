@@ -8,4 +8,3 @@ resources:
   - ./clienttrafficpolicy.yaml
   - ./backendtrafficpolicy.yaml
   - ./waf.yaml
-  - ./envoypatchpolicy.yaml
