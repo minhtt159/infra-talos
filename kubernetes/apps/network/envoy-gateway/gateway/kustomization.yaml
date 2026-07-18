@@ -11,3 +11,4 @@ resources:
   - ./clienttrafficpolicy.yaml
   - ./httpredirect.yaml
   - ./waf.yaml
+  - ./envoypatchpolicy.yaml
