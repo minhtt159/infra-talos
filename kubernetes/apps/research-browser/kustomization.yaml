@@ -5,4 +5,4 @@ namespace: research-browser
 
 resources:
   - ./namespace.yaml
-  - ./steel/ks.yaml
+  - ./browserless/ks.yaml
