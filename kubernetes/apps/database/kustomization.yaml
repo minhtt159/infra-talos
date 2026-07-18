@@ -10,3 +10,4 @@ resources:
   - ./postgres/ks.yaml
   - ./strimzi-operator/ks.yaml
   - ./kafka/ks.yaml
+  - ./valkey/ks.yaml
