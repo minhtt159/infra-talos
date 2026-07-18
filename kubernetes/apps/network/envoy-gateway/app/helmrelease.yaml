@@ -12,6 +12,13 @@ spec:
   values:
     global:
       imageRegistry: mirror.gcr.io
+    deployment:
+      annotations:
+        # EG doesn't self-reload its config, and Flux won't cycle the
+        # controller on a values-only ConfigMap change — so config edits
+        # silently don't take effect until a manual restart. Reloader watches
+        # the config CM and restarts the controller when it changes.
+        configmap.reloader.stakater.com/reload: envoy-gateway-config
     config:
       envoyGateway:
         provider:
