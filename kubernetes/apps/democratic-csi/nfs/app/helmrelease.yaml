@@ -43,11 +43,24 @@ spec:
           detachedSnapshots: "true"
 
     controller:
+      # chart defaults sidecars to --v=5, which floods logs with per-5s
+      # "successfully renewed lease" + reflector watch-close noise. v=2 keeps
+      # provision/attach/resize/error events. Driver's own log is unaffected.
+      externalAttacher:
+        verbosityLevel: 2
+      externalProvisioner:
+        verbosityLevel: 2
+      externalResizer:
+        verbosityLevel: 2
+      externalSnapshotter:
+        verbosityLevel: 2
       driver: &driver
         image:
           registry: ghcr.io/democratic-csi/democratic-csi
           tag: next
     node:
+      driverRegistrar:
+        verbosityLevel: 2
       driver: *driver
     csiProxy:
       driver: *driver
