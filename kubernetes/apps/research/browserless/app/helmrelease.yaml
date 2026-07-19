@@ -26,17 +26,18 @@ spec:
               tag: v2.55.0@sha256:bba9dc2014f90289d4b845dfe12b38bd00b25b2cd732d5b16778c5229f2da7e1
             env:
               CONCURRENT: "3"
-              TIMEOUT: "120000"       # ms; kill a session after 2m idle
+              TIMEOUT: "120000" # ms; kill a session after 2m idle
               QUEUED: "10"
             envFrom:
               - secretRef:
-                  name: browserless-token   # provides TOKEN
+                  name: browserless-token # provides TOKEN
             probes:
               liveness: &probes
                 enabled: true
                 custom: true
                 spec:
-                  tcpSocket:
+                  httpGet:
+                    path: /active
                     port: 3000
                   initialDelaySeconds: 15
                   periodSeconds: 20
