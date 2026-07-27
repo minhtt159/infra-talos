@@ -7,3 +7,4 @@ resources:
   - ./httproute.yaml
   - ./networkpolicy.yaml
   - ./ocirepository.yaml
+  - ./rbac.yaml
