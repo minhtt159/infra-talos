@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
+# The serving-path view: how the LLM stack is actually performing. Deliberately
+# disjoint from the upstream LiteLLM dashboard, which answers a different
+# question (proxy health, usage by key/team) and is left tracking upstream.
+#
+# Ollama exposes no metrics of its own — no /metrics, and upstream ollama#3144
+# has been open since 2024 — so nothing here comes from Ollama. Per-model
+# throughput comes from LiteLLM, the direct LAN traffic LiteLLM never sees comes
+# from Envoy, and the GPU comes from drm-exporter.
+#
+# Repo-owned JSON rather than a grafanaCom id or upstream url: no upstream
+# exists for a dashboard correlating three unrelated exporters. The operator
+# replaces ${DS_PROMETHEUS} with the datasource *name*
+# (grafana-operator controllers/content/resolver.go), which Grafana resolves.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: llm-serving
+spec:
+  allowCrossNamespaceImport: true
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+  datasources:
+    - inputName: DS_PROMETHEUS
+      datasourceName: prometheus
+  configMapRef:
+    name: llm-serving-dashboard
+    key: llm-serving.json
