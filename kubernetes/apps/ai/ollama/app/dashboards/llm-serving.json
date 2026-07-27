@@ -1,0 +1,495 @@
+{
+  "title": "LLM serving — Ollama + LiteLLM",
+  "uid": "llm-serving",
+  "tags": [
+    "llm",
+    "ollama",
+    "litellm",
+    "gpu"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "LLM requests (via LiteLLM)",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests/s by model",
+      "description": "Deployment-level request rate. Only covers traffic routed through LiteLLM.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum by (litellm_model_name) (rate(litellm_deployment_total_requests_total[$__rate_interval]))",
+          "legendFormat": "{{litellm_model_name}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tokens/s in and out by model",
+      "description": "Request-level token counters. NOTE: these carry the `model` label, not `litellm_model_name`.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* out$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    8,
+                    4
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum by (model) (rate(litellm_input_tokens_metric_total[$__rate_interval]))",
+          "legendFormat": "{{model}} in"
+        },
+        {
+          "refId": "B",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum by (model) (rate(litellm_output_tokens_metric_total[$__rate_interval]))",
+          "legendFormat": "{{model}} out"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Generation cost p95 (seconds per output token)",
+      "description": "Lower is faster. Inverse of tokens/sec — the closest thing to a throughput measure available without an Ollama exporter.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "fillOpacity": 0,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "histogram_quantile(0.95, sum by (le, litellm_model_name) (rate(litellm_deployment_latency_per_output_token_bucket[$__rate_interval])))",
+          "legendFormat": "{{litellm_model_name}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Time to first token p95",
+      "description": "Sparse by design: LiteLLM only records TTFT for streaming requests, so models called non-streaming never appear here.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "fillOpacity": 0,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "histogram_quantile(0.95, sum by (le, model) (rate(litellm_llm_api_time_to_first_token_metric_bucket[$__rate_interval])))",
+          "legendFormat": "{{model}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Backend health",
+      "description": "LiteLLM deployment state: 0 healthy, 1 partial outage, 2 complete outage.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "healthy",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "partial outage",
+                  "color": "orange",
+                  "index": 1
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "2": {
+                  "text": "outage",
+                  "color": "red",
+                  "index": 2
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "litellm_deployment_state",
+          "legendFormat": "{{litellm_model_name}}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Direct traffic (invisible to LiteLLM)",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Direct requests/s by response class",
+      "description": "LAN clients calling the Ollama HTTPRoute directly. LiteLLM reaches Ollama over the cluster service, so none of this appears in its metrics.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 23
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 20,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum by (envoy_response_code_class) (rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"httproute/ai/ollama.*\"}[$__rate_interval]))",
+          "legendFormat": "{{envoy_response_code_class}}xx"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Direct requests (24h)",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(increase(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"httproute/ai/ollama.*\"}[24h]))",
+          "legendFormat": "requests",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "GPU",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Compute engine utilization",
+      "description": "ccs is the compute engine — the one LLM inference uses. Video engines (vcs/vecs) belong to transcoding workloads and are deliberately excluded.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "avg by (node, engine) (drm_engine_utilization_ratio{engine=\"ccs\"})",
+          "legendFormat": "{{node}} compute"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU memory used",
+      "description": "vram is the discrete card's memory — the pool a model has to fit in. smem is shared system memory.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum by (pool) (drm_memory_used_bytes) / sum by (pool) (drm_memory_total_bytes)",
+          "legendFormat": "{{pool}}"
+        }
+      ]
+    }
+  ]
+}

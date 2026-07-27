@@ -6,3 +6,15 @@ resources:
   - ./deployment.yaml
   - ./service.yaml
   - ./httproute.yaml
+  - ./grafanadashboard.yaml
+configMapGenerator:
+  - name: llm-serving-dashboard
+    files:
+      - llm-serving.json=./dashboards/llm-serving.json
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    # the dashboard JSON uses ${DS_PROMETHEUS} (grafana-operator substitutes it)
+    # and $__rate_interval (Grafana expands it) — keep Flux's postBuild
+    # substitution away from both
+    kustomize.toolkit.fluxcd.io/substitute: disabled
