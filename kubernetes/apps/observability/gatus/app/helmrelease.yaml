@@ -45,6 +45,12 @@ spec:
     fullnameOverride: gatus
     deploymentAnnotations:
       reloader.stakater.com/auto: "true"
+    gatus:
+      envFrom:
+        # BROWSERLESS_TOKEN — the browserless HTTPRoute's gatus annotation
+        # references it; gatus expands it when it loads /config
+        - secretRef:
+            name: browserless-token
     sidecar:
       kinds:
         httproute:
