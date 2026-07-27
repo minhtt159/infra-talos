@@ -36,7 +36,12 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  tcpSocket:
+                  # /docs/ is the only unauthenticated route (everything else
+                  # 401s without TOKEN, and a probe can't read a Secret into a
+                  # header), so it's the deepest check available without an
+                  # exec. Capacity is gatus's job via /pressure.
+                  httpGet:
+                    path: /docs/
                     port: 3000
                   initialDelaySeconds: 15
                   periodSeconds: 20
