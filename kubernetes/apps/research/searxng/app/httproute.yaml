@@ -11,8 +11,11 @@ metadata:
     # (brave is disabled outright) while search as a whole keeps working.
     # 10m because every probe is a real outbound search; more frequent polling
     # buys little and risks more engines blocking us.
+    # Full url, not path: — the sidecar sets url.Path from a `path:` override
+    # and re-serializes, which escapes `?` to %3F and 404s. `url:` is assigned
+    # verbatim, so it's the only way to probe with a query string.
     gatus.home-operations.com/endpoint: |
-      path: /search?q=talos+linux&format=json
+      url: https://searxng.${SECRET_DOMAIN}/search?q=talos+linux&format=json
       interval: 10m
       conditions:
         - "[STATUS] == 200"
