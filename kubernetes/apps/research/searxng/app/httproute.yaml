@@ -3,6 +3,20 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: searxng
+  annotations:
+    # /healthz is `return Response('OK')` — it proves the process is up and
+    # nothing else. Query the JSON API instead, so the check fails only when no
+    # engine returns anything, which is the one failure Hermes actually feels.
+    # Aggregate, not per-engine: individual engines get CAPTCHA'd routinely
+    # (brave is disabled outright) while search as a whole keeps working.
+    # 10m because every probe is a real outbound search; more frequent polling
+    # buys little and risks more engines blocking us.
+    gatus.home-operations.com/endpoint: |
+      path: /search?q=talos+linux&format=json
+      interval: 10m
+      conditions:
+        - "[STATUS] == 200"
+        - "len([BODY].results) > 0"
 spec:
   hostnames:
     - "searxng.${SECRET_DOMAIN}"
