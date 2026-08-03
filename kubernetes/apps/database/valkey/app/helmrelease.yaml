@@ -19,7 +19,7 @@ spec:
           app:
             image:
               repository: mirror.gcr.io/valkey/valkey
-              tag: 9.1.0
+              tag: 9.1.1
             # Cache/limiter only: ephemeral (no persistence); LRU-evict.
             args:
               - --save
