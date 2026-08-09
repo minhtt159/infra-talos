@@ -16,4 +16,4 @@ spec:
     - inputName: DS_PROMETHEUS
       datasourceName: prometheus
   # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
-  url: https://raw.githubusercontent.com/BerriAI/litellm/v1.93.0/cookbook/litellm_proxy_server/grafana_dashboard/dashboard_v2/grafana_dashboard.json
+  url: https://raw.githubusercontent.com/BerriAI/litellm/v1.96.0/cookbook/litellm_proxy_server/grafana_dashboard/dashboard_v2/grafana_dashboard.json
