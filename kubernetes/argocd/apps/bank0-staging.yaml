@@ -24,14 +24,17 @@ spec:
         logging:
           level: debug # staging: cheap to read, nobody's paging on it
         # envoy-internal deliberately does not trust X-Forwarded-For (see its
-        # ClientTrafficPolicy: "a LAN client can't forge source.ip"), so a
-        # forwarded header here is attacker-controlled and the per-IP auth rate
-        # limit would be bypassable by rotating it. False means every client
-        # shares the Envoy pod's IP — one coarse bucket, but it fails closed.
-        # Correct on chart 1.0.0, whose parser takes the LEFT-most entry. 1.0.1
-        # reads right-to-left with trustedProxyHops (default 1), which makes
-        # Envoy's appended entry authoritative — on that version flip this to
-        # true for real per-client rate-limit keys instead of one shared bucket.
+        # ClientTrafficPolicy: "a LAN client can't forge source.ip"), so on chart
+        # 1.0.0 — whose parser takes the LEFT-most, forgeable entry — a trusted
+        # header means the per-IP auth rate limit is bypassable by rotating it.
+        # False collapses every client onto the Envoy pod IP: one coarse bucket,
+        # but it fails closed.
+        # Chart 1.0.1 parses right-to-left with trustedProxyHops (default 1),
+        # making Envoy's appended entry authoritative. Flip this to true on that
+        # version — while these routes stay on envoy-internal.
+        # NOT a reason to trust the header on envoy-external: that gateway is
+        # reachable directly from the LAN, so a client can bypass Cloudflare and
+        # forge both XFF and CF-Connecting-IP. Fronting is not filtering.
         trustProxyHeaders: false
         # Routing is Flux's (envoy-internal + the shared wildcard cert), so the
         # chart's Gateway and HTTPRoutes stay off.
