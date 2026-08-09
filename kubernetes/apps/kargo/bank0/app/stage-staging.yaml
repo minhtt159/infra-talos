@@ -1,0 +1,54 @@
+---
+# staging: takes Freight straight from the Warehouse, writes the new chart
+# version into the env config, and waits for Argo CD to report Healthy.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging
+  namespace: bank0
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: bank0
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      vars:
+        - name: chartVersion
+          value: ${{ chartFrom("oci://ghcr.io/minhtt159/charts/bank0").Version }}
+      steps:
+        - uses: git-clone
+          config:
+            repoURL: https://github.com/minhtt159/infra-talos
+            checkout:
+              - branch: main
+                path: ./repo
+        - uses: yaml-update
+          as: update
+          config:
+            path: ./repo/kubernetes/argocd/envs/bank0/staging.yaml
+            updates:
+              - key: chartVersion
+                value: ${{ vars.chartVersion }}
+        - uses: git-commit
+          as: commit
+          config:
+            path: ./repo
+            message: ${{ outputs.update.commitMessage }}
+        - uses: git-push
+          config:
+            path: ./repo
+        - uses: argocd-update
+          config:
+            apps:
+              - name: bank0-staging
+                namespace: argocd
+                sources:
+                  - repoURL: ghcr.io/minhtt159/charts
+                    chart: bank0
+                    desiredRevision: ${{ vars.chartVersion }}
+  verification:
+    analysisTemplates:
+      - name: success-rate

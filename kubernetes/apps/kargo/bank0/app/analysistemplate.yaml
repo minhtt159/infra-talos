@@ -1,0 +1,24 @@
+---
+# Gate on real traffic: Gatus probes every HTTPRoute continuously, so envoy
+# carries a live 2xx/5xx stream per route with no synthetic load.
+# Verified against a live AnalysisRun before this pipeline existed — the Kargo
+# UI charts each measurement under the Stage's Verifications tab.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: bank0
+spec:
+  metrics:
+    - name: api-success-rate
+      interval: 1m
+      count: 3
+      successCondition: result[0] >= 0.99
+      failureLimit: 1
+      provider:
+        prometheus:
+          address: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+          query: |
+            sum(rate(envoy_cluster_external_upstream_rq_xx{envoy_cluster_name="httproute/bank0-staging/bank0-api/rule/0",envoy_response_code_class!="5"}[5m]))
+            /
+            sum(rate(envoy_cluster_external_upstream_rq_xx{envoy_cluster_name="httproute/bank0-staging/bank0-api/rule/0"}[5m]))

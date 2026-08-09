@@ -1,0 +1,13 @@
+---
+# Watches the published chart. bank0 only publishes a chart on a v* tag, so one
+# Freight per release — exactly the promotion granularity we want.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: bank0
+  namespace: bank0
+spec:
+  subscriptions:
+    - chart:
+        repoURL: oci://ghcr.io/minhtt159/charts/bank0
+        semverConstraint: ^1.0.0

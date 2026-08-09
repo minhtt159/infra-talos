@@ -1,0 +1,7 @@
+---
+# Creates namespace `bank0` — the control plane for the pipeline. Not to be
+# confused with bank0-staging / bank0-production, where the app actually runs.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: bank0
