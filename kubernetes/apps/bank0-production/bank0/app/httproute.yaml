@@ -1,8 +1,7 @@
 ---
-# The chart's own HTTPRoutes want a chart-created Gateway (sectionName
-# https-api/https-portal), so they're switched off (api/portal.exposed: false)
-# and routing lives here, on the shared envoy-internal gateway like every other
-# app in this cluster. Both surfaces are on envoy-internal, so production is
+# Chart's own HTTPRoutes want a chart-created Gateway (sectionName
+# https-api/https-portal). Switched off (api/portal.exposed: false); routing
+# lives here, on shared envoy-internal like every other app. Both surfaces are on envoy-internal, so production is
 # LAN-only too — deliberately. Moving `api` to envoy-external is a one-line
 # parentRef change plus a public DNS record; make that its own decision.
 apiVersion: gateway.networking.k8s.io/v1
@@ -10,9 +9,8 @@ kind: HTTPRoute
 metadata:
   name: bank0-api
   annotations:
-    # /readyz, not /health: /health is DB-blind by design (a DB blip must not
-    # kill pods), so it can't tell us the thing worth alerting on. /readyz pings
-    # Postgres with a 1s deadline.
+    # /readyz not /health. /health is DB-blind by design (DB blip must not kill
+    # pods) so it can't signal what matters. /readyz pings Postgres, 1s deadline.
     gatus.home-operations.com/endpoint: |
       path: /readyz
       conditions:

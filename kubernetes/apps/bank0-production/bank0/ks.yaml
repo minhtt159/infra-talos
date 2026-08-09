@@ -1,15 +1,15 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-# Platform half of bank0/production: namespace, DB credentials, JWT key, routing.
-# The workload itself is Argo CD's (argocd/apps/bank0-production.yaml) — Flux owns
-# nothing inside the Helm release, Argo CD owns nothing outside it.
+# Platform half of bank0/production: namespace, Postgres cluster, JWT key, routing.
+# Workload is Argo CD's (kubernetes/argocd/envs/bank0/) — Flux owns nothing
+# inside the Helm release, Argo CD owns nothing outside it.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: bank0-platform
 spec:
   dependsOn:
-    - name: postgres # the roles + databases the DSN points at
+    - name: cloudnative-pg # operator for this env's own Postgres cluster
       namespace: database
   interval: 1h
   path: ./kubernetes/apps/bank0-production/bank0/app
