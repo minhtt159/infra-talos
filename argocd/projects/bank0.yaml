@@ -1,0 +1,25 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: bank0
+  namespace: argocd
+  annotations:
+    # Before the Applications that reference it — an Application in a missing
+    # project is rejected outright.
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  description: bank0 core-banking, staging + production
+  sourceRepos:
+    - https://github.com/minhtt159/infra-talos
+    - ghcr.io/minhtt159/charts
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: bank0-staging
+    - server: https://kubernetes.default.svc
+      namespace: bank0-production
+  # Namespaced only: bank0 has no business creating cluster-scoped objects, and
+  # its namespaces are Flux's.
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

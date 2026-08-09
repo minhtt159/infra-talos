@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/database_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: bank0-staging
+spec:
+  name: bank0_staging
+  owner: bank0_staging
+  cluster:
+    name: postgres
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/database_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: bank0-production
+spec:
+  name: bank0_production
+  owner: bank0_production
+  cluster:
+    name: postgres

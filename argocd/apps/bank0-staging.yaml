@@ -1,0 +1,52 @@
+---
+# bank0 @ staging. `targetRevision` is the chart version — this line is what
+# Kargo bumps when new Freight is promoted in, so keep it a plain literal.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bank0-staging
+  namespace: argocd
+spec:
+  project: bank0
+  source:
+    repoURL: ghcr.io/minhtt159/charts
+    chart: bank0
+    targetRevision: 1.0.0
+    helm:
+      releaseName: bank0
+      valuesObject:
+        database:
+          existingSecret: bank0-db # Flux-managed, from Vaultwarden
+          secretKey: dsn
+        auth:
+          existingSecret: bank0-auth
+          secretKey: jwt-secret
+        logging:
+          level: debug # staging: cheap to read, nobody's paging on it
+        # Routing is Flux's (envoy-internal + the shared wildcard cert), so the
+        # chart's Gateway and HTTPRoutes stay off.
+        gateway:
+          create: false
+          # otherwise the chart still emits its HTTP->HTTPS redirect route, pointed
+          # at a Gateway that does not exist here.
+          httpsRedirect: false
+        api:
+          exposed: false
+          replicaCount: 1
+          autoscaling:
+            enabled: false
+        portal:
+          exposed: false
+          replicaCount: 1
+        metrics:
+          serviceMonitor:
+            enabled: true
+          dashboard:
+            enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: bank0-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
