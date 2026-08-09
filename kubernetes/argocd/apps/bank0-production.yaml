@@ -26,8 +26,10 @@ spec:
         # forwarded header here is attacker-controlled and the per-IP auth rate
         # limit would be bypassable by rotating it. False means every client
         # shares the Envoy pod's IP — one coarse bucket, but it fails closed.
-        # Flip to true only behind an edge that overwrites the header (i.e. if
-        # api ever moves to envoy-external + Cloudflare).
+        # Correct on chart 1.0.0, whose parser takes the LEFT-most entry. 1.0.1
+        # reads right-to-left with trustedProxyHops (default 1), which makes
+        # Envoy's appended entry authoritative — on that version flip this to
+        # true for real per-client rate-limit keys instead of one shared bucket.
         trustProxyHeaders: false
         gateway:
           create: false
