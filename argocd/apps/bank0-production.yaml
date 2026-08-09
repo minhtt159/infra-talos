@@ -21,6 +21,14 @@ spec:
         auth:
           existingSecret: bank0-auth
           secretKey: jwt-secret
+        # envoy-internal deliberately does not trust X-Forwarded-For (see its
+        # ClientTrafficPolicy: "a LAN client can't forge source.ip"), so a
+        # forwarded header here is attacker-controlled and the per-IP auth rate
+        # limit would be bypassable by rotating it. False means every client
+        # shares the Envoy pod's IP — one coarse bucket, but it fails closed.
+        # Flip to true only behind an edge that overwrites the header (i.e. if
+        # api ever moves to envoy-external + Cloudflare).
+        trustProxyHeaders: false
         gateway:
           create: false
           # otherwise the chart still emits its HTTP->HTTPS redirect route, pointed
