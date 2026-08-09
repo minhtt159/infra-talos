@@ -12,6 +12,7 @@ metadata:
     # /readyz not /health. /health is DB-blind by design (DB blip must not kill
     # pods) so it can't signal what matters. /readyz pings Postgres, 1s deadline.
     gatus.home-operations.com/endpoint: |
+      group: bank0-production
       path: /readyz
       conditions:
         - "[STATUS] == 200"
@@ -31,6 +32,12 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: bank0-portal
+  annotations:
+    # Portal answers 401 unauthenticated — that IS the healthy signal.
+    gatus.home-operations.com/endpoint: |
+      group: bank0-production
+      conditions:
+        - "[STATUS] == 401"
 spec:
   hostnames:
     - "portal.bank0.${SECRET_DOMAIN}"
