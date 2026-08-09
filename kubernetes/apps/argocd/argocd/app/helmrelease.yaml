@@ -1,0 +1,77 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# Argo CD — the delivery plane for application environments (bank0 → staging →
+# production), driven by Kargo. Flux keeps owning platform/infra in this repo;
+# the two never manage the same objects.
+# Argo CD is stateless: all state is Kubernetes objects, redis is a disposable
+# cache. No database, nothing extra to back up.
+# ponytail: non-HA (single replicas, chart's own redis). HA wants >=3 nodes for
+# redis-ha quorum — scale a component only when it actually bottlenecks.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: argocd
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: argocd
+  interval: 1h
+  values:
+    global:
+      domain: argocd.${SECRET_DOMAIN}
+    configs:
+      params:
+        # TLS terminates at envoy-internal; serving HTTPS here too would mean a
+        # second hop of self-signed TLS for no gain.
+        server.insecure: true
+    # No SSO wired up yet — the chart-generated argocd-initial-admin-secret is
+    # the only account. Drop dex and turn on OIDC when Authentik lands.
+    dex:
+      enabled: false
+    # Nothing consumes Argo CD notifications; Flux already alerts.
+    notifications:
+      enabled: false
+    controller:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+    server:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+    repoServer:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+    # Chart 10.3.0 has no applicationSet.enabled switch, so it ships either way
+    # — bootstrap is app-of-apps; generators are there if they ever earn it.
+    applicationSet:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+    redis:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+    redisSecretInit:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
