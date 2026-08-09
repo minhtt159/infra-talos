@@ -63,10 +63,7 @@ spec:
               namespace: network
       prometheusSpec:
         externalUrl: https://prometheus.${SECRET_DOMAIN}
-        # prompp rebuilds its in-memory index at startup; ~22GB of TSDB on
-        # truenas-iscsi reads back at single-digit MB/s, so the operator's
-        # 15m default startup probe budget kills the pod mid-replay and it
-        # never finishes. 1h is slack over the observed ~40m.
+        # 15m default kills prompp mid-replay on a slow disk
         maximumStartupDurationSeconds: 3600
         version: v2.55.1 # override 'unsupported Prometheus version' error
         image:
@@ -120,12 +117,11 @@ spec:
             memory: 512Mi
           limits:
             memory: 2000Mi
-        # local NVMe, not truenas-iscsi: prompp's startup reads are random and
-        # iSCSI served them at single-digit MB/s, so a 22GB TSDB never finished
-        # replaying inside any sane probe budget. Node-pinned and no snapshots —
-        # acceptable, retention is 14d and the promeo archive is the long-term
-        # copy. Node loss = delete the PVC and let it rebuild empty.
+        # local NVMe: iSCSI served prompp's random startup reads at
+        # single-digit MB/s. Node-pinned, no snapshots — promeo is the archive.
         storageSpec:
+          # kubelet can't mkdir a subPath in a hostpath volume on Talos
+          disableMountSubPath: true
           volumeClaimTemplate:
             spec:
               storageClassName: openebs-hostpath
