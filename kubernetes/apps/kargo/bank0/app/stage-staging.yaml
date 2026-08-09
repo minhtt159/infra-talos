@@ -37,6 +37,9 @@ spec:
           config:
             path: ./repo
             message: ${{ outputs.update.commitMessage }}
+        # Straight to main, which is unprotected. Protect it and this fails —
+        # swap for the PR-opening step and give the PAT pull-requests:write.
+        # Kargo's commits are unsigned, so a signed-commits rule breaks it too.
         - uses: git-push
           config:
             path: ./repo
