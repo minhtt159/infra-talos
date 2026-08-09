@@ -1,8 +1,17 @@
-# argocd/
+# kubernetes/argocd/
 
-Argo CD's territory. **Flux does not read this directory** — its `cluster-apps`
-Kustomization is pinned to `./kubernetes/apps`, so nothing here is reconciled by
-Flux and the two controllers never contend for the same object.
+Argo CD's territory. **Flux does not read this directory.**
+
+That is worth stating loudly, because the path now *looks* like Flux's. It isn't:
+Flux reads exactly two paths in this repo —
+
+| path | what reads it |
+| --- | --- |
+| `kubernetes/flux/cluster` | the FluxInstance's own sync spec |
+| `kubernetes/apps` | the `cluster-apps` Kustomization |
+
+`kubernetes/argocd` is a sibling of `kubernetes/apps`, not a child. Move it inside
+`kubernetes/apps` and both controllers would claim the same objects.
 
 The split, per environment:
 

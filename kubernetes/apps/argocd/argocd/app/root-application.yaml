@@ -1,7 +1,10 @@
 ---
-# The one Argo CD object Flux owns: the app-of-apps root. It points at ../argocd
-# — a path Flux's cluster-apps Kustomization never reads — so everything below
-# it belongs to Argo CD alone.
+# The one Argo CD object Flux owns: the app-of-apps root. Everything below the
+# path it points at belongs to Argo CD alone.
+# kubernetes/argocd sits next to kubernetes/apps, NOT inside it — Flux only ever
+# reads kubernetes/flux/cluster (its entry point) and kubernetes/apps
+# (cluster-apps). Moving that directory under kubernetes/apps would hand both
+# controllers the same objects.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -12,7 +15,7 @@ spec:
   source:
     repoURL: https://github.com/minhtt159/infra-talos
     targetRevision: main
-    path: argocd
+    path: kubernetes/argocd
     directory:
       recurse: true
       exclude: "README.md"
