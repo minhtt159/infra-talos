@@ -82,32 +82,21 @@ spec:
         serviceMonitorSelectorNilUsesHelmValues: false
         retention: 14d
         retentionSize: 50GB
-        # Mirror metrics to the TrueNAS shadow prometheus (long-term FALLBACK
-        # archive; cluster gets rebuilt, promeo doesn't). promeo must run with
-        # --web.enable-remote-write-receiver. Native remote_write — no mirror
-        # agent needed; future VictoriaMetrics = same protocol, different URL.
-        #
-        # promeo is a plain-Prometheus receiver (slow ingest) — shipping the full
-        # series set overran it (desired 339 shards vs max 50 ->
-        # PrometheusRemoteWriteDesiredShards). In-cluster Prometheus stays
-        # Grafana's primary at full fidelity; only trend-worthy series go to the
-        # archive. Drops target the big-volume / low-archive-value offenders;
-        # relax a regex if you need a specific series long-term. If desired
-        # shards is still >50 after this, promeo itself is under-resourced on
-        # TrueNAS (give it more CPU/disk) — don't just raise maxShards.
+        # Long-term archive on TrueNAS; promeo needs
+        # --web.enable-remote-write-receiver. It ingests slowly — the full series
+        # set overran it (339 desired shards vs max 50), hence the drops. Still
+        # >50 after this = promeo is under-resourced, don't raise maxShards.
         remoteWrite:
           - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
             writeRelabelConfigs:
-              # histogram buckets — single biggest volume driver; _sum/_count kept
+              # biggest volume driver; _sum/_count kept
               - sourceLabels: [__name__]
                 regex: ".+_bucket"
                 action: drop
-              # per-target Go runtime + process internals — noise for an archive
               - sourceLabels: [__name__]
                 regex: "go_.*|process_.*"
                 action: drop
-              # cAdvisor per-container churn from short-lived pods; cpu/mem
-              # working-set kept for capacity trends (not matched here)
+              # cAdvisor churn from short-lived pods; cpu/mem kept
               - sourceLabels: [__name__]
                 regex: "container_(network|fs|tasks_state|memory_failures|spec)_.*"
                 action: drop
