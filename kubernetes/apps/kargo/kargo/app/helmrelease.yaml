@@ -1,0 +1,76 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# Kargo. Promotion pipeline on top of Argo CD: Warehouse (watch image/chart) →
+# Freight → Stage (bank0 → staging → production). Promote = write back to app
+# GitOps repo.
+# State all in CRDs (etcd). No database.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kargo
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: kargo
+  interval: 1h
+  values:
+    global:
+      # Chart defaults these to {}. Namespace warns on `restricted`.
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: { drop: ["ALL"] }
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+    api:
+      host: kargo.${SECRET_DOMAIN}
+      # TLS ends at envoy-internal. API serves plain HTTP, still must emit
+      # https:// URLs for UI + token issuer.
+      tls:
+        enabled: false
+        terminatedUpstream: true
+      # Admin hash + signing key from Vaultwarden via ESO (externalsecret.yaml).
+      # Set this or chart generates them — bcrypt hash in git.
+      secret:
+        name: kargo-api
+      argocd:
+        urls:
+          "": https://argocd.${SECRET_DOMAIN}
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+    controller:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+    managementController:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+    webhooksServer:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+    garbageCollector:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+    # ponytail: no inbound git/image webhooks — Warehouses poll. Turn on plus
+    # envoy-external HTTPRoute when poll lag hurts.
+    externalWebhooksServer:
+      enabled: false

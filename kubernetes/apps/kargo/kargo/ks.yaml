@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: kargo
+spec:
+  dependsOn:
+    - name: cert-manager # chart issues own self-signed webhook/API certs
+      namespace: cert-manager
+    - name: argocd # controller sanity-checks Argo CD CRDs at startup
+      namespace: argocd
+    - name: argo-rollouts # same check, AnalysisRun CRDs
+      namespace: argocd
+  interval: 1h
+  path: ./kubernetes/apps/kargo/kargo/app
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: kargo
+  # false: API waits on the Vaultwarden item in externalsecret.yaml. Don't
+  # wedge the reconcile on it.
+  wait: false

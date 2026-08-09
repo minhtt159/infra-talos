@@ -111,6 +111,9 @@ spec:
                 - democratic-csi
                 - openebs
                 - network # controllers legitimately need the API
+                - argocd # ditto — every component watches/writes cluster state
+                # (argo-rollouts lives here too)
+                - kargo
       validate:
         message: "Set automountServiceAccountToken: false unless the workload needs the API."
         pattern:
