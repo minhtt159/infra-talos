@@ -20,8 +20,14 @@ spec:
       set:
         - name: Strict-Transport-Security
           value: "max-age=31536000; includeSubDomains"
-  # cloudflared sits in front → trust exactly one XFF hop for the real client
-  # IP (feeds source.ip logging + the per-IP rate-limit key).
+  # Trust exactly one XFF hop for the real client IP (feeds source.ip logging +
+  # the per-IP rate-limit key). Not because cloudflared is unconditionally in
+  # front — two paths reach this gateway, and the trust holds on both:
+  #   - internet traffic arrives via the tunnel, where cloudflared IS the one hop
+  #   - the LB IP is private, so anything connecting to it directly is on the LAN
+  # A forged X-Forwarded-For therefore only gets you as far as a client we
+  # already trust. That stops being true the moment this LB IP is reachable by
+  # anyone untrusted — then drop this stanza, as ../internal does.
   clientIPDetection:
     xForwardedFor:
       numTrustedHops: 1
