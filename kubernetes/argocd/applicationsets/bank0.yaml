@@ -1,0 +1,50 @@
+---
+# One Application per file under envs/bank0/. Adding an environment is adding a
+# file; the shape stays in one place.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: bank0
+  namespace: argocd
+spec:
+  goTemplate: true
+  # missingkey=error: a config file missing a key fails loudly instead of
+  # rendering "<no value>" into a live Application.
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/minhtt159/infra-talos
+        revision: main
+        files:
+          - path: kubernetes/argocd/envs/bank0/*.yaml
+  template:
+    metadata:
+      name: bank0-{{ .env }}
+    spec:
+      project: bank0
+      source:
+        repoURL: ghcr.io/minhtt159/charts
+        chart: bank0
+        targetRevision: "{{ .chartVersion }}"
+        helm:
+          releaseName: bank0
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: bank0-{{ .env }}
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=false # namespaces are Flux's
+  # valuesObject is arbitrary nested YAML, which the typed template above can't
+  # carry — templatePatch is rendered as text and merged over it.
+  templatePatch: |
+    spec:
+      source:
+        helm:
+          valuesObject:
+            {{- toYaml .values | nindent 12 }}
+      {{- if .autoSync }}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+      {{- end }}

@@ -24,5 +24,18 @@ Bootstrapping is app-of-apps: Flux seeds a single root `Application`
 (`kubernetes/apps/argocd/argocd/app/root-application.yaml`) that points back at
 this directory and recurses. Everything else is Argo CD's to sync.
 
-Kargo promotes `staging → production` by committing to `apps/bank0-production.yaml`
-here — which is why app manifests live in a directory Flux will never fight over.
+## Layout
+
+```
+applicationsets/bank0.yaml   the shape: one Application per env config file
+envs/bank0/<env>.yaml        per-environment values; adding an env is adding a file
+projects/bank0.yaml          AppProject scoping bank0 to its two namespaces
+```
+
+Kargo promotes `staging → production` by rewriting `chartVersion` in
+`envs/bank0/production.yaml` — which is why these files live in a directory Flux
+will never fight over.
+
+Note the failure mode of a git file generator: if its glob matches nothing it
+reports success and produces zero Applications. An environment that silently
+stops existing looks exactly like one that was never added.
