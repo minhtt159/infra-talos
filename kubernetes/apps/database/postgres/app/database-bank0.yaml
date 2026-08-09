@@ -6,7 +6,7 @@ metadata:
   name: bank0-staging
 spec:
   name: bank0_staging
-  owner: bank0_staging
+  owner: ${BANK0_STAGING_DB_USER}
   cluster:
     name: postgres
 ---
@@ -17,6 +17,6 @@ metadata:
   name: bank0-production
 spec:
   name: bank0_production
-  owner: bank0_production
+  owner: ${BANK0_PRODUCTION_DB_USER}
   cluster:
     name: postgres

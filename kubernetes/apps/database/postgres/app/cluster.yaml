@@ -32,12 +32,12 @@ spec:
         login: true
         passwordSecret:
           name: litellm-db-auth
-      - name: bank0_staging
+      - name: ${BANK0_STAGING_DB_USER} # from the bank0-staging-db vault item
         ensure: present
         login: true
         passwordSecret:
           name: bank0-staging-db-auth
-      - name: bank0_production
+      - name: ${BANK0_PRODUCTION_DB_USER} # from the bank0-production-db vault item
         ensure: present
         login: true
         passwordSecret:
