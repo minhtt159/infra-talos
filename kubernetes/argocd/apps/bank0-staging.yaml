@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: ghcr.io/minhtt159/charts
     chart: bank0
-    targetRevision: 1.0.0
+    targetRevision: 1.0.1
     helm:
       releaseName: bank0
       valuesObject:
@@ -23,26 +23,20 @@ spec:
           secretKey: jwt-secret
         logging:
           level: debug # staging: cheap to read, nobody's paging on it
-        # envoy-internal deliberately does not trust X-Forwarded-For (see its
-        # ClientTrafficPolicy: "a LAN client can't forge source.ip"), so on chart
-        # 1.0.0 — whose parser takes the LEFT-most, forgeable entry — a trusted
-        # header means the per-IP auth rate limit is bypassable by rotating it.
-        # False collapses every client onto the Envoy pod IP: one coarse bucket,
-        # but it fails closed.
-        # Chart 1.0.1 parses right-to-left with trustedProxyHops (default 1),
-        # making Envoy's appended entry authoritative. Flip this to true on that
-        # version — while these routes stay on envoy-internal.
-        # NOT a reason to trust the header on envoy-external: that gateway is
-        # reachable directly from the LAN, so a client can bypass Cloudflare and
-        # forge both XFF and CF-Connecting-IP. Fronting is not filtering.
-        trustProxyHeaders: false
+        # Trust the forwarded header: 1.0.1 parses X-Forwarded-For right-to-left
+        # and takes trustedProxyHops entries in, so with envoy-internal appending
+        # the real client IP as the last hop, that entry is proxy-authored and a
+        # client can't forge it. Gets per-client rate-limit keys instead of every
+        # client sharing the Envoy pod's bucket.
+        # Both surfaces are on envoy-internal — exactly one hop. A surface moved
+        # to envoy-external would see two on tunnel traffic (cloudflared, then
+        # Envoy), where CF-Connecting-IP is what saves it, not this count.
+        trustProxyHeaders: true
+        trustedProxyHops: 1
         # Routing is Flux's (envoy-internal + the shared wildcard cert), so the
         # chart's Gateway and HTTPRoutes stay off.
         gateway:
           create: false
-          # otherwise the chart still emits its HTTP->HTTPS redirect route, pointed
-          # at a Gateway that does not exist here.
-          httpsRedirect: false
         api:
           exposed: false
           replicaCount: 1
