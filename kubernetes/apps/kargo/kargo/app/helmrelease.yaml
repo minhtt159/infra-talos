@@ -33,9 +33,16 @@ spec:
       # Set this or chart generates them — bcrypt hash in git.
       secret:
         name: kargo-api
-      argocd:
-        urls:
-          "": https://argocd.${SECRET_DOMAIN}
+      # Deep links to Argo CD. Would be api.argocd.urls (shard name → URL, ""
+      # for unsharded), but a "" YAML key breaks flux's kustomize build:
+      # "expected ScalarNode but got MappingNode". Set the env directly — the
+      # chart builds the same "<shard>=<url>" string, and an explicit env entry
+      # wins over the envFrom ConfigMap.
+      env:
+        - name: ARGOCD_URLS
+          value: "=https://argocd.${SECRET_DOMAIN}"
+        - name: ARGOCD_NAMESPACE
+          value: argocd
       resources:
         requests:
           cpu: 50m
