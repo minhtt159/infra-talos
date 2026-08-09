@@ -9,4 +9,10 @@ spec:
     name: letsencrypt-production
     kind: ClusterIssuer
   commonName: "${SECRET_DOMAIN}"
-  dnsNames: ["${SECRET_DOMAIN}", "*.${SECRET_DOMAIN}"]
+  # A wildcard covers exactly one label, so anything nested deeper than
+  # <host>.${SECRET_DOMAIN} needs its own SAN — hence the bank0 entries.
+  dnsNames:
+    - "${SECRET_DOMAIN}"
+    - "*.${SECRET_DOMAIN}"
+    - "*.bank0.${SECRET_DOMAIN}"
+    - "*.staging.bank0.${SECRET_DOMAIN}"

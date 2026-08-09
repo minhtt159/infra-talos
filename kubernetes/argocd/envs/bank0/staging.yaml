@@ -1,0 +1,42 @@
+---
+# One file per bank0 environment. The ApplicationSet's git file generator turns
+# each into an Application; `chartVersion` is the line Kargo rewrites when it
+# promotes, so keep it a plain literal.
+env: staging
+chartVersion: 1.0.1
+autoSync: true
+values:
+  database:
+    existingSecret: bank0-db # Flux-managed, from Vaultwarden
+    secretKey: dsn
+  auth:
+    existingSecret: bank0-auth
+    secretKey: jwt-secret
+  logging:
+    level: debug # staging: cheap to read, nobody's paging on it
+  # Trust the forwarded header: 1.0.1 parses X-Forwarded-For right-to-left and
+  # takes trustedProxyHops entries in, so with envoy-internal appending the real
+  # client IP as the last hop, that entry is proxy-authored and unforgeable.
+  # Gets per-client rate-limit keys instead of one shared bucket.
+  # Both surfaces are on envoy-internal — exactly one hop. A surface moved to
+  # envoy-external would see two on tunnel traffic (cloudflared, then Envoy),
+  # where CF-Connecting-IP is what saves it, not this count.
+  trustProxyHeaders: true
+  trustedProxyHops: 1
+  # Routing is Flux's (envoy-internal + the shared wildcard cert), so the
+  # chart's Gateway and HTTPRoutes stay off.
+  gateway:
+    create: false
+  api:
+    exposed: false
+    replicaCount: 1
+    autoscaling:
+      enabled: false
+  portal:
+    exposed: false
+    replicaCount: 1
+  metrics:
+    serviceMonitor:
+      enabled: true
+    dashboard:
+      enabled: true

@@ -10,3 +10,5 @@ resources:
   - ./scheduledbackup.yaml
   - ./database-hindsight.yaml
   - ./database-litellm.yaml
+  - ./externalsecret-bank0.yaml
+  - ./database-bank0.yaml

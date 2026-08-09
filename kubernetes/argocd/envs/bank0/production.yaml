@@ -1,0 +1,33 @@
+---
+# autoSync false on purpose: the promotion into this file is Kargo's, applying
+# it stays a human's.
+env: production
+chartVersion: 1.0.1
+autoSync: false
+values:
+  database:
+    existingSecret: bank0-db
+    secretKey: dsn
+  auth:
+    existingSecret: bank0-auth
+    secretKey: jwt-secret
+  # See staging.yaml for why the forwarded header is trusted here.
+  trustProxyHeaders: true
+  trustedProxyHops: 1
+  gateway:
+    create: false
+  api:
+    exposed: false
+    replicaCount: 3
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 10
+  portal:
+    exposed: false
+    replicaCount: 2
+  metrics:
+    serviceMonitor:
+      enabled: true
+    dashboard:
+      enabled: true
