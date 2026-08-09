@@ -65,8 +65,8 @@ spec:
         externalUrl: https://prometheus.${SECRET_DOMAIN}
         version: v2.55.1 # override 'unsupported Prometheus version' error
         image:
-          registry: docker.io
-          repository: prompp/prompp
+          registry: ghcr.io
+          repository: deckhouse/prompp
           tag: 0.8.7
         securityContext:
           runAsNonRoot: true
@@ -98,16 +98,16 @@ spec:
             writeRelabelConfigs:
               # histogram buckets — single biggest volume driver; _sum/_count kept
               - sourceLabels: [__name__]
-                regex: '.+_bucket'
+                regex: ".+_bucket"
                 action: drop
               # per-target Go runtime + process internals — noise for an archive
               - sourceLabels: [__name__]
-                regex: 'go_.*|process_.*'
+                regex: "go_.*|process_.*"
                 action: drop
               # cAdvisor per-container churn from short-lived pods; cpu/mem
               # working-set kept for capacity trends (not matched here)
               - sourceLabels: [__name__]
-                regex: 'container_(network|fs|tasks_state|memory_failures|spec)_.*'
+                regex: "container_(network|fs|tasks_state|memory_failures|spec)_.*"
                 action: drop
         resources:
           requests:
