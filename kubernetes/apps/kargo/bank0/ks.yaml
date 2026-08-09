@@ -1,14 +1,34 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-# Kargo's bank0 pipeline. No targetNamespace: the Project is cluster-scoped and
-# creates its own namespace, everything else names it explicitly.
+# Two Kustomizations, because Flux validates every object in one before applying
+# any of it: the Project creates namespace `bank0`, and everything else lives in
+# that namespace, so shipping them together fails validation and aborts the
+# apply — including the Project itself. Deadlock, not a slow first pass.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: bank0-project
+spec:
+  dependsOn:
+    - name: kargo
+  interval: 1h
+  path: ./kubernetes/apps/kargo/bank0/project
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  wait: true # the namespace must exist before the pipeline applies
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# The pipeline itself. No targetNamespace: everything names `bank0` explicitly.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: bank0-pipeline
 spec:
   dependsOn:
-    - name: kargo
+    - name: bank0-project
   interval: 1h
   path: ./kubernetes/apps/kargo/bank0/app
   prune: true
@@ -16,6 +36,5 @@ spec:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  # false: the git credential waits on a Vaultwarden item, and the Stages wait
-  # on the credential.
+  # false: the git credential waits on Vaultwarden, and the Stages wait on it.
   wait: false
