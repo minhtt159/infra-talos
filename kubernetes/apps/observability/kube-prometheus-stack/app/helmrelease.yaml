@@ -120,10 +120,15 @@ spec:
             memory: 512Mi
           limits:
             memory: 2000Mi
+        # local NVMe, not truenas-iscsi: prompp's startup reads are random and
+        # iSCSI served them at single-digit MB/s, so a 22GB TSDB never finished
+        # replaying inside any sane probe budget. Node-pinned and no snapshots —
+        # acceptable, retention is 14d and the promeo archive is the long-term
+        # copy. Node loss = delete the PVC and let it rebuild empty.
         storageSpec:
           volumeClaimTemplate:
             spec:
-              storageClassName: truenas-iscsi
+              storageClassName: openebs-hostpath
               resources:
                 requests:
                   storage: 50Gi
