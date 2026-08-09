@@ -6,3 +6,4 @@ namespace: kargo
 resources:
   - ./namespace.yaml
   - ./kargo/ks.yaml
+  - ./bank0/ks.yaml

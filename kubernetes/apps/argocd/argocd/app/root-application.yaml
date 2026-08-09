@@ -10,7 +10,7 @@ metadata:
   name: root
   namespace: argocd
 spec:
-  project: default
+  project: root
   source:
     repoURL: https://github.com/minhtt159/infra-talos
     targetRevision: main

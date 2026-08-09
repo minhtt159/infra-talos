@@ -5,4 +5,5 @@ resources:
   - ./ocirepository.yaml
   - ./helmrelease.yaml
   - ./httproute.yaml
+  - ./root-appproject.yaml
   - ./root-application.yaml

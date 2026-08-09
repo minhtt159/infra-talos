@@ -1,0 +1,49 @@
+---
+# production: only accepts Freight that staging has already run AND verified.
+# Promotion is manual (see projectconfig.yaml) — this Stage decides what MAY be
+# promoted, a human decides when.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: production
+  namespace: bank0
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: bank0
+      sources:
+        stages:
+          - staging
+  promotionTemplate:
+    spec:
+      vars:
+        - name: chartVersion
+          value: ${{ chartFrom("oci://ghcr.io/minhtt159/charts/bank0").Version }}
+      steps:
+        - uses: git-clone
+          config:
+            repoURL: https://github.com/minhtt159/infra-talos
+            checkout:
+              - branch: main
+                path: ./repo
+        - uses: yaml-update
+          as: update
+          config:
+            path: ./repo/kubernetes/argocd/envs/bank0/production.yaml
+            updates:
+              - key: chartVersion
+                value: ${{ vars.chartVersion }}
+        - uses: git-commit
+          as: commit
+          config:
+            path: ./repo
+            message: ${{ outputs.update.commitMessage }}
+        # Straight to main, which is unprotected. Protect it and this fails —
+        # swap for the PR-opening step and give the PAT pull-requests:write.
+        # Kargo's commits are unsigned, so a signed-commits rule breaks it too.
+        - uses: git-push
+          config:
+            path: ./repo
+        # No argocd-update: production's Application is manual-sync on purpose.
+        # Kargo lands the commit; a human clicks sync.

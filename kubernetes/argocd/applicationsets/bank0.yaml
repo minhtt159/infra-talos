@@ -18,6 +18,9 @@ spec:
   template:
     metadata:
       name: bank0-{{ .env }}
+      annotations:
+        # Consent: without this, argocd-update from that Stage is refused.
+        kargo.akuity.io/authorized-stage: bank0:{{ .env }}
     spec:
       project: bank0
       source:

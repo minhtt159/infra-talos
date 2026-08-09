@@ -1,0 +1,26 @@
+---
+# Blast radius for the app-of-apps root. Kargo pushes commits into a directory
+# this root syncs, so the credential is effectively deploy access — this caps
+# what a commit landing there can create: Argo CD's own objects, in argocd,
+# from this repo. Anything else needs a human to widen the project first.
+# Lives with the root Application, not in kubernetes/argocd: a project that the
+# root Application managed would have to exist before it could create itself.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  description: app-of-apps root — Argo CD's own objects only
+  sourceRepos:
+    - https://github.com/minhtt159/infra-talos
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: argocd
+  namespaceResourceWhitelist:
+    - group: argoproj.io
+      kind: Application
+    - group: argoproj.io
+      kind: ApplicationSet
+    - group: argoproj.io
+      kind: AppProject
