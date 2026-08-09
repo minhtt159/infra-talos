@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
+# bank0's own Postgres, one per environment. Beats sharing the `postgres`
+# cluster: staging can't reach production data, and CNPG mints the role itself —
+# no role name in git, no Vaultwarden item, no username that can drift out of
+# sync with the DSN.
+# bootstrap.initdb generates Secret bank0-production-app, which carries a ready
+# `uri` — that's what the chart reads (database.existingSecret + secretKey: uri).
+# ponytail: 1 instance and NO backups yet. Both matter here more than in
+# staging — see the PR for the ObjectStore/ScheduledBackup follow-up, which is
+# blocked on the Garage bucket the `postgres` cluster's objectstore.yaml still
+# TODOs.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: bank0-production
+spec:
+  instances: 1
+  # PG18 is a hard floor — bank0's schema uses uuidv7() with no polyfill.
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.4-standard-trixie
+  bootstrap:
+    initdb:
+      database: bank0
+      owner: bank0
+  # truenas-iscsi is network-attached, so a pod reschedules to any node and the
+  # volume follows.
+  storage:
+    storageClass: truenas-iscsi
+    size: 20Gi
+  walStorage:
+    storageClass: truenas-iscsi
+    size: 5Gi
+  monitoring:
+    enablePodMonitor: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi

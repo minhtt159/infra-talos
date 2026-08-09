@@ -32,16 +32,6 @@ spec:
         login: true
         passwordSecret:
           name: litellm-db-auth
-      - name: bank0_staging
-        ensure: present
-        login: true
-        passwordSecret:
-          name: bank0-staging-db-auth
-      - name: bank0_production
-        ensure: present
-        login: true
-        passwordSecret:
-          name: bank0-production-db-auth
   # iSCSI honors these sizes — each provisions a real TrueNAS zvol (100Gi PGDATA
   # + 20Gi WAL). Separate walStorage keeps a WAL spike from filling PGDATA.
   # truenas-iscsi is Retain + allowVolumeExpansion; zvols survive cluster

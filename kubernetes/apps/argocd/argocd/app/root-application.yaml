@@ -1,10 +1,9 @@
 ---
-# The one Argo CD object Flux owns: the app-of-apps root. Everything below the
-# path it points at belongs to Argo CD alone.
-# kubernetes/argocd sits next to kubernetes/apps, NOT inside it — Flux only ever
-# reads kubernetes/flux/cluster (its entry point) and kubernetes/apps
-# (cluster-apps). Moving that directory under kubernetes/apps would hand both
-# controllers the same objects.
+# Only Argo CD object Flux owns: the app-of-apps root. Everything under its
+# path is Argo CD's alone.
+# kubernetes/argocd sits NEXT TO kubernetes/apps, not inside. Flux reads only
+# kubernetes/flux/cluster and kubernetes/apps. Move it inside apps and both
+# controllers claim the same objects.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

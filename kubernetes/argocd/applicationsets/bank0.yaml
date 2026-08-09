@@ -1,6 +1,5 @@
 ---
-# One Application per file under envs/bank0/. Adding an environment is adding a
-# file; the shape stays in one place.
+# One Application per file in envs/bank0/. New env = new file. Shape lives here.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -8,8 +7,7 @@ metadata:
   namespace: argocd
 spec:
   goTemplate: true
-  # missingkey=error: a config file missing a key fails loudly instead of
-  # rendering "<no value>" into a live Application.
+  # missingkey=error: missing key fails loud, not "<no value>" in a live app.
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
@@ -34,8 +32,8 @@ spec:
       syncPolicy:
         syncOptions:
           - CreateNamespace=false # namespaces are Flux's
-  # valuesObject is arbitrary nested YAML, which the typed template above can't
-  # carry — templatePatch is rendered as text and merged over it.
+  # valuesObject is free-form nested YAML. Typed template can't carry it.
+  # templatePatch renders as text, merges over.
   templatePatch: |
     spec:
       source:
