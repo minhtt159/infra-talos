@@ -6,8 +6,8 @@ metadata:
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
   labels:
-    # baseline, not restricted: the Kargo chart leaves container securityContext
-    # empty by default. We fill it in via global.securityContext, but the
-    # chart's own cert/migration helper pods aren't covered — warn first.
+    # baseline not restricted: chart leaves container securityContext empty.
+    # We fill it via global.securityContext, but chart's own cert/migration
+    # helper pods aren't covered. Warn first.
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/warn: restricted

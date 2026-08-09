@@ -4,8 +4,8 @@ kind: HTTPRoute
 metadata:
   name: argocd
   annotations:
-    # /healthz is served unauthenticated by argocd-server and covers DNS, the
-    # gateway and the API server process.
+    # /healthz unauthenticated on argocd-server. Covers DNS, gateway, API
+    # process.
     gatus.home-operations.com/endpoint: |
       path: /healthz
       conditions:

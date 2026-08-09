@@ -1,12 +1,10 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
-# Argo CD — the delivery plane for application environments (bank0 → staging →
-# production), driven by Kargo. Flux keeps owning platform/infra in this repo;
-# the two never manage the same objects.
-# Argo CD is stateless: all state is Kubernetes objects, redis is a disposable
-# cache. No database, nothing extra to back up.
-# ponytail: non-HA (single replicas, chart's own redis). HA wants >=3 nodes for
-# redis-ha quorum — scale a component only when it actually bottlenecks.
+# Argo CD. Delivery plane for app environments (bank0 → staging → production),
+# driven by Kargo. Flux keeps platform/infra in this repo. Never same objects.
+# Argo CD stateless: state is k8s objects, redis is throwaway cache. No DB.
+# ponytail: non-HA, single replicas, chart's own redis. HA wants >=3 nodes for
+# redis-ha quorum. Scale a component when it actually bottlenecks.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -21,14 +19,14 @@ spec:
       domain: argocd.${SECRET_DOMAIN}
     configs:
       params:
-        # TLS terminates at envoy-internal; serving HTTPS here too would mean a
-        # second hop of self-signed TLS for no gain.
+        # TLS ends at envoy-internal. HTTPS here too = second self-signed hop,
+        # no gain.
         server.insecure: true
-    # No SSO wired up yet — the chart-generated argocd-initial-admin-secret is
-    # the only account. Drop dex and turn on OIDC when Authentik lands.
+    # No SSO yet. Chart-generated argocd-initial-admin-secret is the only
+    # account. Drop dex, turn on OIDC when Authentik lands.
     dex:
       enabled: false
-    # Nothing consumes Argo CD notifications; Flux already alerts.
+    # Nothing consumes Argo CD notifications. Flux already alerts.
     notifications:
       enabled: false
     controller:
@@ -52,8 +50,8 @@ spec:
           memory: 256Mi
         limits:
           memory: 1Gi
-    # Chart 10.3.0 has no applicationSet.enabled switch, so it ships either way
-    # — bootstrap is app-of-apps; generators are there if they ever earn it.
+    # Chart 10.3.0 has no applicationSet.enabled switch — ships either way.
+    # Bootstrap is app-of-apps; generators sit there until they earn it.
     applicationSet:
       resources:
         requests:

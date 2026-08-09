@@ -6,9 +6,11 @@ metadata:
   name: kargo
 spec:
   dependsOn:
-    - name: cert-manager # chart issues its own self-signed webhook/API certs
+    - name: cert-manager # chart issues own self-signed webhook/API certs
       namespace: cert-manager
     - name: argocd # controller sanity-checks Argo CD CRDs at startup
+      namespace: argocd
+    - name: argo-rollouts # same check, AnalysisRun CRDs
       namespace: argocd
   interval: 1h
   path: ./kubernetes/apps/kargo/kargo/app
@@ -22,6 +24,6 @@ spec:
     name: flux-system
     namespace: flux-system
   targetNamespace: kargo
-  # false: the API server won't come up until the Vaultwarden item behind
-  # externalsecret.yaml exists — don't wedge the whole reconcile on it.
+  # false: API waits on the Vaultwarden item in externalsecret.yaml. Don't
+  # wedge the reconcile on it.
   wait: false

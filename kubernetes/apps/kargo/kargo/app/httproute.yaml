@@ -4,8 +4,8 @@ kind: HTTPRoute
 metadata:
   name: kargo
   annotations:
-    # One host serves the UI and the Connect/gRPC-Web API. /healthz is
-    # unauthenticated and is what the pod's own probes use.
+    # One host: UI + Connect/gRPC-Web API. /healthz unauthenticated, same path
+    # the pod probes use.
     gatus.home-operations.com/endpoint: |
       path: /healthz
       conditions:

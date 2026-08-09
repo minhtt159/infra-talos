@@ -1,10 +1,9 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
-# Kargo — promotion pipelines on top of Argo CD: Warehouse (watches an image or
-# chart) → Freight → Stage (bank0 → staging → production), promoting by writing
-# back to the app GitOps repo.
-# State lives entirely in CRDs (etcd) — no database, nothing to back up beyond
-# what already backs up etcd.
+# Kargo. Promotion pipeline on top of Argo CD: Warehouse (watch image/chart) →
+# Freight → Stage (bank0 → staging → production). Promote = write back to app
+# GitOps repo.
+# State all in CRDs (etcd). No database.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -16,7 +15,7 @@ spec:
   interval: 1h
   values:
     global:
-      # The chart defaults these to {} and the namespace warns on `restricted`.
+      # Chart defaults these to {}. Namespace warns on `restricted`.
       securityContext:
         allowPrivilegeEscalation: false
         capabilities: { drop: ["ALL"] }
@@ -25,23 +24,18 @@ spec:
           type: RuntimeDefault
     api:
       host: kargo.${SECRET_DOMAIN}
-      # TLS terminates at envoy-internal, so the API serves plain HTTP but must
-      # still generate https:// URLs for the UI and token issuer.
+      # TLS ends at envoy-internal. API serves plain HTTP, still must emit
+      # https:// URLs for UI + token issuer.
       tls:
         enabled: false
         terminatedUpstream: true
-      # Admin password hash + token signing key come from Vaultwarden via ESO
-      # (externalsecret.yaml) — setting this stops the chart generating them,
-      # which would put a bcrypt hash in git.
+      # Admin hash + signing key from Vaultwarden via ESO (externalsecret.yaml).
+      # Set this or chart generates them — bcrypt hash in git.
       secret:
         name: kargo-api
       argocd:
         urls:
           "": https://argocd.${SECRET_DOMAIN}
-      # Argo Rollouts isn't installed; disabling explicitly grants less RBAC
-      # than letting the startup sanity check discover it.
-      rollouts:
-        integrationEnabled: false
       resources:
         requests:
           cpu: 50m
@@ -49,8 +43,6 @@ spec:
         limits:
           memory: 512Mi
     controller:
-      rollouts:
-        integrationEnabled: false
       resources:
         requests:
           cpu: 50m
@@ -78,8 +70,7 @@ spec:
           memory: 64Mi
         limits:
           memory: 256Mi
-    # ponytail: no inbound git/image webhooks — Warehouses poll on their own
-    # interval. Enable this plus an envoy-external HTTPRoute when polling lag
-    # actually hurts.
+    # ponytail: no inbound git/image webhooks — Warehouses poll. Turn on plus
+    # envoy-external HTTPRoute when poll lag hurts.
     externalWebhooksServer:
       enabled: false

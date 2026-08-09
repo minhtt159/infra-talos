@@ -6,3 +6,4 @@ namespace: argocd
 resources:
   - ./namespace.yaml
   - ./argocd/ks.yaml
+  - ./argo-rollouts/ks.yaml
