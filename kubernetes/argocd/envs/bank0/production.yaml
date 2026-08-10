@@ -2,7 +2,7 @@
 # autoSync false on purpose. Promotion into this file is Kargo's; applying it
 # stays a human's.
 env: production
-chartVersion: 1.0.1
+chartVersion: 1.0.2
 autoSync: false
 values:
   database:
