@@ -2,7 +2,7 @@
 # One file per bank0 env. Git file generator turns each into an Application.
 # chartVersion is the line Kargo rewrites on promote — keep it a plain literal.
 env: staging
-chartVersion: 1.0.2
+chartVersion: 1.0.1
 autoSync: true
 values:
   database:
