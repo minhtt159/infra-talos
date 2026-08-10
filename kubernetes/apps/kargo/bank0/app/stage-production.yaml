@@ -34,11 +34,21 @@ spec:
             updates:
               - key: chartVersion
                 value: ${{ vars.chartVersion }}
+        # yaml-update's own commitMessage is just "Updated <path>", which says
+        # nothing about who or what. ctx.meta.promotion.actor is the Promotion's
+        # creator — a username for a UI/CLI promotion, the controller for an
+        # auto-promotion. Not using git-commit's `author`: deprecated in v1.10.0,
+        # removal in v1.12.0; authorship belongs in git-clone now.
         - uses: git-commit
           as: commit
           config:
             path: ./repo
-            message: ${{ outputs.update.commitMessage }}
+            message: |
+              chore(bank0): promote production to ${{ vars.chartVersion }}
+
+              Promoted-by: ${{ ctx.meta.promotion.actor }}
+              Freight: ${{ ctx.targetFreight.name }}
+              Promotion: ${{ ctx.promotion }}
         # Straight to main, which is unprotected. Protect it and this fails —
         # swap for the PR-opening step and give the PAT pull-requests:write.
         # Kargo's commits are unsigned, so a signed-commits rule breaks it too.
