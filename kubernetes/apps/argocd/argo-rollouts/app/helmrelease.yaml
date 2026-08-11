@@ -15,6 +15,20 @@ spec:
   interval: 1h
   values:
     controller:
+      # The Gateway API traffic router, needed for canary weights on an
+      # HTTPRoute. The controller downloads the binary at startup (once — a
+      # restart re-downloads), so it needs egress to github releases.
+      # renovate: datasource=github-releases depName=argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi
+      trafficRouterPlugins:
+        - name: argoproj-labs/gatewayAPI # must match what the plugin expects
+          location: https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.16.0/gatewayapi-plugin-linux-amd64
+          sha256: 3f129e6a1ea948932f440b16dfb9eae636a065857eb27311928e5790593103c1
+      # A plugin location is ONE url, so it is one architecture. This cluster is
+      # mixed (arm64 RK1 workers), and a replica scheduled on arm64 would fail to
+      # load an amd64 binary — latent behind leader election until failover.
+      # Pin to amd64 rather than ship a plugin that works on some replicas.
+      nodeSelector:
+        kubernetes.io/arch: amd64
       resources:
         requests:
           cpu: 25m
