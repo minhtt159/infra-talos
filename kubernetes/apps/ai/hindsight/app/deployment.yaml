@@ -64,6 +64,19 @@ spec:
             # English-clean synthesis; ~56s is fine for night-batch reflect.
             - name: HINDSIGHT_API_REFLECT_LLM_MODEL
               value: qwen3.6:35b-a3b
+            # Appended to the retain/recall MCP tool descriptions. recall's
+            # max_tokens is a TEXT-only budget (per-result metadata is free), so
+            # the 4096 default packs 60+ short facts into a 60-80KB JSON blob —
+            # tail is near-zero-score noise — which blows the client's MCP
+            # output-token cap and gets dumped to a file. 1024 gives ~13 ranked
+            # results / ~14KB (measured), inline and relevant. Soft nudge: it's
+            # per-call and can't be hard-capped server-side in 0.8.4.
+            - name: HINDSIGHT_API_MCP_INSTRUCTIONS
+              value: >-
+                recall: call with max_tokens=1024 by default to keep responses
+                small and inline; raise toward 4096 only when a query genuinely
+                needs broad recall. Results are ranked by final_score (highest
+                first); the top few are what matter. Prefer budget="mid".
           ports:
             - name: api # REST + MCP
               containerPort: 8888
