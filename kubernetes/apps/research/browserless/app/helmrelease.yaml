@@ -23,7 +23,7 @@ spec:
           app:
             image:
               repository: ghcr.io/browserless/chromium
-              tag: v2.55.3@sha256:8f6a3937c574675ebb973acfab5ce6f1cad7b8205e308c788c4774e30b658025
+              tag: v2.56.0@sha256:6f3149efabf5e04a44385974448c85264398db416bc63f884564316d0fcadc3e
             env:
               CONCURRENT: "3"
               TIMEOUT: "120000" # ms; kill a session after 2m idle
