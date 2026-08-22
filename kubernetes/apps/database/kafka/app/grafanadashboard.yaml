@@ -15,7 +15,7 @@ spec:
   # grafana-operator fetches the JSON from the pinned tag; Renovate bumps the tag
   # (in the URL path) alongside the operator via the annotated-dependencies manager.
   # renovate: datasource=github-releases depName=strimzi/strimzi-kafka-operator
-  url: https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.1.0/examples/metrics/grafana-dashboards/strimzi-kafka.json
+  url: https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/examples/metrics/grafana-dashboards/strimzi-kafka.json
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -31,7 +31,7 @@ spec:
     - inputName: DS_PROMETHEUS
       datasourceName: prometheus
   # renovate: datasource=github-releases depName=strimzi/strimzi-kafka-operator
-  url: https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.1.0/examples/metrics/grafana-dashboards/strimzi-kraft.json
+  url: https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/examples/metrics/grafana-dashboards/strimzi-kraft.json
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -47,4 +47,4 @@ spec:
     - inputName: DS_PROMETHEUS
       datasourceName: prometheus
   # renovate: datasource=github-releases depName=strimzi/strimzi-kafka-operator
-  url: https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.1.0/examples/metrics/grafana-dashboards/strimzi-operators.json
+  url: https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/examples/metrics/grafana-dashboards/strimzi-operators.json
