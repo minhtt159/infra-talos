@@ -66,7 +66,8 @@ spec:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 10Gi
+          # sqlite ~6M + plugins ~50M; dashboards/datasources are CRs
+          storage: 2Gi
       # TrueNAS block, not node-local: survives node rotation, Retain on reclaim.
       storageClassName: truenas-iscsi
   disableDefaultSecurityContext: All
