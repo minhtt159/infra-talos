@@ -28,8 +28,8 @@ spec:
   dependsOn:
     - name: grafana
     - # NOTE:custom storage provider
-      name: openebs
-      namespace: openebs
+      name: democratic-iscsi
+      namespace: democratic-csi
   interval: 1h
   path: ./kubernetes/apps/observability/grafana/instance
   prune: true

@@ -21,30 +21,12 @@ spec:
       upgradeJob:
         enabled: true
         forceConflicts: true
+    # No in-cluster alerting: promeo (Prometheus on TrueNAS) is the only TSDB now,
+    # so rule evaluation + Alertmanager belong next to it, not here.
     alertmanager:
-      route:
-        main:
-          enabled: true
-          hostnames:
-            - alertmanager.${SECRET_DOMAIN}
-          parentRefs:
-            - name: envoy-internal
-              namespace: network
-      alertmanagerSpec:
-        # alertmanagerConfiguration:
-        #   name: alertmanager
-        externalUrl: https://alertmanager.${SECRET_DOMAIN}
-        resources:
-          requests:
-            cpu: 10m
-            memory: 64Mi
-        storage:
-          volumeClaimTemplate:
-            spec:
-              storageClassName: truenas-nfs
-              resources:
-                requests:
-                  storage: 1Gi
+      enabled: false
+    defaultRules:
+      create: false
     kubeEtcd:
       enabled: true
       service:
@@ -53,6 +35,11 @@ spec:
     kubeProxy:
       enabled: false
     prometheus:
+      # Agent mode: scrape + remote_write only. No TSDB, no rules, no query API —
+      # promeo (Prometheus on TrueNAS, 6w retention) is the store; Grafana and
+      # Kargo query it directly. Nothing node-pinned left in this stack, so a
+      # dead node costs at most the in-flight WAL.
+      agentMode: true
       route:
         main:
           enabled: true
@@ -63,13 +50,6 @@ spec:
               namespace: network
       prometheusSpec:
         externalUrl: https://prometheus.${SECRET_DOMAIN}
-        # 15m default kills prompp mid-replay on a slow disk
-        maximumStartupDurationSeconds: 3600
-        version: v2.55.1 # override 'unsupported Prometheus version' error
-        image:
-          registry: ghcr.io
-          repository: deckhouse/prompp
-          tag: 0.8.11
         securityContext:
           runAsNonRoot: true
           runAsUser: 64535
@@ -77,15 +57,12 @@ spec:
           fsGroup: 64535
         podMonitorSelectorNilUsesHelmValues: false
         probeSelectorNilUsesHelmValues: false
-        ruleSelectorNilUsesHelmValues: false
         scrapeConfigSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
-        retention: 14d
-        retentionSize: 50GB
-        # Long-term archive on TrueNAS; promeo needs
-        # --web.enable-remote-write-receiver. It ingests slowly — the full series
-        # set overran it (339 desired shards vs max 50), hence the drops. Still
-        # >50 after this = promeo is under-resourced, don't raise maxShards.
+        # promeo needs --web.enable-remote-write-receiver. It ingests slowly —
+        # the full series set overran it (339 desired shards vs max 50), hence
+        # the drops. Still >50 after this = promeo is under-resourced, don't
+        # raise maxShards.
         remoteWrite:
           - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
             writeRelabelConfigs:
@@ -106,17 +83,6 @@ spec:
             memory: 512Mi
           limits:
             memory: 2000Mi
-        # local NVMe: iSCSI served prompp's random startup reads at
-        # single-digit MB/s. Node-pinned, no snapshots — promeo is the archive.
-        storageSpec:
-          # kubelet can't mkdir a subPath in a hostpath volume on Talos
-          disableMountSubPath: true
-          volumeClaimTemplate:
-            spec:
-              storageClassName: openebs-hostpath
-              resources:
-                requests:
-                  storage: 50Gi
 
     prometheus-node-exporter:
       fullnameOverride: node-exporter

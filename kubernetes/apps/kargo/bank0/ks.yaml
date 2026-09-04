@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-# Two Kustomizations, because Flux validates every object in one before applying
+# Three Kustomizations. Two, because Flux validates every object in one before applying
 # any of it: the Project creates namespace `bank0`, and everything else lives in
 # that namespace, so shipping them together fails validation and aborts the
 # apply — including the Project itself. Deadlock, not a slow first pass.
@@ -38,3 +38,26 @@ spec:
     namespace: flux-system
   # false: the git credential waits on Vaultwarden, and the Stages wait on it.
   wait: false
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# Split out for `${SECRET_DOMAIN}`: Flux envsubst errors on Kargo's `${{ … }}`
+# expressions in the pipeline dir, so substitution can only run where none live.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: bank0-analysis
+spec:
+  dependsOn:
+    - name: bank0-project
+  interval: 1h
+  path: ./kubernetes/apps/kargo/bank0/analysis
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  wait: true

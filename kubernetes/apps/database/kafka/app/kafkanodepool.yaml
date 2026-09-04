@@ -8,8 +8,9 @@ metadata:
     strimzi.io/cluster: kafka
 spec:
   # Single dual-role KRaft node (controller + broker in one pod). RF=1 everywhere
-  # — pod restart is a short outage, node loss is data loss. Acceptable for
-  # transient homelab messaging; scale out by adding a broker-only pool + raising RF.
+  # — pod restart is a short outage. Node loss is a reschedule (data is on
+  # TrueNAS); disk loss on TrueNAS is data loss. Acceptable for transient
+  # homelab messaging; scale out by adding a broker-only pool + raising RF.
   replicas: 1
   roles:
     - controller
@@ -17,9 +18,10 @@ spec:
   storage:
     type: persistent-claim
     size: 20Gi
-    # Local disk (same class as postgres) — Kafka best practice for latency.
-    # Not NFS (corruption risk). Durability comes from RF, deliberately given up.
-    class: openebs-hostpath-sata
+    # TrueNAS block (same class as postgres): the volume outlives the node, so
+    # node rotation is a pod reschedule, not data loss. Not NFS (corruption
+    # risk). Local disk would be faster but is node-pinned.
+    class: truenas-iscsi
     deleteClaim: false
   resources:
     requests:

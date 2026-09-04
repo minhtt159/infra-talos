@@ -67,5 +67,6 @@ spec:
       resources:
         requests:
           storage: 10Gi
-      storageClassName: openebs-hostpath
+      # TrueNAS block, not node-local: survives node rotation, Retain on reclaim.
+      storageClassName: truenas-iscsi
   disableDefaultSecurityContext: All

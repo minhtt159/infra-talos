@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - ./projectconfig.yaml
   - ./externalsecret.yaml
-  - ./analysistemplate.yaml
   - ./warehouse.yaml
   - ./stage-staging.yaml
   - ./stage-production.yaml
