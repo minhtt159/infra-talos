@@ -45,9 +45,16 @@ cluster, empty:
 ```sh
 kubectl -n database delete pvc data-kafka-dual-0
 kubectl -n database delete pod kafka-dual-0
+kubectl -n database get pvc data-kafka-dual-0 -o jsonpath='{.metadata.annotations.volume\.kubernetes\.io/selected-node}'
 kubectl -n database get pods -w
 kubectl get kafkatopics -A          # declarative topics, recreated by the topic operator
 ```
+
+The `selected-node` must be the `storage=sata` node. If Strimzi recreated the
+pod before rolling out the node affinity, the provisioner pins the new PV to
+whatever node the old pod was on; delete the PVC and pod once more. The broker
+logs `RegistrationResponseHandler` errors for the first ~2 minutes while the
+fresh KRaft metadata log bootstraps; it goes `1/1` on its own.
 
 ## 3. Recover Ollama (GPU node only)
 
