@@ -33,7 +33,7 @@ spec:
         # CrashLoop the kube-prometheus-stack KubePodCrashLooping alert catches.
         - name: db-migrate
           # repeated below, not anchored — Renovate can't see `&image`.
-          image: ghcr.io/berriai/litellm-database:v1.98.0
+          image: ghcr.io/berriai/litellm-database:v1.99.1
           envFrom:
             - secretRef:
                 name: litellm-config # DATABASE_URL
@@ -56,7 +56,7 @@ spec:
               type: RuntimeDefault
       containers:
         - name: litellm
-          image: ghcr.io/berriai/litellm-database:v1.98.0
+          image: ghcr.io/berriai/litellm-database:v1.99.1
           args:
             - "--config"
             - "/app/config.yaml"
