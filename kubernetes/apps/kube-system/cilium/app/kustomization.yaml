@@ -5,7 +5,6 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./networks.yaml
-  - ./bgp.yaml
   - ./grafanadashboard.yaml
   # Disabled July 2026: hostFirewall + policyAuditMode gone from values; these
   # CCNPs would enforce immediately. Re-enable with a policy rollout plan.

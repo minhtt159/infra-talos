@@ -18,3 +18,25 @@ spec:
     namespace: flux-system
   targetNamespace: kube-system
   wait: false
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cilium-bgp
+spec:
+  interval: 1h
+  # BGP CRDs are registered by cilium-operator only after bgpControlPlane.enabled
+  # reaches it. In one apply with the HelmRelease the dry-run fails on the CRs
+  # and blocks the HelmRelease itself. Separate ks; retries until CRDs exist.
+  dependsOn:
+    - name: cilium
+  retryInterval: 1m
+  path: ./kubernetes/apps/kube-system/cilium/bgp
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: kube-system
+  wait: false
