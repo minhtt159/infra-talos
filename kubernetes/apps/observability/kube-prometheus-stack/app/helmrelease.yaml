@@ -105,23 +105,16 @@ spec:
         probeSelectorNilUsesHelmValues: false
         scrapeConfigSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
-        # promeo needs --web.enable-remote-write-receiver. Full series set
-        # overran it (339 desired shards vs max 50) → drops below. Still >50 =
-        # promeo under-resourced; don't raise maxShards.
+        # promeo sized for full set (~300k series, 12k samples/s; homelab-platform
+        # docs/observability/promeo-sizing.md). Queue raised: default max 50
+        # shards, filtered set already wanted 112. Watch shards_desired,
+        # samples_dropped_total.
         remoteWrite:
           - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
-            writeRelabelConfigs:
-              # biggest volume driver; _sum/_count kept
-              - sourceLabels: [__name__]
-                regex: ".+_bucket"
-                action: drop
-              - sourceLabels: [__name__]
-                regex: "go_.*|process_.*"
-                action: drop
-              # cAdvisor churn from short-lived pods; cpu/mem kept
-              - sourceLabels: [__name__]
-                regex: "container_(network|fs|tasks_state|memory_failures|spec)_.*"
-                action: drop
+            queueConfig:
+              maxShards: 200
+              maxSamplesPerSend: 2000
+              capacity: 20000
         resources:
           requests:
             cpu: 100m
