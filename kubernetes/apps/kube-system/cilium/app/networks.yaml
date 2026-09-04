@@ -8,6 +8,7 @@ spec:
   # Routed prefix OUTSIDE node subnet. Router learns /32s via BGP (bgp.yaml).
   # Nobody ARPs → no L2, no DHCP overlap, no leader blackhole. Not a UniFi network object.
   # Opt-in: Service label `announce: bgp` (Gateway: infrastructure.labels).
+  allowFirstLastIPs: "No" # smoke test got handed 10.1.81.0
   blocks:
     - cidr: "10.1.81.0/24"
   serviceSelector:
