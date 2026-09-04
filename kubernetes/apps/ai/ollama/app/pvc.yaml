@@ -6,7 +6,12 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-iscsi
+  # Node-local NVMe on the GPU node, deliberately. Model loads stream GBs at
+  # every keep_alive reload; iSCSI capped that at 1GbE line rate (~125 MB/s,
+  # 76 ms read latency under load). Ollama is pinned to the GPU node by
+  # hardware anyway, so node-pinning costs nothing; node loss costs a re-pull
+  # of ~20 GB of models — a cache, not state.
+  storageClassName: openebs-hostpath
   resources:
     requests:
       storage: 100Gi

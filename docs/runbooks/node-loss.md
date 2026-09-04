@@ -49,14 +49,25 @@ kubectl -n database get pods -w
 kubectl get kafkatopics -A          # declarative topics, recreated by the topic operator
 ```
 
-## 3. Nothing else needs you
+## 3. Recover Ollama (GPU node only)
+
+Models are a cache on the GPU node's local disk. Same shape as Kafka: fresh
+claim, then the models come back on first use (or pull them now):
+
+```sh
+kubectl -n ai delete pvc ollama-models
+kubectl -n ai delete pod -l app=ollama
+kubectl -n ai exec deploy/ollama -- ollama pull qwen3:8b   # repeat per model you want warm
+```
+
+## 4. Nothing else needs you
 
 - **Prometheus** is an agent: no storage, the new pod resumes remote-writing
   to promeo. At most the in-flight WAL (minutes) is lost.
-- **Grafana, Postgres, Ollama, Hindsight, Frigate, Alertmanager** are on TrueNAS.
+- **Grafana, Postgres, Hindsight, Frigate, Alertmanager** are on TrueNAS.
 - **Prometheus operator, Thanos Ruler, exporters** are stateless.
 
-## 4. Verify
+## 5. Verify
 
 ```sh
 flux get kustomizations -A     # all Ready
