@@ -15,6 +15,8 @@
   Cilium initiates the session, so the gateway can accept the node subnet as
   dynamic neighbours and node IPs may stay DHCP. Timers must match
   `CiliumBGPPeerConfig` (3/9). Verify with `cilium bgp peers` / `cilium bgp routes`.
+  UniFi takes ONE FRR file per device and re-uploading bounces every session;
+  `maximum-paths` is required for ECMP (UniFi FRR defaults to a single best path).
 
   ```
   router bgp 64512
