@@ -26,6 +26,7 @@
    bgp listen range 10.1.80.0/24 peer-group K8S
    address-family ipv4 unicast
     neighbor K8S activate
+    neighbor K8S soft-reconfiguration inbound
     maximum-paths 8
    exit-address-family
   exit
