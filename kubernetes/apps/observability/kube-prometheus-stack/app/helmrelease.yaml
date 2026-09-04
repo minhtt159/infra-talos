@@ -21,12 +21,60 @@ spec:
       upgradeJob:
         enabled: true
         forceConflicts: true
-    # No in-cluster alerting: promeo (Prometheus on TrueNAS) is the only TSDB now,
-    # so rule evaluation + Alertmanager belong next to it, not here.
     alertmanager:
-      enabled: false
-    defaultRules:
-      create: false
+      route:
+        main:
+          enabled: true
+          hostnames:
+            - alertmanager.${SECRET_DOMAIN}
+          parentRefs:
+            - name: envoy-internal
+              namespace: network
+      alertmanagerSpec:
+        # alertmanagerConfiguration:
+        #   name: alertmanager
+        externalUrl: https://alertmanager.${SECRET_DOMAIN}
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: truenas-nfs
+              resources:
+                requests:
+                  storage: 1Gi
+
+    # Rules + alerting stay in-cluster; TrueNAS runs promeo and nothing else.
+    # The Prometheus below is an agent (no TSDB, no rule engine), so Thanos
+    # Ruler evaluates every PrometheusRule against promeo's Prometheus-compatible
+    # query API, remote-writes recording-rule results back to promeo (mixin
+    # dashboards need the `:sum_rate`-style series) and pushes alerts to the
+    # Alertmanager above. Stateless: remoteWrite set → no local TSDB.
+    thanosRuler:
+      enabled: true
+      thanosRulerSpec:
+        ruleSelectorNilUsesHelmValues: false
+        evaluationInterval: 1m
+        # remote_write lag: don't evaluate the seconds promeo hasn't received yet
+        ruleQueryOffset: 1m
+        alertQueryUrl: https://promeo.${SECRET_DOMAIN}
+        alertmanagersUrl:
+          - http://alertmanager-operated.observability.svc.cluster.local:9093
+        # --query only speaks http; https needs a query config file → secret.yaml
+        queryConfig:
+          existingSecret:
+            name: thanos-ruler-query-config
+            key: query-configs.yaml
+        remoteWrite:
+          - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
     kubeEtcd:
       enabled: true
       service:
@@ -36,8 +84,8 @@ spec:
       enabled: false
     prometheus:
       # Agent mode: scrape + remote_write only. No TSDB, no rules, no query API —
-      # promeo (Prometheus on TrueNAS, 6w retention) is the store; Grafana and
-      # Kargo query it directly. Nothing node-pinned left in this stack, so a
+      # promeo (Prometheus on TrueNAS, 6w retention) is the store; Grafana, Kargo
+      # and Thanos Ruler query it. Nothing node-pinned left in this stack, so a
       # dead node costs at most the in-flight WAL.
       agentMode: true
       route:
