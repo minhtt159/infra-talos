@@ -105,12 +105,10 @@ spec:
         probeSelectorNilUsesHelmValues: false
         scrapeConfigSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
-        # promeo: --web.enable-remote-write-receiver, sized for the full set
-        # (~300k series, ~12k samples/s; 4 CPU / 8 GiB, 1y / 800 GiB, see
-        # homelab-platform docs/observability/promeo-sizing.md). Queue raised
-        # for it: the filtered set already wanted 112 shards vs default max 50.
-        # Watch prometheus_remote_storage_shards_desired and
-        # prometheus_remote_storage_samples_dropped_total after changes.
+        # promeo sized for full set (~300k series, 12k samples/s; homelab-platform
+        # docs/observability/promeo-sizing.md). Queue raised: default max 50
+        # shards, filtered set already wanted 112. Watch shards_desired,
+        # samples_dropped_total.
         remoteWrite:
           - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
             queueConfig:
