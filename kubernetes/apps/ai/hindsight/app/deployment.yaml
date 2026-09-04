@@ -64,6 +64,10 @@ spec:
             # English-clean synthesis; ~56s is fine for night-batch reflect.
             - name: HINDSIGHT_API_REFLECT_LLM_MODEL
               value: qwen3.6:35b-a3b
+            # 120s default overruns on a slow GPU, then retries 3x — give
+            # reflect its own ceiling, under the edge's 600s requestTimeout.
+            - name: HINDSIGHT_API_REFLECT_LLM_TIMEOUT
+              value: "300"
           ports:
             - name: api # REST + MCP
               containerPort: 8888
