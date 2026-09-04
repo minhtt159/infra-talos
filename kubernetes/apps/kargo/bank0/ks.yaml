@@ -40,8 +40,8 @@ spec:
   wait: false
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-# Split out for `${SECRET_DOMAIN}`: Flux envsubst errors on Kargo's `${{ … }}`
-# expressions in the pipeline dir, so substitution can only run where none live.
+# Own ks for `${SECRET_DOMAIN}`: Flux envsubst chokes on Kargo `${{ … }}` in
+# the pipeline dir, so substitution runs only here.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:

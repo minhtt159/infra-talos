@@ -1,8 +1,7 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadatasource_v1beta1.json
-# Named `prometheus` so the ~50 dashboards that bind DS_PROMETHEUS to it keep
-# working; the URL is promeo (Prometheus on TrueNAS) — the in-cluster
-# Prometheus is an agent with no query API.
+# Name stays `prometheus`: ~50 dashboards bind DS_PROMETHEUS to it. URL =
+# promeo (Prometheus on TrueNAS); in-cluster Prometheus is agent, no query API.
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:

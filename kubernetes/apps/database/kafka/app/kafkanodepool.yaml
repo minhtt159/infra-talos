@@ -8,11 +8,10 @@ metadata:
     strimzi.io/cluster: kafka
 spec:
   # Single dual-role KRaft node (controller + broker in one pod). RF=1 everywhere
-  # — pod restart is a short outage, node loss is data loss (accepted: transient
-  # homelab messaging). Recovery after node loss: delete PVC data-kafka-dual-0
-  # (+ the Pending pod); Strimzi re-provisions an empty volume and the broker
-  # comes back with the same cluster ID. Scale out by adding a broker-only pool
-  # + raising RF if this ever holds data worth keeping.
+  # — pod restart = short outage, node loss = data loss (accepted, transient
+  # messaging). Recover: delete PVC data-kafka-dual-0 + Pending pod; Strimzi
+  # re-provisions empty, same cluster ID. Need durability → broker-only pool,
+  # raise RF.
   replicas: 1
   roles:
     - controller
@@ -20,17 +19,16 @@ spec:
   storage:
     type: persistent-claim
     size: 20Gi
-    # Local SATA SSD — Kafka best practice for latency; not NFS (corruption
-    # risk), not iSCSI (deliberately: local disk, durability given up above).
+    # Local SATA SSD for latency. Not NFS (corruption), not iSCSI (chosen).
     class: openebs-hostpath-sata
     deleteClaim: false
   template:
     pod:
       affinity:
         nodeAffinity:
-          # The sata class is a hostpath under /var/mnt/sata; only the node
-          # labelled storage=sata (Omni template) has that UserVolume. Without
-          # the pin the provisioner happily creates the dir on any node's /var.
+          # Class = hostpath /var/mnt/sata. Only storage=sata node (Omni
+          # template) has that UserVolume; unpinned, provisioner mkdirs on any
+          # node's /var.
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:

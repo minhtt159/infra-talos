@@ -46,23 +46,22 @@ spec:
                 requests:
                   storage: 1Gi
 
-    # Rules + alerting stay in-cluster; TrueNAS runs promeo and nothing else.
-    # The Prometheus below is an agent (no TSDB, no rule engine), so Thanos
-    # Ruler evaluates every PrometheusRule against promeo's Prometheus-compatible
-    # query API, remote-writes recording-rule results back to promeo (mixin
-    # dashboards need the `:sum_rate`-style series) and pushes alerts to the
-    # Alertmanager above. Stateless: remoteWrite set → no local TSDB.
+    # Rules + alerting in-cluster; TrueNAS runs promeo only. Prometheus below is
+    # agent (no TSDB, no rule engine) → Thanos Ruler evaluates every
+    # PrometheusRule against promeo's query API, remote-writes recording rules
+    # back (mixin dashboards need `:sum_rate` series), alerts → Alertmanager
+    # above. remoteWrite set → stateless, no local TSDB.
     thanosRuler:
       enabled: true
       thanosRulerSpec:
         ruleSelectorNilUsesHelmValues: false
         evaluationInterval: 1m
-        # remote_write lag: don't evaluate the seconds promeo hasn't received yet
+        # skip seconds promeo hasn't received yet (remote_write lag)
         ruleQueryOffset: 1m
         alertQueryUrl: https://promeo.${SECRET_DOMAIN}
         alertmanagersUrl:
           - http://alertmanager-operated.observability.svc.cluster.local:9093
-        # --query only speaks http; https needs a query config file → secret.yaml
+        # --query = http only; https needs query config file → secret.yaml
         queryConfig:
           existingSecret:
             name: thanos-ruler-query-config
@@ -83,10 +82,9 @@ spec:
     kubeProxy:
       enabled: false
     prometheus:
-      # Agent mode: scrape + remote_write only. No TSDB, no rules, no query API —
-      # promeo (Prometheus on TrueNAS, 6w retention) is the store; Grafana, Kargo
-      # and Thanos Ruler query it. Nothing node-pinned left in this stack, so a
-      # dead node costs at most the in-flight WAL.
+      # Agent: scrape + remote_write only. No TSDB, rules, query API. Store =
+      # promeo (Prometheus on TrueNAS, 6w); Grafana, Kargo, Thanos Ruler query
+      # it. Nothing node-pinned here; dead node costs in-flight WAL at most.
       agentMode: true
       route:
         main:
@@ -107,10 +105,9 @@ spec:
         probeSelectorNilUsesHelmValues: false
         scrapeConfigSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
-        # promeo needs --web.enable-remote-write-receiver. It ingests slowly —
-        # the full series set overran it (339 desired shards vs max 50), hence
-        # the drops. Still >50 after this = promeo is under-resourced, don't
-        # raise maxShards.
+        # promeo needs --web.enable-remote-write-receiver. Full series set
+        # overran it (339 desired shards vs max 50) → drops below. Still >50 =
+        # promeo under-resourced; don't raise maxShards.
         remoteWrite:
           - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
             writeRelabelConfigs:
