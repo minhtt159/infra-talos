@@ -1,6 +1,5 @@
 ---
-# Enable mTLS authentication for service mesh traffic
-# This enforces that all L7 traffic uses Cilium's identity-based auth
+# Cilium mutual auth (beta, deprecated 1.19, removal after 1.20). INERT, not in kustomization.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

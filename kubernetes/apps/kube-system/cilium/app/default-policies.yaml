@@ -1,11 +1,10 @@
 ---
-# Default deny all traffic - enforce zero trust
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
   name: default-deny-all
 spec:
-  description: "Default deny - explicit allow required"
+  description: "Default deny, explicit allow required"
   endpointSelector: {}
   ingress:
     - fromEndpoints:
@@ -13,7 +12,7 @@ spec:
   egress:
     - toEndpoints:
         - {}
-    # Allow DNS
+    # DNS
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: kube-system

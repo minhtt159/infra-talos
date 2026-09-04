@@ -11,27 +11,21 @@ spec:
   interval: 1h
   values:
     # ref: https://github.com/cilium/cilium/blob/main/install/kubernetes/cilium/values.yaml
-    #
-    # Layout: every value below is either (a) required on Talos, (b) a used
-    # feature, or (c) observability. Anything tunable-but-default was removed
-    # on purpose — chart defaults are the baseline.
+    # Only: Talos-required, used features, observability. Rest = chart defaults.
 
-    # ── (a) Required on Talos ────────────────────────────────────────────
-    # Talos mounts cgroup2 at /sys/fs/cgroup itself; cilium must not remount.
+    # ── Talos ──
+    # Talos mounts cgroup2 itself.
     cgroup:
       automount:
         enabled: false
       hostRoot: /sys/fs/cgroup
 
-    # Talos runs no kube-proxy (cluster.proxy.disabled) — cilium replaces it.
-    # API server is reached via KubePrism (local LB on every node, port 7445),
-    # so agents survive control-plane endpoint moves.
+    # No kube-proxy on Talos. API via KubePrism (local :7445) — survives CP endpoint moves.
     kubeProxyReplacement: true
     k8sServiceHost: 127.0.0.1
     k8sServicePort: 7445
 
-    # Talos SELinux/capability model: the exact capability set the agent
-    # needs — chart default assumes privileged, Talos wants this explicit.
+    # Explicit caps instead of privileged.
     securityContext:
       capabilities:
         ciliumAgent:
@@ -53,60 +47,50 @@ spec:
           - SYS_ADMIN
           - SYS_RESOURCE
 
-    # ── Routing: native on the shared L2 ─────────────────────────────────
-    # All 6 nodes sit on 10.1.80.0/24, so pods route directly (no vxlan
-    # overlay): each node installs plain routes to every other node's
-    # PodCIDR. Simpler datapath, line-rate, easy to tcpdump.
+    # ── Routing ──
+    # All nodes on one L2 → native routing, no vxlan. Plain routes per PodCIDR.
     routingMode: native
-    autoDirectNodeRoutes: true # requires: all nodes on one L2 segment
-    ipv4NativeRoutingCIDR: "10.69.0.0/16" # must match podSubnets in the Omni cluster template
+    autoDirectNodeRoutes: true # needs single L2 segment
+    ipv4NativeRoutingCIDR: "10.69.0.0/16" # = podSubnets in Omni template
     ipam:
-      mode: kubernetes # node PodCIDRs come from kube-controller-manager
+      mode: kubernetes
 
     bpf:
-      # Masquerade pod egress to the node IP in BPF (no iptables).
-      # Pairs with machine-network.yaml forwardKubeDNSToHost:false
-      # (talos#10002 — host-DNS 169.254 forward breaks under BPF masq).
+      # BPF masq, no iptables. Needs forwardKubeDNSToHost:false in Omni (talos#10002).
       masquerade: true
-      # Keep HOST-namespace traffic on the normal kernel stack. The BPF
-      # host-routing fastpath ate SideroLink/Omni management flows during
-      # the July 2026 bootstrap (fdae:: timeouts, wedged etcd). Pod traffic
-      # keeps the full BPF path; only host sockets take the boring route.
+      # Host-netns traffic on kernel stack. BPF host routing ate SideroLink/Omni
+      # flows at July 2026 bootstrap (fdae:: timeouts, wedged etcd). Pods keep full BPF.
       hostLegacyRouting: true
 
-    # Only cilium manages CNI config on the node.
     cni:
       exclusive: true
 
-    # Pod-to-pod traffic between nodes encrypted with WireGuard (UDP 51871
-    # node-to-node; Talos kernel ships WG). Safe during bootstrap: no
-    # workload pods exist yet when cilium first rolls out.
-    # nodeEncryption stays FALSE: beta, documented key-update bootstrapping
-    # paradox (docs.cilium.io encryption-wireguard), and it wedged etcd
-    # during the July 2026 bootstrap. Revisit only with a healthy cluster
-    # and cilium/cilium#28965 in mind.
+    # Pod-to-pod WireGuard (UDP 51871). nodeEncryption OFF: beta, key-update
+    # paradox, wedged etcd July 2026. Revisit with cilium/cilium#28965.
     encryption:
       enabled: true
       type: wireguard
       nodeEncryption: false
 
-    # ── (b) Used features ────────────────────────────────────────────────
-    # LoadBalancer service IPs are announced via ARP on the LAN
-    # (CiliumL2AnnouncementPolicy + CiliumLoadBalancerIPPool in networks.yaml).
+    # ── LB VIPs ──
+    # BGP: nodes peer eBGP with router (bgp.yaml). `bgp` pool VIPs advertised as /32
+    # only from nodes with local endpoint — eTP:Local honoured, no L2-leader blackhole.
+    # Cilium dials out; no listening port.
+    # L2/ARP: legacy `pool` in node subnet. Drop with L2 policy once gateways on BGP pool.
+    bgpControlPlane:
+      enabled: true
     l2announcements:
       enabled: true
 
-    # Envoy DaemonSet off (v1.19 default is on): no L7 policies in use,
-    # Gateway API is handled by envoy-gateway separately.
+    # No L7 policy; Gateway API = envoy-gateway (../../../network/envoy-gateway).
     envoy:
       enabled: false
     gatewayAPI:
-      enabled: false # ref: ../../../network/envoy-gateway/ks.yaml
+      enabled: false
 
-    # ── Hubble (flow observability) ──────────────────────────────────────
+    # ── Hubble ──
     hubble:
-      # bootstrap helmfile overrides this to false (01-apps.yaml) — DNS
-      # chicken-egg; Flux enables it once coredns exists.
+      # Bootstrap helmfile forces false (DNS chicken-egg); Flux flips on.
       enabled: &hubble-state true
       metrics:
         enabled:
@@ -136,7 +120,7 @@ spec:
         rollOutPods: true
         replicas: 1
         ingress:
-          enabled: false # exposed via Gateway API instead
+          enabled: false # via Gateway API
       tls:
         enabled: *hubble-state
         auto:
@@ -144,9 +128,9 @@ spec:
           method: helm
           certValidityDuration: 1095
 
-    # ── (c) Observability ────────────────────────────────────────────────
+    # ── Observability ──
     dashboards:
-      enabled: true # agent Grafana dashboards via sidecar labels
+      enabled: true
     prometheus:
       enabled: true
       serviceMonitor:
@@ -176,19 +160,11 @@ spec:
         memory: 512Mi
       limits:
         memory: 1Gi
-    rollOutCiliumPods: true # restart agents on config change
+    rollOutCiliumPods: true
 
-    # ── Removed (deliberately, July 2026 rework) ─────────────────────────
-    # encryption.nodeEncryption — blackholed node-to-node traffic mid-rollout
-    #                           (wedged etcd); beta upstream. Pod-to-pod WG
-    #                           kept above.
-    # hostFirewall + policyAuditMode — was audit-only (enforced nothing);
-    #                           host-firewall.yaml CCNPs stay in git, inert.
-    #                           Re-enable both together when ready to enforce.
-    # loadBalancer dsr/maglev — debugging pain (asymmetric returns) for zero
-    #                           observed need; chart default SNAT is fine.
-    # bpf map sizing          — premature tuning, chart defaults.
-    # endpointRoutes, socketLB, identityAllocationMode, healthzBindAddr —
-    #                           chart defaults already.
-    # localRedirectPolices    — misspelled key (real: localRedirectPolicy),
-    #                           was silently ignored since day one.
+    # ── Removed July 2026 ──
+    # nodeEncryption: blackholed node traffic, wedged etcd. Pod WG kept.
+    # hostFirewall+policyAuditMode: audit-only, enforced nothing. CCNPs inert in git.
+    # loadBalancer dsr/maglev: asymmetric-return debugging pain, no need.
+    # bpf map sizing, endpointRoutes, socketLB, identityAllocationMode: defaults.
+    # localRedirectPolices: typo (real: localRedirectPolicy), ignored since day one.

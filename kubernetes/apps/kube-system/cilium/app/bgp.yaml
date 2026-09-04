@@ -1,0 +1,58 @@
+---
+# eBGP every node → UniFi gateway (FRR). Router side = config upload in UniFi UI,
+# snippet in docs/networking.md. Private ASNs: router 64512, cluster 64513.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgpclusterconfig_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumBGPClusterConfig
+metadata:
+  name: unifi
+spec:
+  # No nodeSelector = all nodes. FRR `bgp listen range` takes dynamic neighbours → node IPs stay DHCP.
+  bgpInstances:
+    - name: unifi
+      localASN: 64513
+      peers:
+        - name: udm
+          peerASN: 64512
+          peerAddress: "10.1.80.1" # router, same L2, no multihop
+          peerConfigRef:
+            name: udm
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgppeerconfig_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumBGPPeerConfig
+metadata:
+  name: udm
+spec:
+  # 3/9: dead node drained in ~9s, not 90s. Must match FRR `timers 3 9`.
+  # Graceful restart OFF on purpose: agent restart (rollOutCiliumPods) withdraws
+  # this node's /32s, router shifts to other proxy node. GR would keep forwarding
+  # to a dead node for restartTimeSeconds.
+  timers:
+    keepAliveTimeSeconds: 3
+    holdTimeSeconds: 9
+  families:
+    - afi: ipv4
+      safi: unicast
+      advertisements:
+        matchLabels:
+          advertise: bgp
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgpadvertisement_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumBGPAdvertisement
+metadata:
+  name: lb-vips
+  labels:
+    advertise: bgp
+spec:
+  advertisements:
+    # LB VIPs of Services labelled `announce: bgp` (same label the `bgp` pool selects).
+    # No PodCIDR advert: LAN has no business reaching pod IPs.
+    - advertisementType: Service
+      service:
+        addresses:
+          - LoadBalancerIP
+      selector:
+        matchLabels:
+          announce: bgp
