@@ -20,7 +20,7 @@ spec:
           app:
             image:
               repository: docker.elastic.co/kibana/kibana
-              tag: 9.5.2
+              tag: 9.5.3
             env:
               ELASTICSEARCH_HOSTS: https://elastic.${SECRET_DOMAIN}
               ELASTICSEARCH_USERNAME: kibana_system
