@@ -1,9 +1,6 @@
 ---
-# Tighter per-route rate limit for the public Hindsight route, overriding the
-# envoy-external gateway default (3000/min). 600 req/min (~10 rps) per distinct
-# client IP (XFF behind cloudflared) — blast-radius cap on a leaked token, while
-# still surviving the bulk-import burst. Global type -> same envoy-ratelimit +
-# Valkey backend the gateway policy uses.
+# Per-route edge policy for the public Hindsight route. A route-level BTP does
+# NOT merge with the gateway one, so every field must be restated here.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
@@ -13,6 +10,15 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       name: hindsight-external
+  timeout:
+    http:
+      # Without this the route falls back to Envoy's 15s default and any
+      # recall/reflect slower than that 504s. Whole-request budget, not idle —
+      # SSE pings don't extend it. Keep > the app's REFLECT_LLM_TIMEOUT.
+      requestTimeout: 600s
+  # 600 req/min (~10 rps) per distinct client IP (XFF behind cloudflared) —
+  # blast-radius cap on a leaked token, tighter than the gateway's 3000/min.
+  # Global type -> same envoy-ratelimit + Valkey backend the gateway uses.
   rateLimit:
     type: Global
     global:
