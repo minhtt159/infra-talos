@@ -21,7 +21,8 @@ spec:
       localpv:
         image:
           registry: &registry quay.io/
-        # /var/mnt/data = a Talos UserVolume defined in the private Omni cluster template
+        # /var/mnt/data: plain dir on EPHEMERAL unless node has a `data`
+        # UserVolume (none do today; sata node has `sata` only)
         basePath: &hostPath /var/mnt/data
         resources:
           requests:

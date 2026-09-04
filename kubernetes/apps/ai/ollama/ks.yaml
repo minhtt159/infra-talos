@@ -5,6 +5,10 @@ kind: Kustomization
 metadata:
   name: ollama
 spec:
+  dependsOn:
+    - # NOTE:custom storage provider
+      name: openebs
+      namespace: openebs
   healthChecks:
     - apiVersion: apps/v1
       kind: Deployment

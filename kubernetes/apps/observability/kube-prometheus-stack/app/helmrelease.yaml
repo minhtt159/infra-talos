@@ -45,6 +45,35 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+
+    # Rules + alerting in-cluster; TrueNAS runs promeo only. Prometheus below is
+    # agent (no TSDB, no rule engine) → Thanos Ruler evaluates every
+    # PrometheusRule against promeo's query API, remote-writes recording rules
+    # back (mixin dashboards need `:sum_rate` series), alerts → Alertmanager
+    # above. remoteWrite set → stateless, no local TSDB.
+    thanosRuler:
+      enabled: true
+      thanosRulerSpec:
+        ruleSelectorNilUsesHelmValues: false
+        evaluationInterval: 1m
+        # skip seconds promeo hasn't received yet (remote_write lag)
+        ruleQueryOffset: 1m
+        alertQueryUrl: https://promeo.${SECRET_DOMAIN}
+        alertmanagersUrl:
+          - http://alertmanager-operated.observability.svc.cluster.local:9093
+        # --query = http only; https needs query config file → secret.yaml
+        queryConfig:
+          existingSecret:
+            name: thanos-ruler-query-config
+            key: query-configs.yaml
+        remoteWrite:
+          - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
     kubeEtcd:
       enabled: true
       service:
@@ -53,6 +82,10 @@ spec:
     kubeProxy:
       enabled: false
     prometheus:
+      # Agent: scrape + remote_write only. No TSDB, rules, query API. Store =
+      # promeo (Prometheus on TrueNAS, 6w); Grafana, Kargo, Thanos Ruler query
+      # it. Nothing node-pinned here; dead node costs in-flight WAL at most.
+      agentMode: true
       route:
         main:
           enabled: true
@@ -63,13 +96,6 @@ spec:
               namespace: network
       prometheusSpec:
         externalUrl: https://prometheus.${SECRET_DOMAIN}
-        # 15m default kills prompp mid-replay on a slow disk
-        maximumStartupDurationSeconds: 3600
-        version: v2.55.1 # override 'unsupported Prometheus version' error
-        image:
-          registry: ghcr.io
-          repository: deckhouse/prompp
-          tag: 0.8.11
         securityContext:
           runAsNonRoot: true
           runAsUser: 64535
@@ -77,15 +103,11 @@ spec:
           fsGroup: 64535
         podMonitorSelectorNilUsesHelmValues: false
         probeSelectorNilUsesHelmValues: false
-        ruleSelectorNilUsesHelmValues: false
         scrapeConfigSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
-        retention: 14d
-        retentionSize: 50GB
-        # Long-term archive on TrueNAS; promeo needs
-        # --web.enable-remote-write-receiver. It ingests slowly — the full series
-        # set overran it (339 desired shards vs max 50), hence the drops. Still
-        # >50 after this = promeo is under-resourced, don't raise maxShards.
+        # promeo needs --web.enable-remote-write-receiver. Full series set
+        # overran it (339 desired shards vs max 50) → drops below. Still >50 =
+        # promeo under-resourced; don't raise maxShards.
         remoteWrite:
           - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
             writeRelabelConfigs:
@@ -106,17 +128,6 @@ spec:
             memory: 512Mi
           limits:
             memory: 2000Mi
-        # local NVMe: iSCSI served prompp's random startup reads at
-        # single-digit MB/s. Node-pinned, no snapshots — promeo is the archive.
-        storageSpec:
-          # kubelet can't mkdir a subPath in a hostpath volume on Talos
-          disableMountSubPath: true
-          volumeClaimTemplate:
-            spec:
-              storageClassName: openebs-hostpath
-              resources:
-                requests:
-                  storage: 50Gi
 
     prometheus-node-exporter:
       fullnameOverride: node-exporter

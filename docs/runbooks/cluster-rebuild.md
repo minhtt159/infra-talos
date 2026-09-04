@@ -11,6 +11,9 @@ Works because:
 > Future upgrade path: VolSync (restic) for data-level backup/restore.
 > This runbook only covers object-level reclaim — it does NOT protect
 > against data deletion/corruption on TrueNAS itself.
+>
+> Node-local PVs (`openebs-hostpath*`, Kafka) are not reclaimable: Kafka comes
+> back empty, which it accepts. See [node loss](node-loss.md).
 
 ## 0. Preconditions (verify BEFORE teardown)
 
@@ -72,8 +75,10 @@ Kustomizations, otherwise apps create fresh empty PVCs that bind to fresh
 volumes.
 
 ```sh
-# 4a. suspend the stateful apps so they don't race you
-flux suspend kustomization frigate ollama    # extend list as stateful apps grow
+# 4a. suspend every Kustomization that owns a TrueNAS PVC so they don't race you
+kubectl get pvc -A -L kustomize.toolkit.fluxcd.io/name    # the list, live
+flux suspend kustomization frigate ollama hindsight postgres grafana-instance kube-prometheus-stack -n flux-system
+# bank0 Postgres clusters: suspend their bank0-platform Kustomizations too
 
 # 4b. PVs first (cluster-scoped, no deps)
 kubectl apply -f backups/pv/persistentvolumes.yaml
@@ -89,8 +94,8 @@ kubectl apply -f backups/pv/persistentvolumeclaims.yaml
 # 4e. verify every PVC is Bound to its ORIGINAL PV
 kubectl get pvc -A
 
-# 4f. resume
-flux resume kustomization frigate ollama
+# 4f. resume the same list
+flux resume kustomization frigate ollama hindsight postgres grafana-instance kube-prometheus-stack -n flux-system
 ```
 
 ## 5. Post-checks

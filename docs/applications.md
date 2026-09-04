@@ -37,11 +37,12 @@ Helm repositories.
 | `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden |
 | `kyverno` | kyverno | Policy engine — all ClusterPolicies in Audit mode (PolicyReports), enforce per-policy later |
 | `network` | envoy-gateway, cloudflare-dns, unifi-dns, cloudflare-tunnel | Gateway API ingress, external-dns (Cloudflare + UniFi), Cloudflare tunnel |
-| `observability` | kube-prometheus-stack, grafana, elasticsearch-exporter | Metrics/alerting stack, Grafana (via grafana-operator), external ES monitoring |
+| `observability` | kube-prometheus-stack, grafana, elasticsearch-exporter | Prometheus agent (remote-write to promeo on TrueNAS), Thanos Ruler + Alertmanager, Grafana (via grafana-operator), external ES monitoring |
 | `democratic-csi` | iscsi, nfs | TrueNAS-backed persistent storage (iSCSI + NFS) |
-| `openebs` | openebs | Local-path persistent volumes |
+| `openebs` | openebs | Node-local hostpath PVs; Kafka only, dies with the node |
+| `database` | postgres, strimzi-operator, kafka, valkey | CloudNativePG on TrueNAS iSCSI, single-broker Kafka on local SATA, cache |
 | `frigate` | frigate | NVR — detection on the Intel dGPU (OpenVINO); raw manifests (not Helm) |
-| `ai` | ollama | LLM serving on the Intel dGPU (IPEX build) |
+| `ai` | ollama, litellm, hindsight | LLM serving on the Intel dGPU (IPEX build), OpenAI-compatible proxy, agent memory |
 | `flux-system` | flux-operator, flux-instance | Flux itself + monitoring dashboards |
 | `default` | echo | Ingress/connectivity smoke test |
 

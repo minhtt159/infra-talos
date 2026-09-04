@@ -6,7 +6,10 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-iscsi
+  # Local NVMe on GPU node. Model load = GBs per keep_alive reload; iSCSI capped
+  # at 1GbE (~125 MB/s, 76 ms reads). Pod GPU-pinned anyway. Node loss = re-pull
+  # ~20 GB. Cache, not state.
+  storageClassName: openebs-hostpath
   resources:
     requests:
       storage: 100Gi

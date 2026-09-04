@@ -66,6 +66,8 @@ spec:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 10Gi
-      storageClassName: openebs-hostpath
+          # sqlite ~6M + plugins ~50M; dashboards/datasources = CRs
+          storage: 2Gi
+      # TrueNAS block: survives node rotation, Retain.
+      storageClassName: truenas-iscsi
   disableDefaultSecurityContext: All

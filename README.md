@@ -19,11 +19,11 @@ points at an `app/` directory holding a `HelmRelease` (or raw manifests).
 
 - **[Application pattern](docs/applications.md)** — how every app is wired, the app inventory, and adding a new one.
 - **[Networking & ingress](docs/networking.md)** — Cilium LB, Envoy Gateway, external-dns, Cloudflare tunnel, certs.
-- **[Storage](docs/storage.md)** — openebs + democratic-csi (TrueNAS).
+- **[Storage](docs/storage.md)** — TrueNAS (democratic-csi) for everything stateful; openebs hostpath for Kafka only.
 - **[Secrets](docs/secrets.md)** — External Secrets Operator + Vaultwarden.
 - **[Bootstrapping](docs/bootstrapping.md)** — standing up a fresh cluster.
 - **[Operations & automation](docs/operations.md)** — Renovate, GitHub Actions, Flux webhook, day-2 commands.
-- **Runbooks** — [cluster rebuild](docs/runbooks/cluster-rebuild.md).
+- **Runbooks** — [cluster rebuild](docs/runbooks/cluster-rebuild.md), [node loss](docs/runbooks/node-loss.md).
 - **[CLAUDE.md](CLAUDE.md)** — conventions + security posture for contributors (incl. AI).
 
 ---
