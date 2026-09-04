@@ -1,0 +1,62 @@
+---
+# eBGP from every node to the UniFi gateway (FRR). The router side is a
+# config-file upload in the UniFi UI — see docs/networking.md for the FRR
+# snippet. Private ASNs: router 64512, cluster 64513.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgpclusterconfig_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumBGPClusterConfig
+metadata:
+  name: unifi
+spec:
+  # no nodeSelector: all nodes peer. FRR `bgp listen range <node subnet>`
+  # accepts them as dynamic neighbours, so node IPs may stay DHCP.
+  bgpInstances:
+    - name: unifi
+      localASN: 64513
+      peers:
+        - name: udm
+          peerASN: 64512
+          peerAddress: "10.1.80.1" # router, same L2 as the nodes (no multihop)
+          peerConfigRef:
+            name: udm
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgppeerconfig_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumBGPPeerConfig
+metadata:
+  name: udm
+spec:
+  # 3s/9s: a dead node stops receiving VIP traffic within ~9s instead of the
+  # 90s default. Graceful restart deliberately OFF: an agent restart
+  # (rollOutCiliumPods) withdraws that node's /32s and the router shifts to
+  # the other proxy node — with GR the router would keep forwarding to a
+  # dead node for restartTimeSeconds. Must match `timers 3 9` on FRR.
+  timers:
+    keepAliveTimeSeconds: 3
+    holdTimeSeconds: 9
+  families:
+    - afi: ipv4
+      safi: unicast
+      advertisements:
+        matchLabels:
+          advertise: bgp
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgpadvertisement_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumBGPAdvertisement
+metadata:
+  name: lb-vips
+  labels:
+    advertise: bgp
+spec:
+  advertisements:
+    # LoadBalancer VIPs of Services opted in with `announce: bgp` (the same
+    # label the `bgp` IP pool selects on). PodCIDRs are NOT advertised: LAN
+    # clients have no business reaching pod IPs directly.
+    - advertisementType: Service
+      service:
+        addresses:
+          - LoadBalancerIP
+      selector:
+        matchLabels:
+          announce: bgp

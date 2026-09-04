@@ -3,8 +3,28 @@
 apiVersion: cilium.io/v2
 kind: CiliumLoadBalancerIPPool
 metadata:
+  name: bgp
+spec:
+  # Routed VIP prefix, deliberately OUTSIDE the node subnet: the router learns
+  # each VIP as a /32 over BGP (bgp.yaml) and forwards to a node with a live
+  # endpoint. Nothing on the LAN ARPs for these — so no L2 announcement, no
+  # DHCP overlap, and no leader election to blackhole. Not a UniFi network
+  # object; the prefix exists only as BGP routes on the gateway.
+  # Opt-in per Service: label `announce: bgp` (Gateway: infrastructure.labels).
+  blocks:
+    - cidr: "10.1.81.0/24"
+  serviceSelector:
+    matchLabels:
+      announce: bgp
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumloadbalancerippool_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
   name: pool
 spec:
+  # LEGACY (L2/ARP). Delete with the CiliumL2AnnouncementPolicy below once
+  # both envoy gateways are pinned into the `bgp` pool.
   allowFirstLastIPs: "No"
   blocks:
     # Narrow range, NOT the whole node /24 — pool used to cover the entire
@@ -12,13 +32,24 @@ spec:
     # a conflicting IP. VERIFY this range is excluded from DHCP + node IPs.
     - start: "10.1.80.10"
       stop: "10.1.80.49"
+  serviceSelector:
+    matchExpressions:
+      - { key: announce, operator: NotIn, values: [bgp] }
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliuml2announcementpolicy_v2alpha1.json
 apiVersion: cilium.io/v2alpha1
 kind: CiliumL2AnnouncementPolicy
 metadata:
   name: l2-policy
 spec:
   loadBalancerIPs: true
+  # Known upstream limitation (cilium/cilium#27800): the lease leader is picked
+  # without regard to endpoint placement, so with externalTrafficPolicy: Local
+  # a VIP can be announced from a node that has no pod → LAN blackhole.
+  # BGP-pool Services are excluded here; they never need ARP.
+  serviceSelector:
+    matchExpressions:
+      - { key: announce, operator: NotIn, values: [bgp] }
   nodeSelector:
     matchLabels:
       kubernetes.io/os: linux
