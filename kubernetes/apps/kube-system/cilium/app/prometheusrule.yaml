@@ -1,0 +1,31 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cilium-rules
+spec:
+  groups:
+    - name: cilium.rules
+      rules:
+        # 1 = established
+        - alert: CiliumBGPSessionDown
+          expr: |-
+            cilium_bgp_control_plane_session_state != 1
+          for: 2m
+          annotations:
+            summary: >-
+              BGP session {{ $labels.instance_name }} → {{ $labels.neighbor }} down on {{ $labels.node }}; LB VIPs on that node are unreachable from the LAN
+          labels:
+            severity: critical
+
+        # ConfigMap keys the agent has not applied
+        - alert: CiliumConfigDrift
+          expr: |-
+            cilium_drift_checker_config_delta > 0
+          for: 15m
+          annotations:
+            summary: >-
+              cilium-agent on {{ $labels.node }} runs stale config ({{ $value }} keys); restart it
+          labels:
+            severity: warning

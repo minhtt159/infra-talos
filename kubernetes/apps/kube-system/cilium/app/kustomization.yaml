@@ -7,8 +7,7 @@ resources:
   - ./networks.yaml
   - ./bgp.yaml
   - ./grafanadashboard.yaml
-  # Disabled July 2026: hostFirewall + policyAuditMode gone from values; these
-  # CCNPs would enforce immediately. Re-enable with a policy rollout plan.
+  - ./prometheusrule.yaml
+  # inert: would enforce immediately (hostFirewall off in values)
   # - ./host-firewall.yaml
   # - ./default-policies.yaml
-  # - ./service-mesh-auth.yaml

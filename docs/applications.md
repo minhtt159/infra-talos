@@ -1,66 +1,46 @@
 # Application pattern
 
-Every app is reconciled through the same chain. Using `cert-manager` as the
-example:
+Chain, using `cert-manager` as the example:
 
-1. **Root Kustomization** — [`kubernetes/flux/cluster/ks.yaml`](../kubernetes/flux/cluster/ks.yaml)
-   defines `cluster-apps`, pointing at `./kubernetes/apps`. It applies **global
-   defaults to every child** via `patches`: a `HelmRelease` patch that sets
-   install/upgrade/rollback remediation (retry, `cleanupOnFail`, `CreateReplace` CRDs).
+1. **Root** — [`kubernetes/flux/cluster/ks.yaml`](../kubernetes/flux/cluster/ks.yaml):
+   Kustomization `cluster-apps` → `./kubernetes/apps`. Patches every HelmRelease
+   with install/upgrade/rollback remediation and `CreateReplace` CRDs.
+2. **Namespace** — [`kubernetes/apps/cert-manager/kustomization.yaml`](../kubernetes/apps/cert-manager/kustomization.yaml):
+   `namespace.yaml` + each app's `ks.yaml`. `cluster-secrets` is fanned out to every
+   namespace by a ClusterExternalSecret (`external-secrets/.../stores/`).
+3. **App `ks.yaml`** — [`cert-manager/cert-manager/ks.yaml`](../kubernetes/apps/cert-manager/cert-manager/ks.yaml):
+   Flux Kustomization → `app/`; `healthChecks`; `postBuild.substituteFrom: cluster-secrets`
+   for `${SECRET_DOMAIN}` and friends.
+4. **`app/`** — `OCIRepository` (chart, pinned tag), `HelmRelease` (`chartRef`),
+   `ExternalSecret`, extra CRs (ClusterIssuer, HTTPRoute, …), `kustomization.yaml`.
 
-2. **Namespace Kustomization** — [`kubernetes/apps/cert-manager/kustomization.yaml`](../kubernetes/apps/cert-manager/kustomization.yaml)
-   lists `namespace.yaml` and each app's `ks.yaml`, and pulls in the
-   `cluster-secrets` Secret (fanned out to every namespace by the ClusterExternalSecret in `kubernetes/apps/external-secrets/.../stores/`).
-
-3. **App Kustomization (`ks.yaml`)** — [`kubernetes/apps/cert-manager/cert-manager/ks.yaml`](../kubernetes/apps/cert-manager/cert-manager/ks.yaml)
-   is a Flux `Kustomization` that:
-   - points `path` at the app's `app/` directory,
-   - declares `healthChecks` (Flux waits for the HelmRelease + ClusterIssuer),
-   - runs `postBuild.substituteFrom` against the `cluster-secrets` Secret, so
-     manifests can reference `${SECRET_DOMAIN}` and friends.
-
-4. **The `app/` directory** holds the actual resources: an `OCIRepository`
-   (the Helm chart, pinned by tag), a `HelmRelease` referencing it, an
-   `ExternalSecret` for any secrets, and any extra CRs (ClusterIssuer, HTTPRoute, …).
-
-Charts are pulled as **OCI artifacts** (`OCIRepository`) rather than classic
-Helm repositories.
-
----
+Charts are OCI artifacts, not classic Helm repositories.
 
 ## Applications
 
 | Namespace | Apps | Purpose |
 |-----------|------|---------|
-| `kube-system` | cilium, coredns, metrics-server, reloader, node-feature-discovery, intel-device-plugin | CNI + LB, cluster DNS, HPA metrics, config-change restarts, GPU discovery + `gpu.intel.com/xe` scheduling |
-| `cert-manager` | cert-manager | ACME (Let's Encrypt) + internal CA |
+| `kube-system` | cilium, coredns, metrics-server, reloader, node-feature-discovery, intel-device-plugin | CNI + BGP LB, DNS, HPA metrics, config-change restarts, GPU discovery (`gpu.intel.com/xe`) |
+| `cert-manager` | cert-manager | Let's Encrypt + internal CA |
 | `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden |
-| `kyverno` | kyverno | Policy engine — all ClusterPolicies in Audit mode (PolicyReports), enforce per-policy later |
-| `network` | envoy-gateway, cloudflare-dns, unifi-dns, cloudflare-tunnel | Gateway API ingress, external-dns (Cloudflare + UniFi), Cloudflare tunnel |
-| `observability` | kube-prometheus-stack, grafana, elasticsearch-exporter | Prometheus agent (remote-write to promeo on TrueNAS), Thanos Ruler + Alertmanager, Grafana (via grafana-operator), external ES monitoring |
-| `democratic-csi` | iscsi, nfs | TrueNAS-backed persistent storage (iSCSI + NFS) |
-| `openebs` | openebs | Node-local hostpath PVs; Kafka only, dies with the node |
-| `database` | postgres, strimzi-operator, kafka, valkey | CloudNativePG on TrueNAS iSCSI, single-broker Kafka on local SATA, cache |
-| `frigate` | frigate | NVR — detection on the Intel dGPU (OpenVINO); raw manifests (not Helm) |
-| `ai` | ollama, litellm, hindsight | LLM serving on the Intel dGPU (IPEX build), OpenAI-compatible proxy, agent memory |
-| `flux-system` | flux-operator, flux-instance | Flux itself + monitoring dashboards |
-| `default` | echo | Ingress/connectivity smoke test |
+| `kyverno` | kyverno | Policies, all Audit |
+| `network` | envoy-gateway, cloudflare-dns, unifi-dns, cloudflare-tunnel | Gateway API edge, external-dns (Cloudflare + UniFi), tunnel |
+| `observability` | kube-prometheus-stack, grafana, elasticsearch-exporter | Prometheus agent → promeo (TrueNAS), Thanos Ruler + Alertmanager, Grafana (operator), external ES |
+| `democratic-csi` | iscsi, nfs | TrueNAS-backed PVs |
+| `openebs` | openebs | Node-local hostpath (Kafka, Ollama cache) |
+| `database` | postgres, strimzi-operator, kafka, valkey | CloudNativePG on iSCSI, single-broker Kafka on SATA, cache |
+| `frigate` | frigate | NVR on the Intel dGPU (OpenVINO); raw manifests |
+| `ai` | ollama, litellm, hindsight | LLM serving (IPEX), OpenAI-compatible proxy, agent memory |
+| `flux-system` | flux-operator, flux-instance | Flux + dashboards |
+| `default` | echo | smoke test |
 
----
+## Adding an app
 
-## Adding a new application
+1. `kubernetes/apps/<namespace>/<app>/app/`: OCIRepository, HelmRelease, ExternalSecret
+   (Vaultwarden item UUID + field, never the value), `kustomization.yaml`.
+2. `ks.yaml` → `app/`, with `healthChecks` and `postBuild.substituteFrom` as needed.
+3. Register `ks.yaml` in the namespace `kustomization.yaml` (new namespace: add
+   `namespace.yaml` + its `kustomization.yaml`).
+4. Push; the Flux `Receiver` reconciles. Copy `cert-manager` as the template.
 
-1. Create `kubernetes/apps/<namespace>/<app>/` with an `app/` subdirectory.
-2. In `app/`, add an `OCIRepository` (chart), a `HelmRelease` referencing it,
-   an `app/kustomization.yaml` listing the files, and any secrets as an
-   `ExternalSecret` (store the value in Vaultwarden, ref it by item UUID + field).
-3. Add `ks.yaml` (Flux `Kustomization`) pointing `path` at the `app/` dir; add
-   `healthChecks` and `postBuild.substituteFrom: cluster-secrets` as needed.
-4. Reference the new `ks.yaml` from the namespace's `kustomization.yaml`
-   (create `namespace.yaml` + the namespace `kustomization.yaml` if the
-   namespace is new).
-5. Commit and push — the Flux `Receiver` triggers reconciliation. Copy an
-   existing app (e.g. `cert-manager`) as a template.
-
-New workloads must satisfy the Kyverno policies (pinned image tags, resource
-requests, ServiceAccount-token automount) — see [CLAUDE.md](../CLAUDE.md).
+Kyverno rules (pinned tags, requests, SA-token automount): [CLAUDE.md](../CLAUDE.md).
