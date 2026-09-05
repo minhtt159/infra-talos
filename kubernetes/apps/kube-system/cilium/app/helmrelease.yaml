@@ -79,7 +79,9 @@ spec:
     bgpControlPlane:
       enabled: true
 
-    # No L7 policy; Gateway API = envoy-gateway (../../../network/envoy-gateway).
+    # Cilium Envoy: no separate DaemonSet; agent embeds Envoy (status: "Envoy: embedded",
+    # 0 redirects). Only L7 CiliumNetworkPolicy or L7 visibility would use it. Edge proxy
+    # = envoy-gateway (../../../network/envoy-gateway), a separate Envoy fleet.
     envoy:
       enabled: false
     gatewayAPI:
@@ -97,7 +99,8 @@ spec:
           - flow
           - port-distribution
           - icmp
-          - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction
+          # no httpV2: needs flows through Cilium Envoy (L7 policy/visibility); with 0
+          # redirects it exported nothing. HTTP telemetry = envoy-gateway access logs.
         serviceMonitor:
           enabled: true
         dashboards:
@@ -117,7 +120,7 @@ spec:
         rollOutPods: true
         replicas: 1
         ingress:
-          enabled: false # via Gateway API
+          enabled: false # not exposed; `cilium hubble ui` port-forwards
       tls:
         enabled: *hubble-state
         auto:
