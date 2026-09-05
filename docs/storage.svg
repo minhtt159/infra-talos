@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" width="760" height="330" font-family="-apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#6e7781"/>
+    </marker>
+    <style>
+      .grp{fill:none;stroke:#8c959f;stroke-width:1;stroke-dasharray:5 4;rx:8}
+      .gt{fill:#57606a;font-size:11.5px}
+      .box{fill:#f6f8fa;stroke:#8c959f;stroke-width:1.2;rx:6}
+      .app{fill:#fff8c5;stroke:#d4a72c}
+      .ext{fill:#ddf4ff;stroke:#54aeff}
+      .t{fill:#1f2328;text-anchor:middle}
+      .s{fill:#57606a;text-anchor:middle;font-size:11px}
+      .e{stroke:#6e7781;stroke-width:1.3;fill:none;marker-end:url(#a)}
+      .l{fill:#57606a;font-size:11px;text-anchor:middle}
+    </style>
+  </defs>
+
+  <!-- consumers -->
+  <rect class="box app" x="20" y="20" width="130" height="30"/><text class="t" x="85" y="40">postgres · bank0</text>
+  <rect class="box app" x="20" y="60" width="130" height="30"/><text class="t" x="85" y="80">hindsight · grafana</text>
+  <rect class="box app" x="20" y="120" width="130" height="30"/><text class="t" x="85" y="140">frigate · alertmanager</text>
+  <rect class="box app" x="20" y="190" width="130" height="30"/><text class="t" x="85" y="210">kafka</text>
+  <rect class="box app" x="20" y="240" width="130" height="30"/><text class="t" x="85" y="260">ollama models</text>
+  <rect class="box app" x="20" y="290" width="130" height="30"/><text class="t" x="85" y="310">prometheus agent</text>
+
+  <!-- TrueNAS group -->
+  <rect class="grp" x="250" y="10" width="230" height="150"/>
+  <text class="gt" x="260" y="27">TrueNAS via democratic-csi</text>
+  <rect class="box" x="270" y="40" width="190" height="42"/>
+  <text class="t" x="365" y="57">truenas-iscsi</text><text class="s" x="365" y="73">block · RWO · Retain</text>
+  <rect class="box" x="270" y="100" width="190" height="42"/>
+  <text class="t" x="365" y="117">truenas-nfs</text><text class="s" x="365" y="133">shared · Retain</text>
+
+  <!-- node-local group -->
+  <rect class="grp" x="250" y="175" width="230" height="110"/>
+  <text class="gt" x="260" y="192">node-local via openebs · pinned · Delete</text>
+  <rect class="box" x="270" y="200" width="190" height="34"/>
+  <text class="t" x="365" y="215">openebs-hostpath-sata</text><text class="s" x="365" y="229">SATA SSD, node storage=sata</text>
+  <rect class="box" x="270" y="243" width="190" height="34"/>
+  <text class="t" x="365" y="258">openebs-hostpath</text><text class="s" x="365" y="272">/var/mnt/data on the pod's node</text>
+
+  <!-- promeo -->
+  <rect class="box ext" x="540" y="285" width="200" height="40"/>
+  <text class="t" x="640" y="301">promeo</text><text class="s" x="640" y="316">Prometheus on TrueNAS</text>
+
+  <!-- edges -->
+  <path class="e" d="M150 35C210 35 210 61 268 61"/>
+  <path class="e" d="M150 75C210 75 210 61 268 61"/>
+  <path class="e" d="M150 135C210 135 210 121 268 121"/>
+  <path class="e" d="M150 205C210 205 210 217 268 217"/>
+  <path class="e" d="M150 255C210 255 210 260 268 260"/>
+  <path class="e" d="M150 305H538"/>
+  <text class="l" x="345" y="297">remote_write</text>
+</svg>

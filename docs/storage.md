@@ -3,22 +3,7 @@
 State on TrueNAS. Node-local disk only where speed beats durability: Kafka (accepts
 loss) and the Ollama model cache (re-pullable). iSCSI ≈ 1GbE, ~125 MB/s.
 
-```mermaid
-flowchart LR
-  subgraph truenas[TrueNAS via democratic-csi]
-    iscsi[truenas-iscsi<br/>block, RWO, Retain]
-    nfs[truenas-nfs<br/>shared, Retain]
-  end
-  subgraph local[node-local via openebs, pinned, Delete]
-    sata[openebs-hostpath-sata<br/>SATA SSD, storage=sata node]
-    data[openebs-hostpath<br/>/var/mnt/data on the pod's node]
-  end
-  postgres & bank0 & hindsight & grafana --> iscsi
-  frigate & alertmanager --> nfs
-  kafka --> sata
-  ollama[ollama models, GPU node] --> data
-  promagent[prometheus agent] -->|remote_write| promeo[(promeo: Prometheus on TrueNAS)]
-```
+![Storage: apps → TrueNAS iSCSI/NFS or node-local openebs; prometheus agent remote-writes to promeo](storage.svg)
 
 - **democratic-csi** — iSCSI (block) + NFS (shared) from TrueNAS; creds via
   `ExternalSecret`; setup in [democratic-csi/README.md](../kubernetes/apps/democratic-csi/README.md).

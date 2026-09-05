@@ -38,14 +38,7 @@ This repo owns layers **2 & 3**. Layer 1 lives with the Omni management plane (p
 Once Flux is up it owns everything, including what Helmfile seeded; Helmfile only
 exists because Flux can't install itself or the CNI it needs.
 
-```mermaid
-flowchart TD
-    Omni[Sidero Omni<br/>provisions Talos nodes] --> HF[Helmfile bootstrap<br/>cilium, coredns, cert-manager, flux]
-    HF --> FI[flux-instance<br/>syncs this Git repo]
-    FI --> ROOT[kubernetes/flux/cluster/ks.yaml<br/>Kustomization: cluster-apps]
-    ROOT --> APPS[kubernetes/apps/**<br/>per-namespace Kustomizations]
-    APPS --> HR[HelmReleases + raw manifests]
-```
+![Architecture: Omni → Helmfile bootstrap → flux-instance → cluster-apps → per-app Kustomizations](docs/architecture.svg)
 
 ## Cluster shape
 
