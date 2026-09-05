@@ -73,13 +73,10 @@ spec:
       nodeEncryption: false
 
     # ── LB VIPs ──
-    # BGP: nodes peer eBGP with router (bgp.yaml). `bgp` pool VIPs advertised as /32
-    # only from nodes with local endpoint — eTP:Local honoured, no L2-leader blackhole.
-    # Cilium dials out; no listening port.
-    # L2/ARP: legacy `pool` in node subnet. Drop with L2 policy once gateways on BGP pool.
+    # Nodes peer eBGP with router (bgp.yaml). VIPs advertised as /32 only from nodes
+    # with a local endpoint — eTP:Local honoured, no L2-leader blackhole (July 2026).
+    # Cilium dials out; no listening port. L2 announcements retired Sept 2026.
     bgpControlPlane:
-      enabled: true
-    l2announcements:
       enabled: true
 
     # No L7 policy; Gateway API = envoy-gateway (../../../network/envoy-gateway).

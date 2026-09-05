@@ -1,16 +1,15 @@
 # Networking & ingress
 
-- **LoadBalancer IPs** — Cilium LB IPAM, two pools
-  ([`cilium/app/networks.yaml`](../kubernetes/apps/kube-system/cilium/app/networks.yaml)):
-  - `bgp` — routed VIP prefix `10.1.81.0/24`, **outside** the node subnet.
-    Services opt in with the label `announce: bgp`; each VIP is advertised as a
-    /32 over **eBGP to the UniFi gateway** only from nodes that hold a local
-    endpoint ([`cilium/app/bgp.yaml`](../kubernetes/apps/kube-system/cilium/app/bgp.yaml)),
-    so `externalTrafficPolicy: Local` never blackholes. This is the target state.
-  - `pool` — legacy `10.1.80.10-49` inside the node subnet, announced over
-    L2/ARP on `ens*`/`eth*`. Leader election ignores pod placement
-    (cilium/cilium#27800) → blackholes with `externalTrafficPolicy: Local`.
-    Goes away once both gateways sit on the `bgp` pool.
+- **LoadBalancer IPs** — Cilium LB IPAM pool `bgp`, routed VIP prefix
+  `10.1.81.0/24` **outside** the node subnet
+  ([`cilium/app/networks.yaml`](../kubernetes/apps/kube-system/cilium/app/networks.yaml)).
+  Services opt in with the label `announce: bgp` (Envoy gateways: EnvoyProxy
+  `envoyService.labels`); each VIP is advertised as a /32 over **eBGP to the
+  UniFi gateway** only from nodes that hold a local endpoint
+  ([`cilium/app/bgp.yaml`](../kubernetes/apps/kube-system/cilium/app/bgp.yaml)),
+  so `externalTrafficPolicy: Local` never blackholes. No UniFi network object for
+  the prefix — it exists only as BGP routes on the router. L2 announcements
+  retired Sept 2026 (leader election ignored pod placement, cilium/cilium#27800).
 - **Router side (manual, UniFi UI → Routing → BGP, FRR config upload).**
   Cilium initiates the session, so the gateway can accept the node subnet as
   dynamic neighbours and node IPs may stay DHCP. Timers must match
@@ -34,13 +33,12 @@
   exit
   ```
 
-- **Migration (L2 → BGP)** — steps 1–3 done 2026-09-05. 1) merge BGP config, upload FRR config, confirm
-  sessions `established` from every node; 2) expose a throwaway LB Service with
-  `announce: bgp`, curl its VIP from another VLAN and from inside `10.1.80.0/24`;
-  3) move `envoy-internal` then `envoy-external` (`infrastructure.labels` +
-  new `lbipam.cilium.io/ips`) — external-dns rewrites the UniFi/Cloudflare
-  records; update off-cluster consumers of the old VIPs (DNSControl records,
-  VM egress allowlists); 4) delete `pool`, the L2 policy and `l2announcements`.
+- **Enabling BGP on a running cluster** (done once, 2026-09-05): cilium-operator
+  registers the BGP CRDs only after `bgpControlPlane.enabled` reaches it, and the
+  CRs share a Flux Kustomization with the HelmRelease, so the dry-run fails until
+  the CRDs exist. Apply them by hand from `cilium/cilium` at the chart version
+  (`pkg/k8s/apis/cilium.io/client/crds/v2/ciliumbgp*.yaml`). Fresh bootstraps
+  don't hit this — helmfile installs cilium with BGP on before Flux runs.
 - **Gateways** (Envoy Gateway, Gateway API) —
   [`envoy-gateway/gateway/`](../kubernetes/apps/network/envoy-gateway/gateway):
   - `envoy-internal` → `10.1.81.11`, host `internal.${SECRET_DOMAIN}`
