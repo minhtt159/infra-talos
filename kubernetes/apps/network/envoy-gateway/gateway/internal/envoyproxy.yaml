@@ -50,6 +50,8 @@ spec:
           #     drop:
           #       - ALL
       envoyService:
+        labels:
+          announce: bgp # cilium `bgp` pool + BGP advert; Service-only, no pod roll
         externalTrafficPolicy: Local # Preserve ClientIP
   shutdown:
     drainTimeout: 180s

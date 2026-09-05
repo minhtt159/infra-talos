@@ -34,7 +34,7 @@
   exit
   ```
 
-- **Migration (L2 → BGP)** — 1) merge BGP config, upload FRR config, confirm
+- **Migration (L2 → BGP)** — steps 1–3 done 2026-09-05. 1) merge BGP config, upload FRR config, confirm
   sessions `established` from every node; 2) expose a throwaway LB Service with
   `announce: bgp`, curl its VIP from another VLAN and from inside `10.1.80.0/24`;
   3) move `envoy-internal` then `envoy-external` (`infrastructure.labels` +
@@ -43,8 +43,8 @@
   VM egress allowlists); 4) delete `pool`, the L2 policy and `l2announcements`.
 - **Gateways** (Envoy Gateway, Gateway API) —
   [`envoy-gateway/gateway/`](../kubernetes/apps/network/envoy-gateway/gateway):
-  - `envoy-internal` → `10.1.80.11`, host `internal.${SECRET_DOMAIN}`
-  - `envoy-external` → `10.1.80.12`, host `external.${SECRET_DOMAIN}`
+  - `envoy-internal` → `10.1.81.11`, host `internal.${SECRET_DOMAIN}`
+  - `envoy-external` → `10.1.81.12`, host `external.${SECRET_DOMAIN}`
   - both terminate TLS with the `${SECRET_DOMAIN}-production-tls` wildcard cert.
     Apps attach via `HTTPRoute` (see each app's `httproute.yaml`).
 - **DNS** — `external-dns` publishes gateway hostnames to **Cloudflare**

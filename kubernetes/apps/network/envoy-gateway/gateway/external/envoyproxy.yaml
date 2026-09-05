@@ -48,6 +48,8 @@ spec:
             limits:
               memory: 1Gi
       envoyService:
+        labels:
+          announce: bgp # cilium `bgp` pool + BGP advert; Service-only, no pod roll
         externalTrafficPolicy: Local # preserve client IP
   shutdown:
     drainTimeout: 180s

@@ -12,7 +12,7 @@ spec:
   infrastructure:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: *hostname
-      lbipam.cilium.io/ips: "10.1.80.12"
+      lbipam.cilium.io/ips: "10.1.81.12" # cilium `bgp` pool; label on the Service via EnvoyProxy envoyService.labels
   listeners:
     - name: http
       protocol: HTTP
