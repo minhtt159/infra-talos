@@ -6,19 +6,15 @@
 ![Renovate](https://img.shields.io/badge/Renovate-enabled-1A1F6C?logo=renovatebot&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-GitOps configuration for a home Kubernetes cluster running on **Talos Linux**,
-provisioned by **Sidero Omni** and continuously reconciled by **Flux**.
-Secrets are pulled from **Vaultwarden** via the **External Secrets Operator**;
-dependency updates are automated with **Renovate**.
-
-The layout follows the [onedr0p / home-operations](https://github.com/onedr0p/cluster-template)
-convention: every application is a self-contained Flux `Kustomization` that
-points at an `app/` directory holding a `HelmRelease` (or raw manifests).
+GitOps for a home Kubernetes cluster: **Talos Linux**, provisioned by **Sidero Omni**,
+reconciled by **Flux**. Secrets from **Vaultwarden** via **External Secrets**; updates by
+**Renovate**. Layout follows [onedr0p / home-operations](https://github.com/onedr0p/cluster-template):
+one Flux `Kustomization` per app → `app/` with a `HelmRelease`.
 
 ## Documentation
 
 - **[Application pattern](docs/applications.md)** — how every app is wired, the app inventory, and adding a new one.
-- **[Networking & ingress](docs/networking.md)** — Cilium LB, Envoy Gateway, external-dns, Cloudflare tunnel, certs.
+- **[Networking & ingress](docs/networking.md)** — Cilium BGP VIPs, Envoy Gateway, external-dns, tunnel, certs.
 - **[Storage](docs/storage.md)** — TrueNAS (democratic-csi) for everything stateful; openebs hostpath for Kafka only.
 - **[Secrets](docs/secrets.md)** — External Secrets Operator + Vaultwarden.
 - **[Bootstrapping](docs/bootstrapping.md)** — standing up a fresh cluster.
@@ -38,13 +34,9 @@ Three layers, each owned by a different tool:
 | **2. Cluster prerequisites** | Helmfile | [`bootstrap/helmfile.d/`](bootstrap/helmfile.d) — CNI, DNS, cert-manager, Flux itself |
 | **3. Applications** | Flux (GitOps) | [`kubernetes/`](kubernetes) |
 
-This repo owns layers **2 & 3** (public GitOps). Layer 1 — node provisioning via
-Sidero Omni — lives in a private repo alongside the Omni management plane.
-
-Once layer 3 is up, **Flux owns everything** — including the components that
-were seeded by Helmfile in layer 2. The Helmfile step exists only to break the
-chicken-and-egg problem of installing Flux (and the CNI it needs) before Flux
-exists to install them.
+This repo owns layers **2 & 3**. Layer 1 lives with the Omni management plane (private).
+Once Flux is up it owns everything, including what Helmfile seeded; Helmfile only
+exists because Flux can't install itself or the CNI it needs.
 
 ```mermaid
 flowchart TD
@@ -57,19 +49,15 @@ flowchart TD
 
 ## Cluster shape
 
-Provisioned by Sidero Omni. The node inventory, hardware, disk pinning, and Talos
-machine config live in a **separate private repo** — not published here. What the
-GitOps layer in this repo relies on:
+Node inventory, hardware, disk pinning and machine config: private repo. What this
+layer relies on:
 
-- **Mixed architecture** (amd64 + arm64) — charts/images must be multi-arch;
-  arch-picky workloads pin `kubernetes.io/arch` via nodeSelector.
-- **CNI `none` + kube-proxy disabled** at the Talos layer — Cilium replaces both
-  (`kube-system/cilium`).
-- **CoreDNS disabled** at the Talos layer — deployed as an app instead
-  (`kube-system/coredns`).
-- Control planes are schedulable, so master/worker is logical, not a hard boundary.
-- A **Coral TPU** (`capability=coral`) and an **Intel Arc B580** (`gpu.intel.com/xe`)
-  are exposed to the workloads that select them (frigate, ollama).
+- **Mixed arch** (amd64 + arm64): multi-arch images; picky workloads pin `kubernetes.io/arch`.
+- **CNI `none`, kube-proxy off, CoreDNS off** at the Talos layer — Cilium and the
+  `coredns` app replace them.
+- Control planes are schedulable.
+- **Coral TPU** (`capability=coral`) and **Intel Arc B580** (`gpu.intel.com/xe`) for
+  frigate and ollama.
 
 ## Repository layout
 
@@ -86,6 +74,3 @@ GitOps layer in this repo relies on:
 ├── CLAUDE.md                      # contributor/AI conventions + security posture
 └── .envrc                         # direnv: exports KUBECONFIG
 ```
-
-See **[docs/applications.md](docs/applications.md)** for the per-app pattern
-(`ks.yaml` → `app/` with OCIRepository + HelmRelease + ExternalSecret).

@@ -11,21 +11,20 @@ spec:
   interval: 1h
   values:
     # ref: https://github.com/cilium/cilium/blob/main/install/kubernetes/cilium/values.yaml
-    # Only: Talos-required, used features, observability. Rest = chart defaults.
+    # Talos-required + used features only. Rest = chart defaults.
 
-    # ── Talos ──
-    # Talos mounts cgroup2 itself.
+    # Talos mounts cgroup2 itself
     cgroup:
       automount:
         enabled: false
       hostRoot: /sys/fs/cgroup
 
-    # No kube-proxy on Talos. API via KubePrism (local :7445) — survives CP endpoint moves.
+    # no kube-proxy; API via KubePrism :7445
     kubeProxyReplacement: true
     k8sServiceHost: 127.0.0.1
     k8sServicePort: 7445
 
-    # Explicit caps instead of privileged.
+    # explicit caps, not privileged
     securityContext:
       capabilities:
         ciliumAgent:
@@ -47,49 +46,38 @@ spec:
           - SYS_ADMIN
           - SYS_RESOURCE
 
-    # ── Routing ──
-    # All nodes on one L2 → native routing, no vxlan. Plain routes per PodCIDR.
+    # single L2 → native routing, no overlay
     routingMode: native
-    autoDirectNodeRoutes: true # needs single L2 segment
-    ipv4NativeRoutingCIDR: "10.69.0.0/16" # = podSubnets in Omni template
+    autoDirectNodeRoutes: true
+    ipv4NativeRoutingCIDR: "10.69.0.0/16" # = Omni podSubnets
     ipam:
       mode: kubernetes
 
     bpf:
-      # BPF masq, no iptables. Needs forwardKubeDNSToHost:false in Omni (talos#10002).
-      masquerade: true
-      # Host-netns traffic on kernel stack. BPF host routing ate SideroLink/Omni
-      # flows at July 2026 bootstrap (fdae:: timeouts, wedged etcd). Pods keep full BPF.
-      hostLegacyRouting: true
+      masquerade: true # needs Omni forwardKubeDNSToHost:false (talos#10002)
+      hostLegacyRouting: true # BPF host routing broke SideroLink (July 2026)
 
     cni:
       exclusive: true
 
-    # Pod-to-pod WireGuard (UDP 51871). nodeEncryption OFF: beta, key-update
-    # paradox, wedged etcd July 2026. Revisit with cilium/cilium#28965.
+    # pod↔pod WireGuard :51871; nodeEncryption wedged etcd (July 2026, cilium#28965)
     encryption:
       enabled: true
       type: wireguard
       nodeEncryption: false
 
-    # ── LB VIPs ──
-    # Nodes peer eBGP with router (bgp.yaml). VIPs advertised as /32 only from nodes
-    # with a local endpoint — eTP:Local honoured, no L2-leader blackhole (July 2026).
-    # Cilium dials out; no listening port. L2 announcements retired Sept 2026.
+    # LB VIPs over BGP (bgp.yaml, networks.yaml); L2 announcements retired Sept 2026
     bgpControlPlane:
       enabled: true
 
-    # Cilium Envoy: no separate DaemonSet; agent embeds Envoy (status: "Envoy: embedded",
-    # 0 redirects). Only L7 CiliumNetworkPolicy or L7 visibility would use it. Edge proxy
-    # = envoy-gateway (../../../network/envoy-gateway), a separate Envoy fleet.
+    # embedded Envoy unused (no L7 policy); edge = ../../../network/envoy-gateway
     envoy:
       enabled: false
     gatewayAPI:
       enabled: false
 
-    # ── Hubble ──
     hubble:
-      # Bootstrap helmfile forces false (DNS chicken-egg); Flux flips on.
+      # bootstrap helmfile forces false; Flux flips on
       enabled: &hubble-state true
       metrics:
         enabled:
@@ -99,8 +87,7 @@ spec:
           - flow
           - port-distribution
           - icmp
-          # no httpV2: needs flows through Cilium Envoy (L7 policy/visibility); with 0
-          # redirects it exported nothing. HTTP telemetry = envoy-gateway access logs.
+          # no httpV2: nothing flows through Cilium Envoy
         serviceMonitor:
           enabled: true
         dashboards:
@@ -120,7 +107,7 @@ spec:
         rollOutPods: true
         replicas: 1
         ingress:
-          enabled: false # not exposed; `cilium hubble ui` port-forwards
+          enabled: false # not exposed
       tls:
         enabled: *hubble-state
         auto:
@@ -128,7 +115,6 @@ spec:
           method: helm
           certValidityDuration: 1095
 
-    # ── Observability ──
     dashboards:
       enabled: true
     prometheus:
@@ -161,10 +147,3 @@ spec:
       limits:
         memory: 1Gi
     rollOutCiliumPods: true
-
-    # ── Removed July 2026 ──
-    # nodeEncryption: blackholed node traffic, wedged etcd. Pod WG kept.
-    # hostFirewall+policyAuditMode: audit-only, enforced nothing. CCNPs inert in git.
-    # loadBalancer dsr/maglev: asymmetric-return debugging pain, no need.
-    # bpf map sizing, endpointRoutes, socketLB, identityAllocationMode: defaults.
-    # localRedirectPolices: typo (real: localRedirectPolicy), ignored since day one.

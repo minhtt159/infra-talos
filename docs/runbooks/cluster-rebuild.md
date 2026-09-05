@@ -1,116 +1,71 @@
-# Runbook: full cluster rebuild with volume reclaim
+# Runbook: cluster rebuild with volume reclaim
 
-Goal: tear the cluster down and rebuild it while re-attaching every
-democratic-csi volume (TrueNAS NFS datasets + iSCSI zvols) to its app.
+Tear down, rebuild, re-attach every democratic-csi volume. Works because
+`reclaimPolicy: Retain` keeps TrueNAS data and a PV's `spec.csi.volumeHandle`
+re-mounts the same dataset/zvol.
 
-Works because:
-- `reclaimPolicy: Retain` — deleting PVC/cluster never deletes TrueNAS data.
-- A PV manifest pins `spec.csi.volumeHandle` → re-applying the *same* PV
-  object makes the CSI driver mount the *same* dataset/zvol.
+> Object-level reclaim only. No protection against data loss on TrueNAS itself
+> (VolSync/restic = future). Node-local PVs (Kafka, Ollama cache) are not
+> reclaimable — [node loss](node-loss.md).
 
-> Future upgrade path: VolSync (restic) for data-level backup/restore.
-> This runbook only covers object-level reclaim — it does NOT protect
-> against data deletion/corruption on TrueNAS itself.
->
-> Node-local PVs (`openebs-hostpath*`, Kafka) are not reclaimable: Kafka comes
-> back empty, which it accepts. See [node loss](node-loss.md).
-
-## 0. Preconditions (verify BEFORE teardown)
+## 0. Preconditions
 
 ```sh
-# every democratic-csi PV must be Retain — Delete here means data loss on teardown
+# every democratic-csi PV must be Retain
 kubectl get pv -o custom-columns=NAME:.metadata.name,RECLAIM:.spec.persistentVolumeReclaimPolicy,SC:.spec.storageClassName
-
-# if any still say Delete (created before the Retain change):
-task pv:patch-retain
+task pv:patch-retain    # if any say Delete
 ```
 
-## 1. Export state
+## 1. Export
 
 ```sh
-task pv:export        # writes backups/pv/persistentvolumes.yaml + persistentvolumeclaims.yaml
-git add backups/pv && git commit -m "chore: pv export before rebuild"  # commit = your parachute
+task pv:export          # backups/pv/persistentvolumes.yaml + persistentvolumeclaims.yaml
+git add backups/pv && git commit -m "chore: pv export before rebuild"
 ```
 
-Sanity-check the export: every expected PV present, each has
-`spec.csi.volumeHandle`, PVC namespaces look right.
+Check: every PV present, each has `spec.csi.volumeHandle`, PVC namespaces right.
 
 ## 2. Teardown
 
-```sh
-# Teardown = deleting the Omni cluster. That lives in the private Omni repo
-# (omni-selfhosted), not here:
-#   omnictl cluster template delete -f cluster/homelab/omni-cluster.yaml
-```
-
-TrueNAS check (optional but calming): datasets/zvols still exist under the
-democratic-csi parent dataset.
+Private Omni repo: `omnictl cluster template delete -f cluster/homelab/omni-cluster.yaml`.
+Optional: confirm datasets/zvols still exist on TrueNAS.
 
 ## 3. Rebuild
 
 ```sh
-# 1. Re-provision nodes from the private Omni repo (omni-selfhosted):
-#      omnictl cluster template sync -f cluster/homelab/omni-cluster.yaml
-#    (or push to cluster/** → the cluster-sync workflow). Then, back in this repo:
+# private Omni repo: omnictl cluster template sync -f cluster/homelab/omni-cluster.yaml
 task cluster:kubeconfig
 task bootstrap            # CRDs, then cilium → coredns → cert-manager → flux
+# private Omni repo: task cluster:seed-secrets   (ESO bitwarden-cli login)
 ```
 
-Then seed the **ESO bootstrap secret** — the `bitwarden-cli` bridge login that lets
-External Secrets reach Vaultwarden (it can't come from ESO itself). It's not in this
-repo; it's SOPS-encrypted in the private Omni repo (`omni-selfhosted`). From there:
+## 4. Reclaim — order matters
+
+Before Flux reconciles the apps, or they create fresh empty PVCs.
 
 ```sh
-task cluster:kubeconfig       # if not already fetched
-task cluster:seed-secrets     # sops-decrypt cluster/eso-secrets.sops.yaml | kubectl apply
-```
-
-Once that Secret exists, ESO authenticates and every `ExternalSecret` (including
-`cluster-secrets`) resolves. No SOPS or age key is needed in this repo.
-
-## 4. Reclaim volumes — ORDER MATTERS
-
-Do this **before** (or immediately after) Flux reconciles the app
-Kustomizations, otherwise apps create fresh empty PVCs that bind to fresh
-volumes.
-
-```sh
-# 4a. suspend every Kustomization that owns a TrueNAS PVC so they don't race you
-kubectl get pvc -A -L kustomize.toolkit.fluxcd.io/name    # the list, live
+kubectl get pvc -A -L kustomize.toolkit.fluxcd.io/name
 flux suspend kustomization frigate ollama hindsight postgres grafana-instance kube-prometheus-stack -n flux-system
-# bank0 Postgres clusters: suspend their bank0-platform Kustomizations too
+# + the bank0-platform Kustomizations for the bank0 Postgres clusters
 
-# 4b. PVs first (cluster-scoped, no deps)
 kubectl apply -f backups/pv/persistentvolumes.yaml
-
-# 4c. clear stale claimRefs so re-created PVCs can bind
-#     (exported claimRef points at old PVC UIDs — kubectl may reject or PV stays Released)
 kubectl get pv -o name | xargs -I{} kubectl patch {} --type json \
   -p '[{"op":"remove","path":"/spec/claimRef/uid"},{"op":"remove","path":"/spec/claimRef/resourceVersion"}]' 2>/dev/null || true
-
-# 4d. PVCs (namespaces must exist — Flux creates them, or apply namespace.yaml manually)
-kubectl apply -f backups/pv/persistentvolumeclaims.yaml
-
-# 4e. verify every PVC is Bound to its ORIGINAL PV
-kubectl get pvc -A
-
-# 4f. resume the same list
+kubectl apply -f backups/pv/persistentvolumeclaims.yaml   # namespaces must exist
+kubectl get pvc -A                                         # every PVC Bound to its ORIGINAL PV
 flux resume kustomization frigate ollama hindsight postgres grafana-instance kube-prometheus-stack -n flux-system
 ```
 
 ## 5. Post-checks
 
 ```sh
-flux get kustomizations -A          # all Ready
-kubectl get pv                      # all Bound, none Released
-# spot-check one app's data (e.g. frigate recordings present)
+flux get kustomizations -A
+kubectl get pv                     # all Bound, none Released
 ```
-
-## Failure modes
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| PVC `Pending`, new PV appears | PVC applied before PV, or claimRef stale | delete new PVC+PV, redo 4b–4d |
-| PV `Released` | stale claimRef UID | step 4c patch, PVC re-binds |
-| Mount fails on node | iSCSI target still logged in from old cluster | TrueNAS: check associated targets; node: reboot clears stale sessions |
-| App starts empty | it bound a fresh volume | suspend app, fix binding, old data still on TrueNAS — nothing lost |
+| PVC `Pending`, new PV appears | PVC before PV, or stale claimRef | delete new PVC+PV, redo step 4 |
+| PV `Released` | stale claimRef UID | claimRef patch, PVC re-binds |
+| Mount fails | stale iSCSI session from old cluster | check TrueNAS targets; reboot node |
+| App starts empty | bound a fresh volume | suspend, fix binding; old data still on TrueNAS |

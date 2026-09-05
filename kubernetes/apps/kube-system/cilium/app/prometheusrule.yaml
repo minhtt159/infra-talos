@@ -8,7 +8,7 @@ spec:
   groups:
     - name: cilium.rules
       rules:
-        # session_state: 1 = established. One series per node × peer.
+        # 1 = established
         - alert: CiliumBGPSessionDown
           expr: |-
             cilium_bgp_control_plane_session_state != 1
@@ -19,7 +19,7 @@ spec:
           labels:
             severity: critical
 
-        # Cilium 1.20 drift checker: ConfigMap keys the running agent has not applied.
+        # ConfigMap keys the agent has not applied
         - alert: CiliumConfigDrift
           expr: |-
             cilium_drift_checker_config_delta > 0

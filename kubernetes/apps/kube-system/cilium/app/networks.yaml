@@ -5,9 +5,7 @@ kind: CiliumLoadBalancerIPPool
 metadata:
   name: bgp
 spec:
-  # Routed prefix OUTSIDE node subnet. Router learns /32s via BGP (bgp.yaml).
-  # Nobody ARPs → no L2, no DHCP overlap, no leader blackhole. Not a UniFi network object.
-  # Opt-in: Service label `announce: bgp` (Gateway: EnvoyProxy envoyService.labels).
+  # routed prefix outside the node subnet; opt-in via Service label announce=bgp
   allowFirstLastIPs: "No"
   blocks:
     - cidr: "10.1.81.0/24"
