@@ -1,0 +1,11 @@
+---
+# home: LAN-facing home-automation plumbing (MQTT broker now; Home Assistant
+# integrations later). The HA Green box itself stays outside the cluster.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: _
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  labels:
+    pod-security.kubernetes.io/enforce: restricted

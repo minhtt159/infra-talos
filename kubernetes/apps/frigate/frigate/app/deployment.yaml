@@ -18,6 +18,8 @@ spec:
     metadata:
       labels:
         app: *name
+      annotations:
+        secret.reloader.stakater.com/reload: frigate-camera,frigate-mqtt
     spec:
       restartPolicy: Always
       automountServiceAccountToken: false
@@ -35,6 +37,14 @@ spec:
           # -rk (Rockchip) variant: hardware video decode on the RK1
           image: ghcr.io/blakeblackshear/frigate:0.17.2-rk
           imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: Europe/Amsterdam # recordings folders + UI clock; container default is UTC
+          envFrom:
+            - secretRef:
+                name: frigate-camera # FRIGATE_RTSP_PASSWORD
+            - secretRef:
+                name: frigate-mqtt # FRIGATE_MQTT_PASSWORD
           resources:
             requests:
               cpu: 100m

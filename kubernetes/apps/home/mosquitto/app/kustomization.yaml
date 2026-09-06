@@ -5,8 +5,11 @@ kind: Kustomization
 
 resources:
   - ./externalsecret.yaml
-  - ./config-pvc.yaml
-  - ./media-pvc.yaml
+  - ./pvc.yaml
   - ./deployment.yaml
   - ./service.yaml
-  - ./httproute.yaml
+
+configMapGenerator:
+  - name: mosquitto-config
+    files:
+      - mosquitto.conf

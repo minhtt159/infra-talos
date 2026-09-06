@@ -1,0 +1,70 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name mosquitto
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # RWO hostpath PVC
+  selector:
+    matchLabels:
+      app: *name
+  template:
+    metadata:
+      labels:
+        app: *name
+      annotations:
+        secret.reloader.stakater.com/reload: mosquitto-passwd
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1883 # image's mosquitto user
+        runAsGroup: 1883
+        fsGroup: 1883 # passwd secret + data dir readable by the broker
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: *name
+          image: docker.io/library/eclipse-mosquitto:2.0.22
+          ports:
+            - name: mqtt
+              containerPort: 1883
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+          readinessProbe:
+            tcpSocket:
+              port: mqtt
+          livenessProbe:
+            tcpSocket:
+              port: mqtt
+          volumeMounts:
+            - name: config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: passwd
+              mountPath: /mosquitto/passwd
+              readOnly: true
+            - name: data
+              mountPath: /mosquitto/data
+      volumes:
+        - name: config
+          configMap:
+            name: mosquitto-config
+        - name: passwd
+          secret:
+            secretName: mosquitto-passwd
+            defaultMode: 0440 # not world-readable or mosquitto warns
+        - name: data
+          persistentVolumeClaim:
+            claimName: mosquitto-data
