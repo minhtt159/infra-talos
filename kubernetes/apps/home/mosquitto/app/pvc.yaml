@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mosquitto-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  # retained messages + persistent sessions only; node-local is fine, loss = clients re-publish
+  storageClassName: openebs-hostpath
+  resources:
+    requests:
+      storage: 1Gi
