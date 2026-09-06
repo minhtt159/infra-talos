@@ -2,13 +2,15 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: frigate-config
+  # iSCSI, not NFS: /config holds SQLite (frigate.db); Frigate docs say no
+  # network FS for the DB (locking). Media stays on NFS.
+  name: frigate-config-iscsi
   labels:
     app: frigate
 spec:
-  storageClassName: truenas-nfs
+  storageClassName: truenas-iscsi
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Mi
+      storage: 1Gi
