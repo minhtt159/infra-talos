@@ -24,7 +24,7 @@ spec:
         kubernetes.io/arch: amd64
       containers:
         - name: bitwarden-cli
-          image: ghcr.io/charlesthomas/bitwarden-cli:2026.7.0
+          image: ghcr.io/charlesthomas/bitwarden-cli:2026.8.0
           imagePullPolicy: IfNotPresent
           # Replaces the image entrypoint: it hardcodes `bw serve --hostname
           # 0.0.0.0`, but bitwarden-cli 2026.6+ added DNS-rebinding protection
