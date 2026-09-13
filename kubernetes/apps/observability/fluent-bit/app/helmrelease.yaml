@@ -21,8 +21,7 @@ spec:
         cpu: 10m
         memory: 64Mi
       limits:
-        # backlog replay holds every retrying chunk in memory at once;
-        # 128Mi OOM-killed the control-plane node's fluent-bit in a loop.
+        # backlog replay holds every retrying chunk; 128Mi OOM-looped.
         memory: 256Mi
     envFrom:
       - secretRef:
@@ -109,11 +108,9 @@ spec:
             Generate_ID Off
             Logstash_Format Off
             Trace_Error On
-            # response buffer for the _bulk reply, NOT the request. Default
-            # 512K is smaller than ES's per-doc ack list for a ~2MB chunk
-            # ("cannot increase buffer: requested=544768 max=512000") -> the
-            # flush fails forever and, with Retry_Limit False, the chunk is
-            # never dropped. False = grow as needed.
+            # _bulk RESPONSE buffer. Default 512K < ES ack list for a 2MB
+            # chunk ("cannot increase buffer: requested=544768 max=512000")
+            # -> flush fails forever, Retry_Limit False never drops it.
             Buffer_Size False
             # default Retry_Limit is 1 — a chunk is DISCARDED after one failed
             # retry; ES is external (TrueNAS), so reboots/upgrades would punch
