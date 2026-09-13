@@ -53,6 +53,22 @@ spec:
           # nothing there.
           flux-webhook:
             - SecRuleEngine Off
+          # bank0's client API posts exactly what CRS scores: passwords, IBANs,
+          # free-text payment descriptions and dispute narratives. Going straight
+          # to enforcing would 403 real logins and transfers on day one, so it
+          # starts in DetectionOnly — same 8-days-of-evidence treatment the
+          # gateway itself got. Read the match log, then delete this block to put
+          # the hostname back under `default`. Tracked: minhtt159/bank0#124.
+          bank0-api:
+            - Include @recommended-conf
+            - SecRuleEngine DetectionOnly
+            - Include @crs-setup-conf
+            - Include @owasp_crs/*.conf
+            - SecResponseBodyAccess Off
+            - SecRequestBodyLimit 104857600
+            - SecRequestBodyNoFilesLimit 1048576
+            - SecRequestBodyLimitAction ProcessPartial
         default_directives: default
         per_authority_directives:
           flux-webhook.${SECRET_DOMAIN}: flux-webhook
+          api.bank0.${SECRET_DOMAIN}: bank0-api

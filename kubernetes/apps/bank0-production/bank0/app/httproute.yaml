@@ -1,9 +1,13 @@
 ---
 # Chart's own HTTPRoutes want a chart-created Gateway (sectionName
 # https-api/https-portal). Switched off (api/portal.exposed: false); routing
-# lives here, on shared envoy-internal like every other app. Both surfaces are on envoy-internal, so production is
-# LAN-only too — deliberately. Moving `api` to envoy-external is a one-line
-# parentRef change plus a public DNS record; make that its own decision.
+# lives here, like every other app.
+#
+# `api` is on envoy-external (public, via cloudflared); `portal` stays on
+# envoy-internal. That split is the point: the portal is the admin surface and
+# has no MFA yet (minhtt159/bank0#116), so nothing about it leaves the LAN.
+# Rationale and the full checklist: bank0 docs/04-deployment.md §3, "Exposing
+# the client API to the internet" (minhtt159/bank0#124).
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -20,11 +24,40 @@ spec:
   hostnames:
     - "api.bank0.${SECRET_DOMAIN}"
   parentRefs:
-    - name: envoy-internal
+    - name: envoy-external
       namespace: network
       sectionName: https
   rules:
     - backendRefs:
+        - name: bank0-api
+          port: 80
+---
+# /auth/* split out purely so a tighter rate limit can attach to it
+# (BackendTrafficPolicy targets a whole HTTPRoute, and EG's global rate limit
+# selects on client IP and headers, not path). Same hostname and backend as
+# above; Gateway API gives the longer path match precedence, so this route wins
+# for /auth/* and bank0-api keeps everything else.
+#
+# It exists because the app's own /auth/* limiter is a PER-REPLICA window — with
+# 3-10 api pods and HPA on, the real ceiling both multiplies and moves. The
+# Valkey-backed global limit counts once for the whole deployment.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bank0-api-auth
+spec:
+  hostnames:
+    - "api.bank0.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /auth
+      backendRefs:
         - name: bank0-api
           port: 80
 ---

@@ -14,7 +14,11 @@ values:
     secretKey: jwt-secret
   # See staging.yaml for why the forwarded header is trusted here.
   trustProxyHeaders: true
-  trustedProxyHops: 1
+  # 2, not 1: this env is on envoy-external, so internet traffic arrives through
+  # cloudflared AND Envoy. CF-Connecting-IP covers the common case (Cloudflare
+  # replaces it outright); this is for a request that shows up without it, where
+  # XFF is read right-to-left and the second entry from the right is the client.
+  trustedProxyHops: 2
   gateway:
     create: false
   api:
