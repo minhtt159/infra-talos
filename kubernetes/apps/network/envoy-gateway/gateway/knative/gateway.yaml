@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/gateway_v1.json
+# Dedicated gateway for Knative. net-gateway-api probes every generated route
+# over plain HTTP on the `http` listener and accepts only a 200 — on
+# envoy-internal that listener is `from: Same` and carries the hostless
+# https-redirect, so probes get a 301 and no ksvc ever goes Ready. Separate
+# gateway instead of reopening the shared one.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: knative-internal
+  annotations:
+    external-dns.alpha.kubernetes.io/target: &hostname knative.${SECRET_DOMAIN}
+spec:
+  gatewayClassName: knative-internal
+  infrastructure:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: *hostname
+      lbipam.cilium.io/ips: "10.1.81.13" # cilium `bgp` pool; label on the Service via EnvoyProxy envoyService.labels
+  listeners:
+    # Load-bearing: probe path + cluster-local path. No https-redirect route
+    # binds here (../httpredirect.yaml names its parents explicitly).
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: functions
+    - name: https
+      protocol: HTTPS
+      port: 443
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: functions
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: ${SECRET_DOMAIN/./-}-production-tls

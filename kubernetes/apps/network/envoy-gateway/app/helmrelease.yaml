@@ -9,6 +9,13 @@ spec:
     kind: OCIRepository
     name: envoy-gateway
   interval: 1h
+  # EG >=1.9 requires the Gateway API v1.6 CRDs the chart ships (1.8.3 had
+  # v1.5.1), and Flux defaults upgrade.crds to Skip — without this the
+  # controller upgrades past its own CRDs. Render-diff: no fields removed.
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
   values:
     global:
       imageRegistry: mirror.gcr.io

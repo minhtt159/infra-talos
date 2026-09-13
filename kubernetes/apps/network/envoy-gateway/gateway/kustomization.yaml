@@ -5,5 +5,8 @@ resources:
   # per-gateway config (each dir owns its GatewayClass + EnvoyProxy + policies)
   - ./external
   - ./internal
-  # shared: the http->https redirect binds both gateways' :80 listeners
+  # own gateway: its :80 is a real probe path, not a redirect stub
+  - ./knative
+  # shared: the http->https redirect binds external + internal :80 by name.
+  # Deliberately not knative.
   - ./httpredirect.yaml

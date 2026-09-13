@@ -1,0 +1,45 @@
+---
+# See ../internal/backendtrafficpolicy.yaml — KEEP IN SYNC (common blocks).
+# Unmetered like internal: functions are LAN-only and rate-limiting them buys
+# nothing here.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: knative-internal
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: knative-internal
+  compressor:
+    - type: Brotli
+    - type: Gzip
+    - type: Zstd
+  connection:
+    bufferLimit: 8Mi
+  tcpKeepalive: {}
+  # Resilience block — keep in sync with ../internal.
+  circuitBreaker:
+    maxConnections: 1024
+    maxPendingRequests: 256
+    maxParallelRequests: 1024
+    maxParallelRetries: 10
+  # No passive healthCheck, unlike ../internal: the activator legitimately 503s
+  # during a cold start, and ejecting it for 30s turns slow into failed.
+  retry:
+    numRetries: 2
+    retryOn:
+      triggers:
+        - connect-failure
+        - refused-stream
+        - reset
+    perRetry:
+      backOff:
+        baseInterval: 100ms
+        maxInterval: 1s
+  timeout:
+    http:
+      # Cold start has to fit inside this. Unmetered like ../internal until a
+      # real cold start is measured.
+      requestTimeout: 0s
