@@ -1,0 +1,96 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/envoyproxy_v1alpha1.json
+# Proxy template for the KNATIVE gateway (via GatewayClass knative-internal).
+# Mirrors ../internal/envoyproxy.yaml; observer.name distinguishes the three.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: knative-internal-proxy
+spec:
+  logging:
+    level:
+      default: warn
+  provider:
+    type: Kubernetes
+    kubernetes:
+      # node drains may never take both replicas at once
+      envoyPDB:
+        minAvailable: 1
+      envoyDeployment:
+        replicas: 2
+        pod:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: DoNotSchedule
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: envoy
+        container:
+          imageRepository: mirror.gcr.io/envoyproxy/envoy
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+      envoyService:
+        labels:
+          announce: bgp # cilium `bgp` pool + BGP advert; Service-only, no pod roll
+        externalTrafficPolicy: Local # Preserve ClientIP
+  shutdown:
+    drainTimeout: 180s
+  telemetry:
+    accessLog:
+      settings:
+        - format:
+            type: JSON
+            # Same ECS shape as ../internal → same fluent-bit retag → same
+            # logs-envoy.access stream. source.ip is the direct L4 client
+            # (no proxy in front, eTP:Local preserves it), so no XFF field.
+            json:
+              event.start: "%START_TIME%" # NOT @timestamp (out_es owns that)
+              event.dataset: envoy.access
+              observer.name: knative-internal
+              # client (real LAN client, direct L4)
+              source.ip: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
+              user_agent.original: "%REQ(USER-AGENT)%"
+              # request
+              url.domain: "%REQ(:AUTHORITY)%"
+              url.path: "%REQ(:PATH)%"
+              http.request.method: "%REQ(:METHOD)%"
+              http.request.id: "%REQ(X-REQUEST-ID)%"
+              http.request.referrer: "%REQ(Referer)%"
+              http.request.bytes: "%BYTES_RECEIVED%"
+              # response
+              http.response.status_code: "%RESPONSE_CODE%"
+              http.response.bytes: "%BYTES_SENT%"
+              # upstream
+              destination.address: "%UPSTREAM_REMOTE_ADDRESS%"
+              tls.cipher: "%DOWNSTREAM_TLS_CIPHER%"
+              tls.client.server_name: "%REQUESTED_SERVER_NAME%" # SNI
+              # ── envoy namespace ─────────────────────────────────────
+              envoy.duration_ms: "%DURATION%"
+              envoy.upstream_ms: "%RESPONSE_DURATION%"
+              envoy.request_ms: "%REQUEST_DURATION%"
+              envoy.response_tx_ms: "%RESPONSE_TX_DURATION%"
+              envoy.protocol: "%PROTOCOL%"
+              envoy.response_flags: "%RESPONSE_FLAGS%"
+              envoy.response_code_details: "%RESPONSE_CODE_DETAILS%"
+              envoy.upstream_cluster: "%UPSTREAM_CLUSTER%"
+              envoy.route_name: "%ROUTE_NAME%"
+              envoy.tls_version: "%DOWNSTREAM_TLS_VERSION%"
+          # FOLLOW-UP: the net-gateway-api prober hits :80 constantly and will
+          # dominate this log. Add a match for it once its real User-Agent has
+          # been read off the live gateway rather than guessed.
+          matches:
+            - "!request.useragent.startsWith('Gatus')"
+          sinks:
+            - type: File
+              file:
+                path: /dev/stdout
+    metrics:
+      prometheus:
+        # Gzip not Zstd: Prometheus only sends Accept-Encoding: gzip.
+        compression:
+          type: Gzip

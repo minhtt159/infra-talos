@@ -16,3 +16,5 @@ spec:
     - "*.${SECRET_DOMAIN}"
     - "*.bank0.${SECRET_DOMAIN}"
     - "*.staging.bank0.${SECRET_DOMAIN}"
+    # ksvc hostnames: <name>-<namespace>.fn.${SECRET_DOMAIN}
+    - "*.fn.${SECRET_DOMAIN}"

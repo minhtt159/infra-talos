@@ -1,0 +1,36 @@
+---
+# See ../internal/clienttrafficpolicy.yaml — KEEP IN SYNC. Differences are
+# called out inline; everything else is deliberately identical.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/clienttrafficpolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: knative-internal
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: knative-internal
+  # No HSTS, unlike the other two gateways — it would tell clients never to use
+  # :80 for these hosts, and :80 is the path this gateway exists to serve.
+  # No clientIPDetection either: no proxy in front on the LAN, so omitting it
+  # stops a client forging source.ip. (EG >=1.9 rejects an empty `{}`.)
+  connection:
+    bufferLimit: 8Mi
+    maxAcceptPerSocketEvent: 0
+  http2:
+    initialStreamWindowSize: 2Mi
+    initialConnectionWindowSize: 32Mi
+    onInvalidMessage: TerminateStream
+    maxConcurrentStreams: 100 # HTTP/2 Rapid Reset guard (CVE-2023-44487)
+  http3: {}
+  tcpKeepalive: {}
+  timeout:
+    http:
+      requestReceivedTimeout: 30s
+  tls:
+    # 1.2 not 1.3 — see ../internal for the client-compat rationale.
+    minVersion: "1.2"
+    alpnProtocols:
+      - h2
+      - http/1.1
