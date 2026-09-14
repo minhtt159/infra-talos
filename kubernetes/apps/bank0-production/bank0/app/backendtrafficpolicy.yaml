@@ -1,0 +1,76 @@
+---
+# Per-route edge policy for bank0's public /auth/* route. A route-level BTP does
+# NOT merge with the gateway one, so everything envoy-external's BTP sets is
+# restated here — dropping the circuit breaker or outlier ejection on the login
+# path of a banking API would be a silent downgrade, not a simplification.
+# KEEP IN SYNC with ../../../network/envoy-gateway/gateway/external/backendtrafficpolicy.yaml.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: bank0-api-auth-ratelimit
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: bank0-api-auth
+  # --- restated from the gateway BTP ---
+  compressor:
+    - type: Brotli
+    - type: Gzip
+    - type: Zstd
+  connection:
+    bufferLimit: 8Mi
+  tcpKeepalive: {}
+  circuitBreaker:
+    maxConnections: 1024
+    maxPendingRequests: 256
+    maxParallelRequests: 1024
+    maxParallelRetries: 10
+  healthCheck:
+    passive:
+      interval: 10s
+      consecutive5XxErrors: 5
+      consecutiveGatewayErrors: 5
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+  retry:
+    numRetries: 2
+    retryOn:
+      triggers:
+        - connect-failure
+        - refused-stream
+        - reset
+    perRetry:
+      backOff:
+        baseInterval: 100ms
+        maxInterval: 1s
+  timeout:
+    http:
+      # Auth handlers are bcrypt + one DB round trip; nothing here streams.
+      # Far below the gateway's 300s so a wedged login can't hold a connection.
+      requestTimeout: 30s
+  # --- the reason this policy exists ---
+  # 60 req/min per distinct client IP on /auth/* — login, refresh, logout,
+  # register, verify-contact, resend-code, mfa/verify. Matches the app's own
+  # rate_limit_per_min default, but counted ONCE for the whole deployment
+  # instead of once per replica. Behind cloudflared the client IP comes from
+  # XFF (gateway ClientTrafficPolicy, numTrustedHops: 1).
+  #
+  # This is the credential-stuffing control; the gateway's 3000/min is flood
+  # protection and far too loose to be one. The in-app limiter stays as defence
+  # in depth for anything that reaches a pod without passing the gateway.
+  #
+  # Fail-open, like every Global limit here (envoy-ratelimit + Valkey): a Valkey
+  # outage must not lock every customer out of their bank.
+  rateLimit:
+    type: Global
+    global:
+      rules:
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+          limit:
+            requests: 60
+            unit: Minute
