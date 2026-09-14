@@ -3,6 +3,12 @@
 # https-api/https-portal). Switched off (api/portal.exposed: false); routing
 # lives here, like every other app.
 #
+# The public API is `bank0-api.${SECRET_DOMAIN}`, NOT `api.bank0.${SECRET_DOMAIN}`:
+# Cloudflare's Universal SSL covers the apex and first-level subdomains only, so a
+# two-label name would need paid Total TLS/ACM at the edge. One label also means
+# the tunnel's existing `*.${SECRET_DOMAIN}` ingress rule already covers it — no
+# dashboard entry. Same reason hindsight uses `hindsight-api.${SECRET_DOMAIN}`.
+#
 # `api` is on envoy-external (public, via cloudflared); `portal` stays on
 # envoy-internal. That split is the point: the portal is the admin surface and
 # has no MFA yet (minhtt159/bank0#116), so nothing about it leaves the LAN.
@@ -22,7 +28,7 @@ metadata:
         - "[STATUS] == 200"
 spec:
   hostnames:
-    - "api.bank0.${SECRET_DOMAIN}"
+    - "bank0-api.${SECRET_DOMAIN}"
   parentRefs:
     - name: envoy-external
       namespace: network
@@ -47,7 +53,7 @@ metadata:
   name: bank0-api-auth
 spec:
   hostnames:
-    - "api.bank0.${SECRET_DOMAIN}"
+    - "bank0-api.${SECRET_DOMAIN}"
   parentRefs:
     - name: envoy-external
       namespace: network

@@ -71,4 +71,4 @@ spec:
         default_directives: default
         per_authority_directives:
           flux-webhook.${SECRET_DOMAIN}: flux-webhook
-          api.bank0.${SECRET_DOMAIN}: bank0-api
+          bank0-api.${SECRET_DOMAIN}: bank0-api
