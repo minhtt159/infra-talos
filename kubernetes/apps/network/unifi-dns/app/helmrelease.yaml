@@ -53,6 +53,15 @@ spec:
             memory: 32Mi
     triggerLoopOnEvent: true
     policy: sync
+    # A hostname on BOTH gateways (bank0-portal, hindsight) is two CNAME
+    # candidates for one LAN name; external-dns warns "Only one CNAME per name"
+    # and keeps whichever it iterated first - the LAN answer flips between
+    # envoy-internal and envoy-external. Routes that must not be the LAN answer
+    # carry `dns.hnimn.art/lan: "false"`; `!=` also matches objects without the
+    # label, so everything else is unaffected. cloudflare-dns does not read
+    # this label, it filters on --gateway-name=envoy-external instead.
+    extraArgs:
+      - --label-filter=dns.hnimn.art/lan!=false
     sources:
       - gateway-httproute
       - service

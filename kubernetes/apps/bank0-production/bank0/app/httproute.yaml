@@ -18,10 +18,12 @@
 # (securitypolicy.yaml). The portal has no MFA of its own (minhtt159/bank0#116);
 # Access is the second factor. Rationale: bank0 docs/04-deployment.md §3.
 #
-# The LAN answer is deterministic only because of route NAMES: when two routes
-# publish the same hostname, external-dns keeps the one whose resource id sorts
-# first - `bank0-portal` < `bank0-portal-external`. Rename either and the LAN
-# may start resolving to envoy-external, where the SecurityPolicy 401s it.
+# The LAN answer is deterministic only because the three external routes carry
+# `dns.hnimn.art/lan: "false"`, which unifi-dns's --label-filter excludes. Without
+# it external-dns sees two CNAME candidates for one name and keeps whichever it
+# iterated first - the LAN flipped to envoy-external on first apply, where the
+# SecurityPolicy 401s every request. Keep the label on any new route for this
+# hostname on envoy-external.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -163,12 +165,13 @@ spec:
 # 401 here. Flat name for the same Universal-SSL reason as bank0-api.
 # cloudflare-dns publishes it from this route; the tunnel's `*.${SECRET_DOMAIN}`
 # rule and the gateway cert's wildcard SAN already cover it. No Gatus
-# annotation: the LAN route above probes /. Name must sort AFTER `bank0-portal`
-# (see the top of this file).
+# annotation: the LAN route above probes /.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: bank0-portal-external
+  labels:
+    dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
 spec:
   hostnames:
     - "bank0-portal.${SECRET_DOMAIN}"
@@ -189,6 +192,8 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: bank0-portal-external-login
+  labels:
+    dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
 spec:
   hostnames:
     - "bank0-portal.${SECRET_DOMAIN}"
@@ -212,6 +217,8 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: bank0-portal-internal-paths
+  labels:
+    dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
 spec:
   hostnames:
     - "bank0-portal.${SECRET_DOMAIN}"
