@@ -88,3 +88,79 @@ spec:
     - backendRefs:
         - name: bank0-portal
           port: 80
+---
+# The client API's NON-CLIENT surface, hidden from the internet.
+#
+# Why here and not in a Worker: the Access policy on bank0-api.${SECRET_DOMAIN}
+# stops the internet reaching this hostname directly (403, verified), but a
+# Cloudflare Worker subrequest to a same-zone hostname does NOT go through
+# Access. So each Worker is a hole through the gate as wide as its proxy, and
+# both of them forward every path:
+#
+#   bank0.hnimn.art/api/metrics       -> 200  (Prometheus exposition)
+#   fraudbank.hnimn.art/api/metrics   -> 200
+#   ...same for /docs, /openapi.yaml, /health
+#
+# Measured 2026-09-16. Fixing it in each Worker would work and would have to be
+# remembered by every Worker ever added; fixing it on the route fixes it once,
+# for every caller through envoy-external, including ones that do not exist yet.
+#
+# Exact matches, so Gateway API precedence puts these ahead of bank0-api's
+# catch-all - the same mechanism bank0-api-auth already relies on for /auth.
+#
+# NOT blocked, deliberately:
+#   /readyz  - Gatus probes it through this very route (see the annotation on
+#              bank0-api), and it returns only {"status":"ready"}.
+#   /metrics on the pods - Prometheus scrapes via the ServiceMonitor on the
+#              Service's `http` port, i.e. pod IPs direct. It never traverses a
+#              gateway, so this route cannot affect monitoring.
+#
+# 404 rather than 403: a 403 confirms something is there.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: HTTPRouteFilter
+metadata:
+  name: bank0-api-not-found
+spec:
+  directResponse:
+    statusCode: 404
+    contentType: application/json
+    body:
+      type: Inline
+      inline: '{"error":"not_found"}'
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bank0-api-internal-paths
+spec:
+  hostnames:
+    - "bank0-api.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - matches:
+        # Prometheus exposition: Go internals, DB pool state, version, and
+        # per-route traffic volume + latency. Labels are route templates, so no
+        # PII - but none of it belongs on the public internet.
+        - path: { type: Exact, value: /metrics }
+        # Version disclosure: {"status":"ok","version":"1.1.0"}. Gatus uses
+        # /readyz, which stays reachable.
+        - path: { type: Exact, value: /health }
+        # The spec and the Scalar explorer. Nothing at runtime needs either:
+        # fraudbank generates its types at BUILD time from the vendored copy in
+        # packages/api-contract, and the drift job reads bank0's git, not the URL.
+        #
+        # If the spec is meant to be public (a demo bank has a reasonable case
+        # for that), delete these two matches - that is the whole change, and it
+        # is the one line in this file that is a product decision rather than a
+        # security fix.
+        - path: { type: Exact, value: /openapi.yaml }
+        - path: { type: Exact, value: /docs }
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.envoyproxy.io
+            kind: HTTPRouteFilter
+            name: bank0-api-not-found
