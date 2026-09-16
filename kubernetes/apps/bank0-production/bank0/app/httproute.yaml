@@ -88,3 +88,62 @@ spec:
     - backendRefs:
         - name: bank0-portal
           port: 80
+---
+# The client API's non-client surface, hidden from the internet.
+#
+# Access stops the internet reaching this hostname directly (403), but a
+# Cloudflare Worker subrequest to a same-zone hostname does NOT go through
+# Access - so each Worker is a hole as wide as its proxy, and both forward every
+# path. Measured 2026-09-16: bank0.hnimn.art/api/metrics and
+# fraudbank.hnimn.art/api/metrics both 200.
+#
+# Fixed on the route rather than in each Worker so it covers Workers that do not
+# exist yet. Exact matches take precedence over bank0-api's catch-all, the same
+# way bank0-api-auth does for /auth. 404 not 403: a 403 confirms something is
+# there.
+#
+# Still reachable on purpose: /readyz (Gatus probes it through this route), and
+# /metrics on the pods (Prometheus scrapes the Service's `http` port direct, so
+# this cannot affect monitoring).
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: HTTPRouteFilter
+metadata:
+  name: bank0-api-not-found
+spec:
+  directResponse:
+    statusCode: 404
+    contentType: application/json
+    body:
+      type: Inline
+      inline: '{"error":"not_found"}'
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bank0-api-internal-paths
+spec:
+  hostnames:
+    - "bank0-api.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - matches:
+        # Go internals, DB pool state, version, per-route traffic + latency.
+        # Labels are route templates, so no PII - still not public material.
+        - path: { type: Exact, value: /metrics }
+        # Leaks the version string. Gatus uses /readyz, which stays open.
+        - path: { type: Exact, value: /health }
+        # Nothing needs these at runtime: fraudbank generates types at build
+        # time from the vendored contract. Blocked by default, but publishing
+        # the spec is a defensible product choice - delete these two matches if
+        # that is the intent.
+        - path: { type: Exact, value: /openapi.yaml }
+        - path: { type: Exact, value: /docs }
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.envoyproxy.io
+            kind: HTTPRouteFilter
+            name: bank0-api-not-found
