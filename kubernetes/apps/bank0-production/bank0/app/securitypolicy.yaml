@@ -13,9 +13,10 @@
 # come from cluster-secrets: the team domain is not committed anywhere in this
 # repo, and the AUD changes if the application is ever recreated.
 #
-# LAN operators keep using portal.bank0.${SECRET_DOMAIN} (envoy-internal); this
-# policy does not touch that route. The 404 route (bank0-portal-internal-paths)
-# is deliberately not targeted: a 404 gives nothing away, a 401 there would.
+# On the LAN the same hostname resolves to envoy-internal (httproute.yaml, top
+# comment), which this policy does not touch - that is the break-glass path.
+# The 404 route (bank0-portal-internal-paths) is deliberately not targeted: a
+# 404 gives nothing away, a 401 there would.
 #
 # First SecurityPolicy in the cluster. Envoy Gateway v1.9: remoteJWKS.uri alone is
 # enough, EG builds the egress cluster for the JWKS host itself.
