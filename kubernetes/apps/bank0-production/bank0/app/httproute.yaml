@@ -9,11 +9,13 @@
 # the tunnel's existing `*.${SECRET_DOMAIN}` ingress rule already covers it — no
 # dashboard entry. Same reason hindsight uses `hindsight-api.${SECRET_DOMAIN}`.
 #
-# `api` is on envoy-external (public, via cloudflared); `portal` stays on
-# envoy-internal. That split is the point: the portal is the admin surface and
-# has no MFA yet (minhtt159/bank0#116), so nothing about it leaves the LAN.
-# Rationale and the full checklist: bank0 docs/04-deployment.md §3, "Exposing
-# the client API to the internet" (minhtt159/bank0#124).
+# `api` is on envoy-external (public, via cloudflared). `portal` is on BOTH
+# gateways: the nested `portal.bank0` name stays on envoy-internal as the LAN
+# break-glass path (no Cloudflare, no Entra in the loop), and the flat
+# `bank0-portal` name is on envoy-external behind Cloudflare Access (Entra SSO +
+# MFA, the `Only-Minh` policy) with the Access JWT re-verified at this gateway
+# (securitypolicy.yaml). The portal has no MFA of its own (minhtt159/bank0#116);
+# Access is the second factor. Rationale: bank0 docs/04-deployment.md §3.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -89,7 +91,7 @@ spec:
         - name: bank0-portal
           port: 80
 ---
-# The client API's non-client surface, hidden from the internet.
+# The non-client surface of both public hostnames, hidden from the internet.
 #
 # Access stops the internet reaching this hostname directly (403), but a
 # Cloudflare Worker subrequest to a same-zone hostname does NOT go through
@@ -108,7 +110,7 @@ spec:
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: HTTPRouteFilter
 metadata:
-  name: bank0-api-not-found
+  name: bank0-not-found
 spec:
   directResponse:
     statusCode: 404
@@ -146,4 +148,77 @@ spec:
           extensionRef:
             group: gateway.envoyproxy.io
             kind: HTTPRouteFilter
-            name: bank0-api-not-found
+            name: bank0-not-found
+---
+# Operator console, public. The gate is Cloudflare Access on this hostname; the
+# SecurityPolicy in securitypolicy.yaml makes the gateway verify the Access JWT
+# itself, so a request that reaches this route without having passed Access - a
+# Worker subrequest, a LAN client on the external VIP - gets 401 here. Flat name
+# for the same Universal-SSL reason as bank0-api. external-dns publishes it from
+# this route; the tunnel's `*.${SECRET_DOMAIN}` rule and the gateway cert's
+# wildcard SAN already cover it. No Gatus annotation: the LAN route probes /.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bank0-portal-external
+spec:
+  hostnames:
+    - "bank0-portal.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - backendRefs:
+        - name: bank0-portal
+          port: 80
+---
+# /login split out for a tight per-IP limit (backendtrafficpolicy.yaml), same
+# shape as bank0-api-auth. The console login has a DB-side lockout (25 fails /
+# 15 min per account) but, unlike the client /auth/login, no in-app per-IP
+# limiter until bank0's next release; this is the backstop either way.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bank0-portal-external-login
+spec:
+  hostnames:
+    - "bank0-portal.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /login
+      backendRefs:
+        - name: bank0-portal
+          port: 80
+---
+# Same treatment as bank0-api-internal-paths, minus /openapi.yaml and /docs:
+# behind Access those are the operator's API reference and may stay. /readyz is
+# blocked too - Gatus probes the portal on the LAN route, nothing external needs it.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bank0-portal-internal-paths
+spec:
+  hostnames:
+    - "bank0-portal.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - matches:
+        - path: { type: Exact, value: /metrics }
+        - path: { type: Exact, value: /health }
+        - path: { type: Exact, value: /readyz }
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.envoyproxy.io
+            kind: HTTPRouteFilter
+            name: bank0-not-found

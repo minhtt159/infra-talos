@@ -53,13 +53,14 @@ spec:
           # nothing there.
           flux-webhook:
             - SecRuleEngine Off
-          # bank0's client API posts exactly what CRS scores: passwords, IBANs,
-          # free-text payment descriptions and dispute narratives. Going straight
-          # to enforcing would 403 real logins and transfers on day one, so it
-          # starts in DetectionOnly — same 8-days-of-evidence treatment the
-          # gateway itself got. Read the match log, then delete this block to put
-          # the hostname back under `default`. Tracked: minhtt159/bank0#124.
-          bank0-api:
+          # bank0 posts exactly what CRS scores: passwords, IBANs, free-text
+          # payment descriptions, dispute narratives, reversal reasons. Going
+          # straight to enforcing would 403 real logins and transfers on day one,
+          # so both public hostnames start in DetectionOnly — same 8-days-of-
+          # evidence treatment the gateway itself got. Read the match log (the
+          # proxy container's stdout; there is no WAF dashboard yet), then delete
+          # this block to put them back under `default`. Tracked: minhtt159/bank0#124.
+          bank0:
             - Include @recommended-conf
             - SecRuleEngine DetectionOnly
             - Include @crs-setup-conf
@@ -71,4 +72,5 @@ spec:
         default_directives: default
         per_authority_directives:
           flux-webhook.${SECRET_DOMAIN}: flux-webhook
-          bank0-api.${SECRET_DOMAIN}: bank0-api
+          bank0-api.${SECRET_DOMAIN}: bank0
+          bank0-portal.${SECRET_DOMAIN}: bank0

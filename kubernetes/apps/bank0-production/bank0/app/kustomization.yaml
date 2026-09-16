@@ -6,3 +6,4 @@ resources:
   - ./externalsecret.yaml
   - ./httproute.yaml
   - ./backendtrafficpolicy.yaml
+  - ./securitypolicy.yaml
