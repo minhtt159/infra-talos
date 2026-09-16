@@ -89,33 +89,22 @@ spec:
         - name: bank0-portal
           port: 80
 ---
-# The client API's NON-CLIENT surface, hidden from the internet.
+# The client API's non-client surface, hidden from the internet.
 #
-# Why here and not in a Worker: the Access policy on bank0-api.${SECRET_DOMAIN}
-# stops the internet reaching this hostname directly (403, verified), but a
+# Access stops the internet reaching this hostname directly (403), but a
 # Cloudflare Worker subrequest to a same-zone hostname does NOT go through
-# Access. So each Worker is a hole through the gate as wide as its proxy, and
-# both of them forward every path:
+# Access - so each Worker is a hole as wide as its proxy, and both forward every
+# path. Measured 2026-09-16: bank0.hnimn.art/api/metrics and
+# fraudbank.hnimn.art/api/metrics both 200.
 #
-#   bank0.hnimn.art/api/metrics       -> 200  (Prometheus exposition)
-#   fraudbank.hnimn.art/api/metrics   -> 200
-#   ...same for /docs, /openapi.yaml, /health
+# Fixed on the route rather than in each Worker so it covers Workers that do not
+# exist yet. Exact matches take precedence over bank0-api's catch-all, the same
+# way bank0-api-auth does for /auth. 404 not 403: a 403 confirms something is
+# there.
 #
-# Measured 2026-09-16. Fixing it in each Worker would work and would have to be
-# remembered by every Worker ever added; fixing it on the route fixes it once,
-# for every caller through envoy-external, including ones that do not exist yet.
-#
-# Exact matches, so Gateway API precedence puts these ahead of bank0-api's
-# catch-all - the same mechanism bank0-api-auth already relies on for /auth.
-#
-# NOT blocked, deliberately:
-#   /readyz  - Gatus probes it through this very route (see the annotation on
-#              bank0-api), and it returns only {"status":"ready"}.
-#   /metrics on the pods - Prometheus scrapes via the ServiceMonitor on the
-#              Service's `http` port, i.e. pod IPs direct. It never traverses a
-#              gateway, so this route cannot affect monitoring.
-#
-# 404 rather than 403: a 403 confirms something is there.
+# Still reachable on purpose: /readyz (Gatus probes it through this route), and
+# /metrics on the pods (Prometheus scrapes the Service's `http` port direct, so
+# this cannot affect monitoring).
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: HTTPRouteFilter
 metadata:
@@ -141,21 +130,15 @@ spec:
       sectionName: https
   rules:
     - matches:
-        # Prometheus exposition: Go internals, DB pool state, version, and
-        # per-route traffic volume + latency. Labels are route templates, so no
-        # PII - but none of it belongs on the public internet.
+        # Go internals, DB pool state, version, per-route traffic + latency.
+        # Labels are route templates, so no PII - still not public material.
         - path: { type: Exact, value: /metrics }
-        # Version disclosure: {"status":"ok","version":"1.1.0"}. Gatus uses
-        # /readyz, which stays reachable.
+        # Leaks the version string. Gatus uses /readyz, which stays open.
         - path: { type: Exact, value: /health }
-        # The spec and the Scalar explorer. Nothing at runtime needs either:
-        # fraudbank generates its types at BUILD time from the vendored copy in
-        # packages/api-contract, and the drift job reads bank0's git, not the URL.
-        #
-        # If the spec is meant to be public (a demo bank has a reasonable case
-        # for that), delete these two matches - that is the whole change, and it
-        # is the one line in this file that is a product decision rather than a
-        # security fix.
+        # Nothing needs these at runtime: fraudbank generates types at build
+        # time from the vendored contract. Blocked by default, but publishing
+        # the spec is a defensible product choice - delete these two matches if
+        # that is the intent.
         - path: { type: Exact, value: /openapi.yaml }
         - path: { type: Exact, value: /docs }
       filters:
