@@ -19,6 +19,9 @@ spec:
       policyExceptions:
         enabled: true
         namespace: kyverno
+      # don't take the cluster down if kyverno is: fail-open for admission
+      forceFailurePolicyIgnore:
+        enabled: true
     # dashboard ConfigMap (kyverno-grafana), imported by grafanadashboard.yaml
     grafana:
       enabled: true
@@ -28,9 +31,6 @@ spec:
       podDisruptionBudget:
         enabled: true
         minAvailable: 1
-      # don't take the cluster down if kyverno is: fail-open for admission
-      webhooks:
-        failurePolicy: Ignore
       serviceMonitor:
         enabled: true
     backgroundController:
