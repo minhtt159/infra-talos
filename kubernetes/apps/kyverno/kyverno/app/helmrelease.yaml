@@ -23,6 +23,11 @@ spec:
     grafana:
       enabled: true
     admissionController:
+      # HA: a single replica blocked the cluster's admissions while its node rebooted
+      replicas: 3
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
       # don't take the cluster down if kyverno is: fail-open for admission
       webhooks:
         failurePolicy: Ignore
