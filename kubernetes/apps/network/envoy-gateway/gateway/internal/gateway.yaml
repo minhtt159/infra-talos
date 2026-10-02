@@ -5,12 +5,12 @@ kind: Gateway
 metadata:
   name: envoy-internal
   annotations:
-    external-dns.alpha.kubernetes.io/target: &hostname internal.${SECRET_DOMAIN}
+    external-dns.kubernetes.io/target: &hostname internal.${SECRET_DOMAIN}
 spec:
   gatewayClassName: envoy-internal
   infrastructure:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: *hostname
+      external-dns.kubernetes.io/hostname: *hostname
       lbipam.cilium.io/ips: "10.1.81.11" # cilium `bgp` pool; label on the Service via EnvoyProxy envoyService.labels
   listeners:
     - name: http

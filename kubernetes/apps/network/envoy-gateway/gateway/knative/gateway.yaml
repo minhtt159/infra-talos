@@ -10,12 +10,12 @@ kind: Gateway
 metadata:
   name: knative-internal
   annotations:
-    external-dns.alpha.kubernetes.io/target: &hostname knative.${SECRET_DOMAIN}
+    external-dns.kubernetes.io/target: &hostname knative.${SECRET_DOMAIN}
 spec:
   gatewayClassName: knative-internal
   infrastructure:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: *hostname
+      external-dns.kubernetes.io/hostname: *hostname
       lbipam.cilium.io/ips: "10.1.81.13" # cilium `bgp` pool; label on the Service via EnvoyProxy envoyService.labels
   listeners:
     # Load-bearing: probe path + cluster-local path. No https-redirect route
