@@ -21,7 +21,10 @@ endpoints:
 
 metrics: true
 
-# no storage block: gatus defaults to in-memory; history rebuilds as checks run
+storage:
+  type: postgres
+  path: ${GATUS_POSTGRES_DSN}
+
 ui:
   title: Status | Gatus
   header: Status
