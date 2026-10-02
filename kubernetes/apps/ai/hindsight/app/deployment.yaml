@@ -68,6 +68,15 @@ spec:
             # reflect its own ceiling, under the edge's 600s requestTimeout.
             - name: HINDSIGHT_API_REFLECT_LLM_TIMEOUT
               value: "300"
+            # default 100k; the reflect model's num_ctx is 32768, so larger
+            # prompts got silently truncated by ollama or timed out. 32k minus
+            # 4k output + margin.
+            - name: HINDSIGHT_API_REFLECT_MAX_CONTEXT_TOKENS
+              value: "24000"
+            # default 32 in-flight calls vs 2 single-slot backends (B580 + pc):
+            # retain bursts queued for ~5min and spilled onto the pc.
+            - name: HINDSIGHT_API_LLM_MAX_CONCURRENT
+              value: "2"
           ports:
             - name: api # REST + MCP
               containerPort: 8888
