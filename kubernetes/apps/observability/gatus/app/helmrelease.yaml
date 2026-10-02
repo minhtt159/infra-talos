@@ -46,6 +46,11 @@ spec:
     deploymentAnnotations:
       reloader.stakater.com/auto: "true"
     gatus:
+      # the sidecar writes gatus-sidecar.yaml in the same second gatus loads
+      # /config; gatus's reload check has 1s mtime granularity, so it never
+      # picks the file up — and with postgres storage it prunes the missing
+      # endpoints' history on startup. Give the sidecar a head start.
+      delayStartSeconds: "5"
       envFrom:
         # BROWSERLESS_TOKEN — the browserless HTTPRoute's gatus annotation
         # references it; gatus expands it when it loads /config
