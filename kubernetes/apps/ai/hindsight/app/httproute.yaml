@@ -1,5 +1,5 @@
 ---
-# LAN route (break-glass / fast local). Public exposure is httproute-external.yaml.
+# LAN route (break-glass / fast local). Public: httproute-external.yaml.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

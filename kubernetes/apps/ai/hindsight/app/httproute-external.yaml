@@ -1,9 +1,8 @@
 ---
-# Public via the Cloudflare tunnel (wildcard *.${SECRET_DOMAIN} -> envoy-external).
-# Gated at the edge by Cloudflare Access:
-#   hindsight.${SECRET_DOMAIN}     (UI)       -> Entra SSO policy
-#   hindsight-api.${SECRET_DOMAIN} (API/MCP)  -> service-token policy (+ Entra for UI->API)
-# AND at the app by Hindsight's Bearer key (hindsight-auth). See the runbook.
+# Public via CF tunnel (*.${SECRET_DOMAIN} -> envoy-external). CF Access:
+#   hindsight     (UI)      -> Entra SSO
+#   hindsight-api (API/MCP) -> service token (+ Entra for UI->API)
+# Plus app Bearer key (hindsight-auth).
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
