@@ -71,7 +71,7 @@ spec:
             target:
               kind: Deployment
               name: (helm-controller|kustomize-controller)
-          - # Cancel health checks on new Kustomizations revisions
+          - # Cancel health checks on new Kustomization revisions
             patch: |-
               - op: add
                 path: /spec/template/spec/containers/0/args/-

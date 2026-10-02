@@ -37,7 +37,7 @@ spec:
         image:
           registry: *registry
 
-    # NOTE: Disable unused package
+    # NOTE: Disable unused packages
     zfs-localpv:
       enabled: false
     lvm-localpv:
