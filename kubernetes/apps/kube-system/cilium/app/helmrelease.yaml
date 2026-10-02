@@ -60,6 +60,14 @@ spec:
     cni:
       exclusive: true
 
+    # fq qdisc/EDT pacing; bbr needs eBPF host routing (blocked by hostLegacyRouting)
+    bandwidthManager:
+      enabled: true
+
+    # consistent backend pick across nodes → survives router ECMP rehash of BGP VIPs
+    loadBalancer:
+      algorithm: maglev
+
     # pod↔pod WireGuard :51871; nodeEncryption wedged etcd (July 2026, cilium#28965)
     encryption:
       enabled: true
@@ -143,7 +151,7 @@ spec:
     resources:
       requests:
         cpu: 100m
-        memory: 512Mi
+        memory: 256Mi # observed ~140-190Mi
       limits:
         memory: 1Gi
     rollOutCiliumPods: true
