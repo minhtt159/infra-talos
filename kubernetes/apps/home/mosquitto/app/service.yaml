@@ -8,7 +8,7 @@ metadata:
   labels:
     announce: bgp
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: mqtt.${SECRET_DOMAIN}
+    external-dns.kubernetes.io/hostname: mqtt.${SECRET_DOMAIN}
 spec:
   type: LoadBalancer
   externalTrafficPolicy: Local # keep client IPs in the broker log
