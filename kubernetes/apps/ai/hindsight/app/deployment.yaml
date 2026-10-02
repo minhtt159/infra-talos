@@ -1,12 +1,12 @@
 ---
-# Hindsight — Claude Code memory backend (web UI + streamable-HTTP MCP).
-# Postgres = the CNPG cluster (rides its barman/Garage backups); LLM = litellm.
+# Hindsight: Claude Code memory (UI + streamable-HTTP MCP).
+# DB = CNPG (barman/Garage backups). LLM = litellm.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: &name hindsight
   annotations:
-    # bounce on configmap/secret change
+    # restart on secret change
     reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
@@ -22,7 +22,7 @@ spec:
     spec:
       automountServiceAccountToken: false
       securityContext:
-        fsGroup: 1000 # image runs as user hindsight; needs the cache mount writable
+        fsGroup: 1000 # cache mount writable for image user
       containers:
         - name: hindsight
           image: ghcr.io/vectorize-io/hindsight:0.10.2
@@ -32,42 +32,43 @@ spec:
             - secretRef:
                 name: hindsight-auth # HINDSIGHT_API_TENANT_API_KEY (Bearer)
           env:
-            # App-level auth: require Bearer on all HTTP API + MCP. Edge is also
-            # gated by Cloudflare Access, but this holds even if CF is bypassed.
+            # Bearer on all API + MCP. Holds even if CF Access bypassed.
             - name: HINDSIGHT_API_TENANT_EXTENSION
               value: hindsight_api.extensions.builtin.tenant:ApiKeyTenantExtension
-            # Control Plane (UI) -> dataplane API auth. Same key. NOTE: this does
-            # NOT gate the UI itself — Cloudflare Access (Entra) does that.
+            # UI -> API auth, same key. Does NOT gate UI; CF Access (Entra) does.
             - name: HINDSIGHT_CP_DATAPLANE_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: hindsight-auth
                   key: HINDSIGHT_API_TENANT_API_KEY
-            # stable worker id: default is the pod hostname (changes on recreate),
-            # which orphans in-flight async tasks. replicas=1 so a fixed id is safe.
+            # fixed id: default = pod hostname, new on recreate -> orphans async
+            # tasks. Safe at replicas=1.
             - name: HINDSIGHT_API_WORKER_ID
               value: hindsight-0
-            # LLM via the LiteLLM gateway (openai-compatible). Backend routing
-            # lives in litellm's DB, not here. API key: envFrom hindsight-auth
-            # (HINDSIGHT_API_LLM_API_KEY, a scoped litellm virtual key).
+            # LLM via litellm (openai-compatible); routing in litellm DB.
+            # Key: HINDSIGHT_API_LLM_API_KEY (scoped virtual key, hindsight-auth).
             - name: HINDSIGHT_API_LLM_PROVIDER
               value: openai
             - name: HINDSIGHT_API_LLM_BASE_URL
               value: http://litellm.ai.svc.cluster.local:4000/v1
             - name: HINDSIGHT_API_LLM_MODEL
-              # thinking models break JSON extraction (empty content) — this
-              # alias pins think:false on the litellm deployment.
+              # alias pins think:false; thinking breaks JSON extraction
               value: qwen3.5:9b-json
-            # qwen3.6:35b-a3b: reuses the chat+research model (already resident on
-            # the 3080Ti) — so reflect adds NO separate model and NO 3080Ti swap.
-            # On-task benchmark (bank0 mental model) it gave the deepest, faithful,
-            # English-clean synthesis; ~56s is fine for night-batch reflect.
+            # reuses chat model already resident on 3080Ti: no extra model, no
+            # swap. Won on-task benchmark (deepest, English-clean, ~56s).
             - name: HINDSIGHT_API_REFLECT_LLM_MODEL
               value: qwen3.6:35b-a3b
-            # 120s default overruns on a slow GPU, then retries 3x — give
-            # reflect its own ceiling, under the edge's 600s requestTimeout.
+            # 120s default overruns, then 3x retry. Stay < edge 600s.
             - name: HINDSIGHT_API_REFLECT_LLM_TIMEOUT
               value: "300"
+            # default 100k > reflect num_ctx 32k -> ollama truncated or timed
+            # out. 32k - 4k output - margin.
+            - name: HINDSIGHT_API_REFLECT_MAX_CONTEXT_TOKENS
+              value: "24000"
+            # default 32 vs 2 single-slot backends (B580 + pc): bursts queued
+            # ~5min, spilled onto pc.
+            - name: HINDSIGHT_API_LLM_MAX_CONCURRENT
+              value: "2"
           ports:
             - name: api # REST + MCP
               containerPort: 8888
@@ -76,7 +77,7 @@ spec:
           resources:
             requests:
               cpu: 500m
-              memory: 2Gi # local embedder + reranker run in-process on CPU
+              memory: 2Gi # embedder + reranker in-process, CPU
             limits:
               memory: 4Gi
           volumeMounts:

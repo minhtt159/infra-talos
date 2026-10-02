@@ -1,6 +1,6 @@
 ---
-# Per-route edge policy for the public Hindsight route. A route-level BTP does
-# NOT merge with the gateway one, so every field must be restated here.
+# Public route edge policy. Route BTP does NOT merge with gateway BTP:
+# restate every field.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
@@ -12,13 +12,11 @@ spec:
       name: hindsight-external
   timeout:
     http:
-      # Without this the route falls back to Envoy's 15s default and any
-      # recall/reflect slower than that 504s. Whole-request budget, not idle —
-      # SSE pings don't extend it. Keep > the app's REFLECT_LLM_TIMEOUT.
+      # else Envoy 15s default -> slow recall/reflect 504s. Whole-request,
+      # not idle (SSE pings don't extend). Keep > REFLECT_LLM_TIMEOUT.
       requestTimeout: 600s
-  # 600 req/min (~10 rps) per distinct client IP (XFF behind cloudflared) —
-  # blast-radius cap on a leaked token, tighter than the gateway's 3000/min.
-  # Global type -> same envoy-ratelimit + Valkey backend the gateway uses.
+  # 600/min per client IP (XFF via cloudflared): leaked-token blast cap,
+  # tighter than gateway 3000/min. Global = gateway's ratelimit + Valkey.
   rateLimit:
     type: Global
     global:

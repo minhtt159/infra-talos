@@ -20,6 +20,6 @@ data:
       num_retries: 2 # retry transient fails
       json_logs: true
       # shared models are DB model-groups spanning both ollama servers — litellm
-      # auto-routes (B580-weighted, spills to pc). only cross-model fallback here:
-      fallbacks:
-        - qwen3.6:35b-a3b: ["chat-fast"] # chat -> B580 9b when pc busy/down
+      # auto-routes (B580-weighted, spills to pc). No cross-model fallback:
+      # qwen3.6:35b-a3b also serves hindsight reflect, and falling back to
+      # chat-fast (8k ctx) silently truncated 25-70k reflect prompts.

@@ -8,7 +8,7 @@ spec:
   dependsOn:
     - name: postgres
       namespace: database
-    - name: ollama
+    - name: litellm # LLM gateway (hindsight never calls ollama direct)
   healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
