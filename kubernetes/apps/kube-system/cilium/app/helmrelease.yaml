@@ -50,6 +50,9 @@ spec:
     routingMode: native
     autoDirectNodeRoutes: true
     ipv4NativeRoutingCIDR: "10.69.0.0/16" # = Omni podSubnets
+    # pin to LAN NICs (eth0 / Proxmox ens18): auto-detect also grabs
+    # siderolinktun (MTU 1280), dragging pod MTU to 1185 under WireGuard
+    devices: [eth+, ens+]
     ipam:
       mode: kubernetes
 
