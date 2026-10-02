@@ -50,6 +50,13 @@
       automerge: false,
     },
     {
+      description: "bw CLI >=2026.9.0 crashes on login against Vaultwarden (KeyIdBackfillMigration POSTs an endpoint Vaultwarden 404s) — manual approval only",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/charlesthomas/bitwarden-cli"],
+      dependencyDashboardApproval: true,
+      automerge: false,
+    },
+    {
       description: "Override Helmfile Dependency Name",
       matchDatasources: ["docker"],
       matchManagers: ["helmfile"],
