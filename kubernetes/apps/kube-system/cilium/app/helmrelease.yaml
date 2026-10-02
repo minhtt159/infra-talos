@@ -58,14 +58,18 @@ spec:
 
     bpf:
       masquerade: true # needs Omni forwardKubeDNSToHost:false (talos#10002)
-      hostLegacyRouting: true # BPF host routing broke SideroLink (July 2026)
+      # eBPF host routing. July 2026 SideroLink break blamed on siderolinktun
+      # being a device (now excluded). KubeSpan must stay off (Talos: needs legacy)
+      hostLegacyRouting: false
 
     cni:
       exclusive: true
 
-    # fq qdisc/EDT pacing; bbr needs eBPF host routing (blocked by hostLegacyRouting)
+    # fq qdisc/EDT pacing + BBR for pods (needs eBPF host routing)
+    # netkit skipped: can't switch with veth pods running, needs per-node drain
     bandwidthManager:
       enabled: true
+      bbr: true
 
     # consistent backend pick across nodes → survives router ECMP rehash of BGP VIPs
     loadBalancer:
