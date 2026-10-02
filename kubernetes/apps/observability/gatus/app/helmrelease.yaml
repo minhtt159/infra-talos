@@ -51,6 +51,9 @@ spec:
         # references it; gatus expands it when it loads /config
         - secretRef:
             name: browserless-token
+        # GATUS_POSTGRES_DSN — storage backend, see externalsecret.yaml
+        - secretRef:
+            name: gatus-db
     sidecar:
       kinds:
         httproute:
