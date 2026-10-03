@@ -11,7 +11,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: hello
-          image: docker.io/traefik/whoami:v1.11.0
+          image: docker.io/traefik/whoami:v1.12.0
           args: ["--port", "8080"]
           ports:
             - containerPort: 8080
