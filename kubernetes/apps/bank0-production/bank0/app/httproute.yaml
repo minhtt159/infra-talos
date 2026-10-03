@@ -61,6 +61,8 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: bank0-api-auth
+  annotations:
+    gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
 spec:
   hostnames:
     - "bank0-api.${SECRET_DOMAIN}"
@@ -131,6 +133,8 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: bank0-api-internal-paths
+  annotations:
+    gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
 spec:
   hostnames:
     - "bank0-api.${SECRET_DOMAIN}"
@@ -164,12 +168,14 @@ spec:
 # - a Worker subrequest, anyone on the LAN hitting the external VIP by IP - gets
 # 401 here. Flat name for the same Universal-SSL reason as bank0-api.
 # cloudflare-dns publishes it from this route; the tunnel's `*.${SECRET_DOMAIN}`
-# rule and the gateway cert's wildcard SAN already cover it. No Gatus
-# annotation: the LAN route above probes /.
+# rule and the gateway cert's wildcard SAN already cover it. Gatus opted out
+# (the sidecar auto-probes every route): the LAN route above probes /.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: bank0-portal-external
+  annotations:
+    gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
   labels:
     dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
 spec:
@@ -192,6 +198,8 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: bank0-portal-external-login
+  annotations:
+    gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
   labels:
     dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
 spec:
@@ -212,11 +220,15 @@ spec:
 ---
 # Same treatment as bank0-api-internal-paths, minus /openapi.yaml and /docs:
 # behind Access those are the operator's API reference and may stay. /readyz is
-# blocked too - Gatus probes the portal on the LAN route, nothing external needs it.
+# blocked too - Gatus probes / on the LAN route. Attached to envoy-internal as
+# well: the LAN route otherwise served /metrics to any LAN client (Prometheus
+# scrapes the pods direct, so nothing needs it through a gateway).
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: bank0-portal-internal-paths
+  annotations:
+    gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
   labels:
     dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
 spec:
@@ -224,6 +236,9 @@ spec:
     - "bank0-portal.${SECRET_DOMAIN}"
   parentRefs:
     - name: envoy-external
+      namespace: network
+      sectionName: https
+    - name: envoy-internal
       namespace: network
       sectionName: https
   rules:
