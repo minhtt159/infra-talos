@@ -26,6 +26,9 @@ spec:
       # server forwards to /etc/resolv.conf = [10.1.80.1, 1.1.1.1], so ~half
       # of cache-miss queries hit 1.1.1.1 -> NXDOMAIN. Pin the internal zone
       # to the router only.
+      # No `autopath`: it resolves the final bare name inside the `.` server
+      # (-> 1.1.1.1 half the time), bypassing this pin - pods following the
+      # ndots:5 search path got Cloudflare's public IPs for LAN-only answers.
       - zones:
           - zone: ${SECRET_DOMAIN}
             scheme: dns://
@@ -52,8 +55,6 @@ spec:
             configBlock: |-
               pods verified
               fallthrough in-addr.arpa ip6.arpa
-          - name: autopath
-            parameters: "@kubernetes"
           - name: forward
             parameters: . /etc/resolv.conf
           - name: cache
