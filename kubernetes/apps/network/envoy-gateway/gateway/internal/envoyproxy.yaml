@@ -1,8 +1,8 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/envoyproxy_v1alpha1.json
 # Proxy template for the INTERNAL gateway (via GatewayClass envoy-internal).
-# No access logs here — the external gateway's proxy (../external/envoyproxy.yaml)
-# emits ECS JSON logs; internal is LAN-only and quiet.
+# Emits the same ECS JSON access logs as the external proxy
+# (../external/envoyproxy.yaml), minus Gatus probe noise; see telemetry below.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
