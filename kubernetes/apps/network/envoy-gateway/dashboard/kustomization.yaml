@@ -6,3 +6,11 @@ resources:
   - ./ocirepository.yaml
   - ./helmrelease.yaml
   - ./grafanadashboard.yaml
+
+configMapGenerator:
+  - name: network-overview-dashboard
+    files:
+      - dashboards/network-overview.json
+
+configurations:
+  - kustomizeconfig.yaml

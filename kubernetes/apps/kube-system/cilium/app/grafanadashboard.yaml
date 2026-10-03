@@ -2,7 +2,8 @@
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 # Chart ships dashboards as ConfigMaps; these bridge them into grafana-operator.
 # The chart JSON declares __inputs (${DS_PROMETHEUS}), so each CR maps it.
-# Skipped: hubble-l7-http-metrics-by-workload (no httpV2 metrics, see helmrelease).
+# Skipped: hubble-l7-http-metrics-by-workload (no httpV2) and hubble-dns-namespace
+# (Hubble DNS metrics need a DNS-proxy L7 policy; CoreDNS metrics cover DNS).
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -22,6 +23,7 @@ spec:
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
+# Mostly empty: most panels are AWS ENI/EC2 IPAM (we run ipam: kubernetes).
 metadata:
   name: cilium-operator
 spec:
@@ -53,23 +55,6 @@ spec:
   configMapRef:
     name: hubble-dashboard
     key: hubble-dashboard.json
----
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDashboard
-metadata:
-  name: hubble-dns-namespace
-spec:
-  allowCrossNamespaceImport: true
-  folder: Cilium
-  instanceSelector:
-    matchLabels:
-      grafana.internal/instance: grafana
-  datasources:
-    - datasourceName: prometheus
-      inputName: DS_PROMETHEUS
-  configMapRef:
-    name: hubble-dns-namespace
-    key: hubble-dns-namespace.json
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
