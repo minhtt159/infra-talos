@@ -47,3 +47,42 @@ spec:
     - backendRefs:
         - name: bank0-portal
           port: 80
+---
+# /metrics (Go internals, DB pool state, per-route traffic) hidden from the
+# LAN, like production. Prometheus scrapes the pods direct; Gatus probes
+# /readyz and /, which stay open. Exact match wins over the catch-alls above.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: HTTPRouteFilter
+metadata:
+  name: bank0-not-found
+spec:
+  directResponse:
+    statusCode: 404
+    contentType: application/json
+    body:
+      type: Inline
+      inline: '{"error":"not_found"}'
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bank0-internal-paths
+  annotations:
+    gatus.home-operations.com/enabled: "false" # see bank0-api / bank0-portal for the probes
+spec:
+  hostnames:
+    - "api.staging.bank0.${SECRET_DOMAIN}"
+    - "portal.staging.bank0.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-internal
+      namespace: network
+      sectionName: https
+  rules:
+    - matches:
+        - path: { type: Exact, value: /metrics }
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.envoyproxy.io
+            kind: HTTPRouteFilter
+            name: bank0-not-found
