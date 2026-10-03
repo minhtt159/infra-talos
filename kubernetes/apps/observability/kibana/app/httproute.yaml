@@ -1,0 +1,23 @@
+---
+# Public half, behind Cloudflare Access (Entra SSO) with the JWT re-verified at
+# the gateway (securitypolicy.yaml). Kibana's own login (ES native users) stays
+# as the second layer: the free tier has no JWT realm. The LAN route is the
+# chart's (helmrelease.yaml `route.app`, envoy-internal); the label keeps
+# unifi-dns answering the LAN with it.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: kibana-external
+  labels:
+    dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
+spec:
+  hostnames:
+    - "kibana.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - backendRefs:
+        - name: kibana
+          port: 5601

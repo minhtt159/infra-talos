@@ -1,0 +1,27 @@
+---
+# The gate on the tunnel path. Grafana keeps auth.anonymous on for the LAN, so
+# anything reaching grafana-external without a valid Access JWT - a Worker
+# subrequest, a LAN client hitting envoy-external's VIP - must stop here (401),
+# or it would land as anonymous. Same provider as bank0-portal-access-jwt; the
+# AUD is the shared observability Access application (grafana. + kibana.).
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: grafana-access-jwt
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: grafana-external
+  jwt:
+    providers:
+      - name: cloudflare-access
+        issuer: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com"
+        audiences:
+          - "${SECRET_OBSERVABILITY_ACCESS_AUD}"
+        remoteJWKS:
+          uri: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com/cdn-cgi/access/certs"
+        extractFrom:
+          headers:
+            - name: Cf-Access-Jwt-Assertion
