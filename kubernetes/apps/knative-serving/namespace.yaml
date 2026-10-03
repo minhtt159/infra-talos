@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: _
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  labels:
+    # baseline, not restricted: the operator chart sets no seccompProfile, so
+    # restricted would reject its pods. Control plane only — functions run in
+    # the `functions` namespace under restricted.
+    pod-security.kubernetes.io/enforce: baseline

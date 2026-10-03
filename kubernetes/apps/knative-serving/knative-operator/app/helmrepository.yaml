@@ -1,0 +1,10 @@
+---
+# Knative publishes no OCI chart — classic HelmRepository, same legacy
+# exception as kyverno.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: knative-operator
+spec:
+  interval: 1h
+  url: https://knative.github.io/operator

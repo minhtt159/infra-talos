@@ -114,6 +114,8 @@ spec:
                 - argocd # ditto — every component watches/writes cluster state
                 # (argo-rollouts lives here too)
                 - kargo
+                - knative-serving # operator + Serving controllers watch/write cluster state
+                - headlamp # in-cluster mode reads the API CA/host from the SA mount
       validate:
         message: "Set automountServiceAccountToken: false unless the workload needs the API."
         pattern:

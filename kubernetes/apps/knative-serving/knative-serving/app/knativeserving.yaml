@@ -1,0 +1,42 @@
+---
+# Serving only (no Eventing). Design: homelab-platform
+# docs/kubernetes/knative-deployment-plan.md
+apiVersion: operator.knative.dev/v1beta1
+kind: KnativeServing
+metadata:
+  name: knative-serving
+spec:
+  ingress:
+    gateway-api:
+      enabled: true
+  config:
+    network:
+      ingress-class: "gateway-api.ingress.networking.knative.dev"
+      # keep the namespace in the name (upstream's advice) and stay one label
+      # under fn. — covered by the *.fn wildcard SAN. LAN-only, so Cloudflare's
+      # one-level Universal SSL limit never applies.
+      domain-template: "{{.Name}}-{{.Namespace}}.{{.Domain}}"
+    domain:
+      fn.${SECRET_DOMAIN}: ""
+    gateway:
+      # `service:` omitted — net-gateway-api falls back to
+      # Gateway.status.addresses[0].
+      external-gateways: |
+        - class: knative-internal
+          gateway: network/knative-internal
+          supported-features:
+            - HTTPRouteRequestTimeout
+      local-gateways: |
+        - class: knative-internal
+          gateway: network/knative-internal
+          supported-features:
+            - HTTPRouteRequestTimeout
+    features:
+      # user containers can't satisfy PSA restricted without these
+      secure-pod-defaults: "enabled"
+      kubernetes.podspec-securitycontext: "enabled"
+    deployment:
+      # queue-proxy ships no memory request by default -> Kyverno violation on
+      # every revision; upstream's opt-in defaults (400Mi) are too heavy here
+      queue-sidecar-cpu-request: "25m"
+      queue-sidecar-memory-request: "64Mi"

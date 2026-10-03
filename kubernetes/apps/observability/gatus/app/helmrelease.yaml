@@ -60,6 +60,12 @@ spec:
         - secretRef:
             name: gatus-db
     sidecar:
+      # Skip knative-internal: net-gateway-api strips annotations from the
+      # routes it generates, so the per-route opt-out can't reach them, and a
+      # 1m probe would keep every function warm — scale-to-zero never happens.
+      gatewayNames:
+        - envoy-internal
+        - envoy-external
       kinds:
         httproute:
           enable: true

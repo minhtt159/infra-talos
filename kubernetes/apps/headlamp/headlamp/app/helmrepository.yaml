@@ -1,0 +1,10 @@
+---
+# Headlamp's OCI chart on ghcr isn't public — classic HelmRepository, same
+# legacy exception as kyverno.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: headlamp
+spec:
+  interval: 1h
+  url: https://kubernetes-sigs.github.io/headlamp/
