@@ -1,0 +1,24 @@
+---
+# Gate on the tunnel path; Kibana's login stays behind it. Same shared
+# observability Access application as ../../grafana/instance/securitypolicy.yaml.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: kibana-access-jwt
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: kibana-external
+  jwt:
+    providers:
+      - name: cloudflare-access
+        issuer: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com"
+        audiences:
+          - "${SECRET_OBSERVABILITY_ACCESS_AUD}"
+        remoteJWKS:
+          uri: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com/cdn-cgi/access/certs"
+        extractFrom:
+          headers:
+            - name: Cf-Access-Jwt-Assertion

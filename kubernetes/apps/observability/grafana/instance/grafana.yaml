@@ -15,8 +15,24 @@ spec:
       reporting_enabled: "false"
     auth:
       disable_login_form: "false"
+    # LAN (envoy-internal) stays anonymous Viewer. The tunnel path is gated by
+    # Envoy (securitypolicy.yaml); this only turns the Access JWT Envoy already
+    # verified into a Grafana user. Requests without the header fall through to
+    # anonymous, which is why the Envoy policy - not this block - is the gate.
     auth.anonymous:
       enabled: "true"
+    auth.jwt:
+      enabled: "true"
+      header_name: Cf-Access-Jwt-Assertion
+      email_claim: email
+      username_claim: email
+      jwk_set_url: https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com/cdn-cgi/access/certs
+      cache_ttl: 60m
+      expect_claims: '{"iss": "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com", "aud": ["${SECRET_OBSERVABILITY_ACCESS_AUD}"]}'
+      auto_sign_up: "true"
+      # ponytail: Access policy admits only the owner, so every JWT user is Admin.
+      # Map from a groups claim if the policy ever admits anyone else.
+      role_attribute_path: "'Admin'"
     log:
       mode: console
     metrics:
