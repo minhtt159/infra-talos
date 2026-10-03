@@ -82,6 +82,15 @@
       },
     },
     {
+      description: "Envoy Gateway Group — controller chart + addons (dashboards) chart",
+      groupName: "envoy-gateway",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/gateway-helm/", "/gateway-addons-helm/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+    {
       description: "Auto-merge GitHub Actions",
       matchManagers: ["github-actions"],
       automerge: true,

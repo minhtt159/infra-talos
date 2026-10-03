@@ -6,6 +6,7 @@ metadata:
   name: envoy-clusters
 spec:
   allowCrossNamespaceImport: true
+  folder: Envoy Gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -23,6 +24,7 @@ metadata:
   name: envoy-gateway-global
 spec:
   allowCrossNamespaceImport: true
+  folder: Envoy Gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -40,6 +42,7 @@ metadata:
   name: envoy-proxy-global
 spec:
   allowCrossNamespaceImport: true
+  folder: Envoy Gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -53,10 +56,14 @@ spec:
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
+# Partly empty: the chart's rate-limit panels hard-code a demo route key; only
+# the memory panels show data. Kept as the ratelimit deep-dive; the Network
+# Overview covers 429s and fail-open.
 metadata:
   name: global-ratelimit
 spec:
   allowCrossNamespaceImport: true
+  folder: Envoy Gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -74,6 +81,7 @@ metadata:
   name: resources-monitor
 spec:
   allowCrossNamespaceImport: true
+  folder: Envoy Gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -83,3 +91,23 @@ spec:
   configMapRef:
     name: grafana-dashboards
     key: resources-monitor.gen.json
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
+# In-repo SRE front door (Envoy + Cilium + CoreDNS golden signals); the
+# vendor dashboards above and in the Cilium folder are the drill-downs.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: network-overview
+spec:
+  allowCrossNamespaceImport: true
+  folder: Network
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+  datasources:
+    - datasourceName: prometheus
+      inputName: DS_PROMETHEUS
+  configMapRef:
+    name: network-overview-dashboard
+    key: network-overview.json

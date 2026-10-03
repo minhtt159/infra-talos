@@ -95,20 +95,19 @@ spec:
       # bootstrap helmfile forces false; Flux flips on
       enabled: &hubble-state true
       metrics:
+        # contexts + namespace labels feed the Hubble "(Namespace)" dashboards,
+        # which filter on source/destination_namespace and group by source/destination
         enabled:
-          - dns:query;ignoreAAAA
-          - drop
-          - tcp
-          - flow
-          - port-distribution
-          - icmp
-          # no httpV2: nothing flows through Cilium Envoy
+          - drop:sourceContext=workload-name|reserved-identity;destinationContext=workload-name|reserved-identity;labelsContext=source_namespace,destination_namespace
+          - tcp:sourceContext=workload-name|reserved-identity;destinationContext=workload-name|reserved-identity;labelsContext=source_namespace,destination_namespace
+          - flow:sourceContext=workload-name|reserved-identity;destinationContext=workload-name|reserved-identity;labelsContext=source_namespace,destination_namespace
+          - port-distribution:sourceContext=workload-name|reserved-identity;destinationContext=workload-name|reserved-identity;labelsContext=source_namespace,destination_namespace
+          - icmp:sourceContext=workload-name|reserved-identity;destinationContext=workload-name|reserved-identity;labelsContext=source_namespace,destination_namespace
+          # no httpV2 / dns: both need flows through Cilium Envoy / DNS proxy (L7 policy)
         serviceMonitor:
           enabled: true
         dashboards:
           enabled: true
-          annotations:
-            grafana_folder: "Cilium"
       relay:
         enabled: *hubble-state
         replicas: 2
