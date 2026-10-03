@@ -66,6 +66,11 @@ don't add to the violation backlog. New workloads must satisfy:
 - If a chart ships none: a `GrafanaDashboard` with `grafanaCom` id **+ revision**, tracked
   by the `custom.grafana-dashboards` Renovate datasource (see `.renovaterc.json5`).
   **Don't** commit static, un-tracked grafana.com JSON — that goes stale.
+- Every dashboard sets `spec.folderUID` to an existing topic folder (`GrafanaFolder` CRs in
+  `kubernetes/apps/observability/grafana/instance/grafanafolder.yaml`): `kubernetes`, `network`,
+  `network-cilium`, `network-envoy-gateway`, `observability`, `data`, `ai`, `platform`. **Never**
+  `spec.folder` (a title): it adopts existing folders case-insensitively and lands in the wrong
+  one. Chart-rendered dashboards that only offer a title get `folderUID` via a postRenderer patch.
 
 ## Conventions
 
