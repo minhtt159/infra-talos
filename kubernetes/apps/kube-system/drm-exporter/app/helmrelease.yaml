@@ -40,3 +40,17 @@ spec:
         memory: 32Mi
       limits:
         memory: 128Mi
+  # Chart only offers a title-based folder; pin the topic folder by uid.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: GrafanaDashboard
+              name: drm-exporter-dashboard
+            patch: |-
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: drm-exporter-dashboard
+              spec:
+                folderUID: kubernetes

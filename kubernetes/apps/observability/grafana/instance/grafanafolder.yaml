@@ -1,0 +1,95 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanafolder_v1beta1.json
+# Topic folders, owned here with fixed uids. Dashboards point at them with
+# spec.folderUID: it works across namespaces (folderRef doesn't), and the
+# title-based spec.folder matches existing folders case-insensitively and
+# never renames them.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: kubernetes
+spec:
+  uid: kubernetes
+  title: Kubernetes
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: network
+spec:
+  uid: network
+  title: Network
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: network-cilium
+spec:
+  uid: network-cilium
+  title: Cilium
+  parentFolderUID: network
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: network-envoy-gateway
+spec:
+  uid: network-envoy-gateway
+  title: Envoy Gateway
+  parentFolderUID: network
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: observability
+spec:
+  uid: observability
+  title: Observability
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: data
+spec:
+  uid: data
+  title: Data
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: ai
+spec:
+  uid: ai
+  title: AI
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: platform
+spec:
+  uid: platform
+  title: Platform
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana

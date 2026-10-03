@@ -10,7 +10,7 @@ metadata:
   name: cilium
 spec:
   allowCrossNamespaceImport: true
-  folder: Cilium
+  folderUID: network-cilium
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -28,7 +28,7 @@ metadata:
   name: cilium-operator
 spec:
   allowCrossNamespaceImport: true
-  folder: Cilium
+  folderUID: network-cilium
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -45,7 +45,7 @@ metadata:
   name: hubble
 spec:
   allowCrossNamespaceImport: true
-  folder: Cilium
+  folderUID: network-cilium
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -62,7 +62,7 @@ metadata:
   name: hubble-network-overview-namespace
 spec:
   allowCrossNamespaceImport: true
-  folder: Cilium
+  folderUID: network-cilium
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana

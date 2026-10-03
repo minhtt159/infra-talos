@@ -122,6 +122,14 @@ spec:
           limits:
             memory: 2000Mi
 
+    nodeExporter:
+      # no AIX/macOS nodes: drops their dashboards
+      operatingSystems:
+        aix:
+          enabled: false
+        darwin:
+          enabled: false
+
     prometheus-node-exporter:
       fullnameOverride: node-exporter
       resources:
@@ -159,6 +167,20 @@ spec:
       forceDeployDashboards: true
       operator:
         dashboardsConfigMapRefEnabled: true
-        folder: observability
+        folder: null
+        folderUID: kubernetes # GrafanaFolder in observability/grafana/instance
         matchLabels:
           grafana.internal/instance: grafana
+  # Multi-cluster board has no chart toggle; single cluster, so drop it.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: GrafanaDashboard
+              name: kube-prometheus-stack-k8s-resources-multicluster
+            patch: |-
+              $patch: delete
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: kube-prometheus-stack-k8s-resources-multicluster

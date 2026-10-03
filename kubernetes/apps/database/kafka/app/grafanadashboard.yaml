@@ -6,6 +6,7 @@ metadata:
   name: strimzi-kafka
 spec:
   allowCrossNamespaceImport: true
+  folderUID: data
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -24,6 +25,7 @@ metadata:
   name: strimzi-kraft
 spec:
   allowCrossNamespaceImport: true
+  folderUID: data
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -40,6 +42,7 @@ metadata:
   name: strimzi-operators
 spec:
   allowCrossNamespaceImport: true
+  folderUID: data
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana

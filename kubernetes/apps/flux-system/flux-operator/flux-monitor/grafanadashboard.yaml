@@ -6,6 +6,7 @@ metadata:
   name: flux-cluster-monitor
 spec:
   allowCrossNamespaceImport: true
+  folderUID: platform
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -23,6 +24,7 @@ metadata:
   name: flux-control-plane-monitor
 spec:
   allowCrossNamespaceImport: true
+  folderUID: platform
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana

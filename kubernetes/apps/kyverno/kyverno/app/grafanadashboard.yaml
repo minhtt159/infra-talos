@@ -6,6 +6,7 @@ metadata:
   name: kyverno
 spec:
   allowCrossNamespaceImport: true
+  folderUID: platform
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
