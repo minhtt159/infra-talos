@@ -1,1 +1,3 @@
-{{ (fromYaml (readFile (printf "../../../kubernetes/apps/%s/%s/app/helmrelease.yaml" .Release.Namespace .Release.Name))).spec.values | toYaml }}
+{{- /* Flux substitutes ${SECRET_DOMAIN} from cluster-secrets; helmfile doesn't, so take it from the env (required only when the values use it, e.g. coredns). */ -}}
+{{- $v := (fromYaml (readFile (printf "../../../kubernetes/apps/%s/%s/app/helmrelease.yaml" .Release.Namespace .Release.Name))).spec.values | toYaml }}
+{{- if contains "${SECRET_DOMAIN}" $v }}{{ $v | replace "${SECRET_DOMAIN}" (requiredEnv "SECRET_DOMAIN") }}{{ else }}{{ $v }}{{ end }}

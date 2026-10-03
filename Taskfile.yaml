@@ -58,6 +58,8 @@ tasks:
     preconditions:
       - msg: Missing kubeconfig — run 'task cluster:kubeconfig'
         sh: test -f {{.KUBECONFIG}}
+      - msg: Missing SECRET_DOMAIN env (coredns split-horizon zone) — export it first
+        sh: test -n "$SECRET_DOMAIN"
 
   bootstrap:
     desc: Bootstrap the cluster — CRDs then apps (after nodes are up + kubeconfig)
