@@ -26,6 +26,9 @@ metadata:
   name: envoy-ratelimit
 spec:
   jobLabel: envoy-ratelimit
+  # the shipped dashboard filters on app_kubernetes_io_component
+  podTargetLabels:
+    - app.kubernetes.io/component
   namespaceSelector:
     matchNames:
       - network
