@@ -6,7 +6,7 @@ metadata:
   name: envoy-clusters
 spec:
   allowCrossNamespaceImport: true
-  folder: Envoy Gateway
+  folderUID: network-envoy-gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -24,7 +24,7 @@ metadata:
   name: envoy-gateway-global
 spec:
   allowCrossNamespaceImport: true
-  folder: Envoy Gateway
+  folderUID: network-envoy-gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -42,7 +42,7 @@ metadata:
   name: envoy-proxy-global
 spec:
   allowCrossNamespaceImport: true
-  folder: Envoy Gateway
+  folderUID: network-envoy-gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -63,7 +63,7 @@ metadata:
   name: global-ratelimit
 spec:
   allowCrossNamespaceImport: true
-  folder: Envoy Gateway
+  folderUID: network-envoy-gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -81,7 +81,7 @@ metadata:
   name: resources-monitor
 spec:
   allowCrossNamespaceImport: true
-  folder: Envoy Gateway
+  folderUID: network-envoy-gateway
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -101,7 +101,7 @@ metadata:
   name: network-overview
 spec:
   allowCrossNamespaceImport: true
-  folder: Network
+  folderUID: network
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana

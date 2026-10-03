@@ -6,6 +6,7 @@ metadata:
   name: cloudnative-pg
 spec:
   allowCrossNamespaceImport: true
+  folderUID: data
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana

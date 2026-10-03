@@ -6,6 +6,7 @@ metadata:
   name: elasticsearch-exporter
 spec:
   allowCrossNamespaceImport: true
+  folderUID: data
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
@@ -14,7 +15,7 @@ spec:
   # your Prometheus datasource is named differently).
   datasources:
     - inputName: "DS_PROMETHEUS"
-      datasourceName: "Prometheus"
+      datasourceName: prometheus
   # https://grafana.com/grafana/dashboards/14191 — Elasticsearch Exporter Quickstart.
   # grafana-operator fetches this revision from grafana.com; Renovate bumps it via
   # the custom.grafana-dashboards datasource (see .renovaterc.json5).

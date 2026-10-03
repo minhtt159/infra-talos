@@ -9,6 +9,7 @@ metadata:
   name: litellm
 spec:
   allowCrossNamespaceImport: true
+  folderUID: ai
   instanceSelector:
     matchLabels:
       grafana.internal/instance: grafana
