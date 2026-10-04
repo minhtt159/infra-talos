@@ -69,6 +69,10 @@ spec:
             # ~5min, spilled onto pc.
             - name: HINDSIGHT_API_LLM_MAX_CONCURRENT
               value: "2"
+            # litellm 429s (mpr=1 backends) mean "busy", not broken; default 3
+            # retries exhausted under batch retain -> chunks failed, data lost.
+            - name: HINDSIGHT_API_LLM_MAX_RETRIES
+              value: "10"
             # CPU cross-encoder on 8-core arm64: default 4 concurrent x 8 torch
             # threads thrashed -> 140-680s recalls, MCP timeouts. Serialize.
             - name: HINDSIGHT_API_RERANKER_LOCAL_MAX_CONCURRENT
