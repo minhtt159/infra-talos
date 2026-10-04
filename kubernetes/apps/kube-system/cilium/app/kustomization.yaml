@@ -8,6 +8,8 @@ resources:
   - ./bgp.yaml
   - ./grafanadashboard.yaml
   - ./prometheusrule.yaml
+  - ./httproute-hubble.yaml
+  - ./securitypolicy-hubble.yaml
   # inert: would enforce immediately (hostFirewall off in values)
   # - ./host-firewall.yaml
   # - ./default-policies.yaml
