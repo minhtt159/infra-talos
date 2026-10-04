@@ -33,6 +33,19 @@ spec:
       # Set this or chart generates them — bcrypt hash in git.
       secret:
         name: kargo-api
+      # authentik OIDC: public client + PKCE, no secret (client ID is not
+      # confidential - it is in every login URL). Local admin above stays as
+      # break-glass.
+      oidc:
+        enabled: true
+        issuerURL: https://auth.${SECRET_DOMAIN}/application/o/kargo/
+        clientID: qIUxqMMMgjkoBY5BgxXl53bKgw2pYWHSX7odkRGY
+        # authentik's profile scope already carries groups; it has no groups scope.
+        additionalScopes: []
+        admins:
+          claims:
+            groups:
+              - homelab-admins
       # Deep links to Argo CD. Would be api.argocd.urls (shard name → URL, ""
       # for unsharded), but a "" YAML key breaks flux's kustomize build:
       # "expected ScalarNode but got MappingNode". Set the env directly — the
