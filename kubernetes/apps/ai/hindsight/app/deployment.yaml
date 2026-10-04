@@ -72,6 +72,13 @@ spec:
             # serialized calls run longer than 300s default. Stay < edge 600s.
             - name: HINDSIGHT_API_REFLECT_WALL_TIMEOUT
               value: "540"
+            # mental-model refresh ignores REFLECT_LLM_*: own knobs, else global
+            # (120s, 2 concurrent). 120s cut qwen3.6 mid-generation; orphan held
+            # the slot -> every retry 429'd. Match reflect.
+            - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_TIMEOUT
+              value: "300"
+            - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_MAX_CONCURRENT
+              value: "1"
             # default 32 vs 2 single-slot backends (B580 + pc): bursts queued
             # ~5min, spilled onto pc.
             - name: HINDSIGHT_API_LLM_MAX_CONCURRENT
