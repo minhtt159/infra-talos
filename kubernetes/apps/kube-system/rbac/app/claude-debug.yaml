@@ -1,0 +1,36 @@
+---
+# Claude's read-only debug identity. No long-lived credential: the admin mints a
+# short-lived token per session:
+#   kubectl -n kube-system create token claude-debug --duration=8h
+# Revoke early: delete + recreate this SA (bound tokens carry its UID).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: claude-debug
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: homelab:claude-debug:view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: claude-debug
+    namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: homelab:claude-debug:cluster-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: homelab:cluster-reader
+subjects:
+  - kind: ServiceAccount
+    name: claude-debug
+    namespace: kube-system

@@ -1,0 +1,43 @@
+---
+# Read-only for what `view` misses: cluster-scoped core objects + CRD groups that
+# don't aggregate into `view`. Bound alongside `view`, never alone.
+# Never add: core secrets, pods/exec|attach|portforward, serviceaccounts/token,
+# impersonate, any write verb, or apiGroups ["*"] (it matches core -> secrets).
+# New operator: diff its CRD group against `view` and add it here unless the CRs
+# can hold secret material inline.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: homelab:cluster-reader
+rules:
+  - apiGroups: [""]
+    resources: [nodes, namespaces, persistentvolumes]
+    verbs: [get, list, watch]
+  - apiGroups: [storage.k8s.io]
+    resources: [storageclasses]
+    verbs: [get, list, watch]
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    verbs: [get, list, watch]
+  - apiGroups:
+      - cilium.io
+      - gateway.networking.k8s.io
+      - gateway.networking.x-k8s.io
+      - gateway.envoyproxy.io
+      - externaldns.k8s.io
+      - monitoring.coreos.com
+      - postgresql.cnpg.io
+      - barmancloud.cnpg.io
+      - kargo.akuity.io
+      - grafana.integreatly.org
+      - kafka.strimzi.io
+      - core.strimzi.io
+      - snapshot.storage.k8s.io
+      - groupsnapshot.storage.k8s.io
+      - operator.knative.dev
+      - nfd.k8s-sigs.io
+      - deviceplugin.intel.com
+      - fpga.intel.com
+      - talos.dev
+    resources: ["*"]
+    verbs: [get, list, watch]
