@@ -1,0 +1,9 @@
+---
+# Human + bot RBAC (personas). Controllers keep their chart RBAC.
+# Change the persona table in the platform RBAC model doc first, then here.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./clusterrole-cluster-reader.yaml
+  - ./claude-debug.yaml
+  - ./authentik-admins.yaml
