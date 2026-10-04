@@ -28,6 +28,10 @@ spec:
         configmap.reloader.stakater.com/reload: envoy-gateway-config
     config:
       envoyGateway:
+        # Backend CRs are off by default; gateway/authentik-outpost.yaml needs one
+        # (an IP endpoint outside the cluster) for the extAuth check.
+        extensionApis:
+          enableBackend: true
         provider:
           type: Kubernetes
           kubernetes:

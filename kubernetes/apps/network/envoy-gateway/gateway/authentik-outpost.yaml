@@ -1,0 +1,42 @@
+---
+# authentik's embedded outpost on TrueNAS - the extAuth check target for routes gated
+# with forward-auth. Direct to authentik's HTTPS port, NOT via NPM: the check keeps
+# the app's Host, and NPM would route it to that app.
+#
+# TLS: authentik serves the auth-direct cert (app/certificate-auth-direct.yaml) for
+# this SNI via a dedicated brand; Envoy validates it against internal-ca (the
+# secret's ca.crt). sni must be set - unset, EG sends the app Host as SNI and
+# authentik answers with its self-signed default cert.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/backend_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: authentik-outpost
+spec:
+  endpoints:
+    - ip:
+        address: "${SECRET_TRUENAS_IP}"
+        port: 30141
+  tls:
+    sni: "auth-direct.${SECRET_DOMAIN}"
+    caCertificateRefs:
+      - group: ""
+        kind: Secret
+        name: auth-direct-tls
+---
+# SecurityPolicies live next to their routes; let them point at the Backend.
+# Add a namespace here when an app there gets gated.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/referencegrant_v1beta1.json
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: authentik-outpost
+spec:
+  from:
+    - group: gateway.envoyproxy.io
+      kind: SecurityPolicy
+      namespace: kube-system
+  to:
+    - group: gateway.envoyproxy.io
+      kind: Backend
+      name: authentik-outpost
