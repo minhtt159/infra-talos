@@ -65,6 +65,13 @@ spec:
             # out. 32k - 4k output - margin.
             - name: HINDSIGHT_API_REFLECT_MAX_CONTEXT_TOKENS
               value: "24000"
+            # reflect model is one litellm slot (mpr=1); inherited 2 -> reflect
+            # 429'd itself until the 300s wall limit killed every refresh.
+            - name: HINDSIGHT_API_REFLECT_LLM_MAX_CONCURRENT
+              value: "1"
+            # serialized calls run longer than 300s default. Stay < edge 600s.
+            - name: HINDSIGHT_API_REFLECT_WALL_TIMEOUT
+              value: "540"
             # default 32 vs 2 single-slot backends (B580 + pc): bursts queued
             # ~5min, spilled onto pc.
             - name: HINDSIGHT_API_LLM_MAX_CONCURRENT
