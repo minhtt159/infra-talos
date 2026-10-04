@@ -22,8 +22,19 @@ spec:
         # TLS ends at envoy-internal. HTTPS here too = second self-signed hop,
         # no gain.
         server.insecure: true
-    # No SSO yet. Chart-generated argocd-initial-admin-secret is the only
-    # account. Drop dex, turn on OIDC when Authentik lands.
+      # authentik OIDC (no dex). Local admin (argocd-initial-admin-secret) stays
+      # as break-glass for when authentik is down.
+      cm:
+        oidc.config: |
+          name: authentik
+          issuer: https://auth.${SECRET_DOMAIN}/application/o/argocd/
+          clientID: $argocd-oidc:clientID
+          clientSecret: $argocd-oidc:clientSecret
+          requestedScopes: ["openid", "profile", "email"]
+      rbac:
+        # ponytail: one homelab-wide admin group, nobody else gets a role.
+        policy.csv: |
+          g, homelab-admins, role:admin
     dex:
       enabled: false
     # Nothing consumes Argo CD notifications. Flux already alerts.
