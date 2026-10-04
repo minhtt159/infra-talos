@@ -69,6 +69,16 @@ spec:
             # ~5min, spilled onto pc.
             - name: HINDSIGHT_API_LLM_MAX_CONCURRENT
               value: "2"
+            # CPU cross-encoder on 8-core arm64: default 4 concurrent x 8 torch
+            # threads thrashed -> 140-680s recalls, MCP timeouts. Serialize.
+            - name: HINDSIGHT_API_RERANKER_LOCAL_MAX_CONCURRENT
+              value: "1"
+            # default 300; idle rerank 300=~19s, 100=~6s. RRF top-100 enough.
+            - name: HINDSIGHT_API_RERANKER_MAX_CANDIDATES
+              value: "100"
+            # length-sorted batches, less padding (upstream: 36-54% faster)
+            - name: HINDSIGHT_API_RERANKER_LOCAL_BUCKET_BATCHING
+              value: "true"
           ports:
             - name: api # REST + MCP
               containerPort: 8888
