@@ -28,8 +28,8 @@ spec:
       use_pkce: "true"
       use_refresh_token: "true"
       login_attribute_path: preferred_username
-      # ponytail: one admin group, everyone else Viewer. Add Editor when a second user shows up.
-      role_attribute_path: contains(groups, 'grafana-admins') && 'Admin' || 'Viewer'
+      # ponytail: one homelab-wide admin group, everyone else Viewer. Per-app groups when a second user shows up.
+      role_attribute_path: contains(groups, 'homelab-admins') && 'Admin' || 'Viewer'
     log:
       mode: console
     metrics:
