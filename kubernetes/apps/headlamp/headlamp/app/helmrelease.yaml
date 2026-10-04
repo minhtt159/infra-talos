@@ -61,6 +61,10 @@ spec:
             version: 0.3.0-beta
     httpRoute:
       enabled: true
+      labels:
+        forward-auth: authentik
+      annotations:
+        gatus.home-operations.com/enabled: "false" # gated by authentik forward-auth
       hostnames:
         - headlamp.${SECRET_DOMAIN}
       parentRefs:
