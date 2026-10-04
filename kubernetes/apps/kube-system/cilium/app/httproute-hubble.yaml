@@ -6,13 +6,9 @@ kind: HTTPRoute
 metadata:
   name: hubble-ui
   annotations:
-    # Gated: an unauthenticated probe gets authentik's 302. Don't follow it - a
-    # dead outpost shows up as 5xx/403 instead.
-    gatus.home-operations.com/endpoint: |
-      client:
-        ignore-redirect: true
-      conditions:
-        - "[STATUS] == 302"
+    # ponytail: no probe while forward-auth is new. When wanted: [STATUS] == 302
+    # + client.ignore-redirect (an unauthenticated probe gets authentik's 302).
+    gatus.home-operations.com/enabled: "false"
 spec:
   hostnames:
     - "hubble.${SECRET_DOMAIN}"
