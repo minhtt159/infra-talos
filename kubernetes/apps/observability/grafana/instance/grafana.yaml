@@ -19,6 +19,8 @@ spec:
     # Login form stays on: the local admin is the break-glass when authentik is down.
     auth.generic_oauth:
       enabled: "true"
+      # Straight to authentik. Break-glass form: /login?disableAutoLogin=true
+      auto_login: "true"
       name: authentik
       scopes: openid profile email
       auth_url: https://auth.${SECRET_DOMAIN}/application/o/authorize/
