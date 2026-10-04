@@ -1,0 +1,21 @@
+---
+# authentik's web cert for the Envoy extAuth -> embedded outpost hop (bypasses NPM).
+# Not served by the cluster: export tls.crt/tls.key and install it in authentik by hand.
+# Envoy pins this secret's ca.crt (internal-ca), so a renewal here needs no reinstall
+# until the installed cert itself expires.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: auth-direct
+spec:
+  secretName: auth-direct-tls
+  issuerRef:
+    name: internal-ca-issuer
+    kind: ClusterIssuer
+  commonName: "auth-direct.${SECRET_DOMAIN}"
+  dnsNames:
+    - "auth-direct.${SECRET_DOMAIN}"
+  duration: 87600h # 10 years
+  privateKey:
+    algorithm: ECDSA
+    size: 256

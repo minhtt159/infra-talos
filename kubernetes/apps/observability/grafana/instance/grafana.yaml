@@ -15,8 +15,21 @@ spec:
       reporting_enabled: "false"
     auth:
       disable_login_form: "false"
-    auth.anonymous:
+    # authentik OIDC is the gate on both gateways (LAN bypasses CF Access).
+    # Login form stays on: the local admin is the break-glass when authentik is down.
+    auth.generic_oauth:
       enabled: "true"
+      name: authentik
+      scopes: openid profile email
+      auth_url: https://auth.${SECRET_DOMAIN}/application/o/authorize/
+      token_url: https://auth.${SECRET_DOMAIN}/application/o/token/
+      api_url: https://auth.${SECRET_DOMAIN}/application/o/userinfo/
+      signout_redirect_url: https://auth.${SECRET_DOMAIN}/application/o/grafana/end-session/
+      use_pkce: "true"
+      use_refresh_token: "true"
+      login_attribute_path: preferred_username
+      # ponytail: one homelab-wide admin group, everyone else Viewer. Per-app groups when a second user shows up.
+      role_attribute_path: contains(groups, 'homelab-admins') && 'Admin' || 'Viewer'
     log:
       mode: console
     metrics:
@@ -38,6 +51,10 @@ spec:
         spec:
           containers:
             - name: grafana
+              envFrom:
+                # GF_AUTH_GENERIC_OAUTH_CLIENT_ID / _CLIENT_SECRET
+                - secretRef:
+                    name: grafana-oidc-secret
               env:
                 - name: GF_SECURITY_ADMIN_PASSWORD
                   valueFrom:
