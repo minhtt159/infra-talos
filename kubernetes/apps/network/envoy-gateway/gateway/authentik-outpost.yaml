@@ -15,7 +15,7 @@ metadata:
 spec:
   endpoints:
     - ip:
-        address: "${SECRET_AUTHENTIK_IP}"
+        address: "${SECRET_TRUENAS_IP}"
         port: 30141
   tls:
     sni: "auth-direct.${SECRET_DOMAIN}"
