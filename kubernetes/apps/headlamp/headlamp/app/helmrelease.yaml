@@ -1,9 +1,9 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
 # Kubernetes UI, mainly for Knative (functions, revisions, traffic). LAN-only.
-# Gated by authentik forward-auth; users act as the read-only headlamp-viewer
-# SA. Not Headlamp's own OIDC: it passes the id_token straight to
-# kube-apiserver, which only trusts Omni's issuer through Omni's proxy.
+# Login is a ServiceAccount token (see rbac.yaml): Headlamp's OIDC passes the
+# user's id_token straight to kube-apiserver, which only trusts Omni's
+# issuer through Omni's proxy — Entra tokens would be rejected.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -18,15 +18,8 @@ spec:
         name: headlamp
   interval: 1h
   values:
-    # authentik forward-auth is the gate (httpRoute label below), so every
-    # Headlamp user acts as the read-only headlamp-viewer SA (rbac.yaml) - no
-    # token prompt. Break-glass/port-forward users get the same read-only view.
-    config:
-      unsafeUseServiceAccountToken: true
-    serviceAccount:
-      create: false
-      name: headlamp-viewer
-    # the chart binds its own SA to cluster-admin by default. Not wanted.
+    # the chart binds its own SA to cluster-admin by default. Not needed:
+    # every request uses the logged-in user's token.
     clusterRoleBinding:
       create: false
     podSecurityContext:
