@@ -116,6 +116,13 @@ spec:
                 - kargo
                 - knative-serving # operator + Serving controllers watch/write cluster state
                 - headlamp # in-cluster mode reads the API CA/host from the SA mount
+          # CNPG instance manager (instances + initdb/join jobs) reads its Cluster,
+          # writes status and Secrets — needs the API wherever the Cluster lives.
+          - resources:
+              selector:
+                matchExpressions:
+                  - key: cnpg.io/cluster
+                    operator: Exists
       validate:
         message: "Set automountServiceAccountToken: false unless the workload needs the API."
         pattern:
