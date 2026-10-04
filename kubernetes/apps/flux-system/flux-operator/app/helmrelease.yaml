@@ -17,8 +17,34 @@ spec:
     # upstream-recommended interval when Prometheus scrapes the operator
     reporting:
       interval: 30s
+    # Web UI login via authentik OIDC; the UI impersonates the user for k8s RBAC
+    # (rbac.yaml). Client id/secret come in through valuesFrom below.
+    web:
+      config:
+        baseURL: https://flux.${SECRET_DOMAIN}
+        authentication:
+          type: OAuth2
+          oauth2:
+            provider: OIDC
+            issuerURL: https://auth.${SECRET_DOMAIN}/application/o/flux-web/
+            # The defaults add `groups` + `offline_access`; authentik has no
+            # groups scope (profile carries the claim).
+            scopes: [openid, profile, email]
+            autoLogin: true
+            impersonation:
+              username: claims.email
+              groups: claims.groups
     # NOTE: I made a PR to fix networkPolicy
     # https://github.com/controlplaneio-fluxcd/charts/pull/135
     # web:
     #   networkPolicy:
     #     create: false
+  valuesFrom:
+    - kind: Secret
+      name: flux-web-client
+      valuesKey: client-id
+      targetPath: web.config.authentication.oauth2.clientID
+    - kind: Secret
+      name: flux-web-client
+      valuesKey: client-secret
+      targetPath: web.config.authentication.oauth2.clientSecret
