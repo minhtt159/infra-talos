@@ -42,9 +42,6 @@ spec:
     - group: gateway.envoyproxy.io
       kind: SecurityPolicy
       namespace: headlamp
-    - group: gateway.envoyproxy.io
-      kind: SecurityPolicy
-      namespace: flux-system
   to:
     - group: gateway.envoyproxy.io
       kind: Backend
