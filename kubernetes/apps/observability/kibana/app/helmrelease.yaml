@@ -65,6 +65,12 @@ spec:
             port: *port
     route:
       app:
+        # The observability SecurityPolicy ships with kube-prometheus-stack (one
+        # owner per namespace); this label is all kibana needs.
+        labels:
+          forward-auth: authentik
+        annotations:
+          gatus.home-operations.com/enabled: "false" # gated by authentik forward-auth
         hostnames: ["kibana.${SECRET_DOMAIN}"]
         parentRefs:
           - name: envoy-internal

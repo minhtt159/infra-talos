@@ -1,0 +1,9 @@
+---
+# Gate HTTPRoutes with authentik forward-auth: include this component in the app's
+# kustomization and label each route `forward-auth: authentik`. The namespace
+# must also be listed in network/envoy-gateway/gateway/authentik-outpost.yaml
+# (ReferenceGrant). Break-glass for a gated app: kubectl port-forward its Service.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - ./securitypolicy.yaml

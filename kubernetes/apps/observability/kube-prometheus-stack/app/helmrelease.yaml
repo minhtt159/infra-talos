@@ -25,6 +25,10 @@ spec:
       route:
         main:
           enabled: true
+          labels:
+            forward-auth: authentik
+          annotations:
+            gatus.home-operations.com/enabled: "false" # gated by authentik forward-auth
           hostnames:
             - alertmanager.${SECRET_DOMAIN}
           parentRefs:
@@ -89,6 +93,10 @@ spec:
       route:
         main:
           enabled: true
+          labels:
+            forward-auth: authentik
+          annotations:
+            gatus.home-operations.com/enabled: "false" # gated by authentik forward-auth
           hostnames:
             - prometheus.${SECRET_DOMAIN}
           parentRefs:
