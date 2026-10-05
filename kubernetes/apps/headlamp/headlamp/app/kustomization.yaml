@@ -4,6 +4,7 @@ kind: Kustomization
 components:
   - ../../../../components/authentik-forward-auth
 resources:
+  - ./externalsecret.yaml
   - ./helmrepository.yaml
   - ./helmrelease.yaml
   - ./rbac.yaml

@@ -1,9 +1,9 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
 # Kubernetes UI, mainly for Knative (functions, revisions, traffic). LAN-only.
-# Login is a ServiceAccount token (see rbac.yaml): Headlamp's OIDC passes the
-# user's id_token straight to kube-apiserver, which only trusts Omni's
-# issuer through Omni's proxy — Entra tokens would be rejected.
+# Login via authentik OIDC: Headlamp passes the user's id_token straight to
+# kube-apiserver, which trusts the authentik `kubernetes` provider as an extra
+# issuer (Omni config patch). RBAC lives in kube-system/rbac.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -18,6 +18,13 @@ spec:
         name: headlamp
   interval: 1h
   values:
+    config:
+      oidc:
+        issuerURL: https://auth.${SECRET_DOMAIN}/application/o/kubernetes/
+        # authentik has no groups scope (profile carries the claim);
+        # offline_access gets a refresh token for the 15 min id_token.
+        scopes: profile,email,offline_access
+        callbackURL: https://headlamp.${SECRET_DOMAIN}/oidc-callback
     # the chart binds its own SA to cluster-admin by default. Not needed:
     # every request uses the logged-in user's token.
     clusterRoleBinding:
@@ -70,3 +77,12 @@ spec:
       parentRefs:
         - name: envoy-internal
           namespace: network
+  valuesFrom:
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: client-id
+      targetPath: config.oidc.clientID
+    - kind: Secret
+      name: headlamp-oidc
+      valuesKey: client-secret
+      targetPath: config.oidc.clientSecret
