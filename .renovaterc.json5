@@ -50,7 +50,7 @@
       automerge: false,
     },
     {
-      description: "bw CLI >=2026.9.0 crashes on login against Vaultwarden (KeyIdBackfillMigration POSTs an endpoint Vaultwarden 404s) — manual approval only",
+      description: "bw CLI >=2026.9.0 crashes on login against Vaultwarden <=1.37.3 (POST /api/accounts/key-management/user-key-id 404s). Fixed in dani-garcia/vaultwarden#7693 — drop this rule once the self-hosted Vaultwarden runs a release containing it",
       matchDatasources: ["docker"],
       matchPackageNames: ["ghcr.io/charlesthomas/bitwarden-cli"],
       dependencyDashboardApproval: true,
