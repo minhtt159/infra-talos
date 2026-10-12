@@ -16,6 +16,10 @@ metadata:
   name: bank0-production
 spec:
   instances: 1
+  # 1 instance: the primary PDB (minAvailable 1) can never be met, so every node
+  # drain stalls on the Talos 5m timeout, then kills Postgres. Off = clean
+  # shutdown + reschedule (iSCSI follows). Re-enable at instances >= 2.
+  enablePDB: false
   # PG18 is a hard floor — bank0's schema uses uuidv7() with no polyfill.
   # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
   imageName: ghcr.io/cloudnative-pg/postgresql:18.4-standard-trixie
