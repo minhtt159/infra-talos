@@ -6,6 +6,15 @@ kind: KnativeServing
 metadata:
   name: knative-serving
 spec:
+  # Upstream PDBs are minAvailable 80% on single-replica deployments -> 0
+  # disruptions allowed, which wedges every node drain (Talos upgrades,
+  # shutdowns) until the 5m drain timeout. One replica has no availability
+  # to protect, so allow eviction. Raise with replicas if HA is ever wanted.
+  podDisruptionBudgets:
+    - name: activator-pdb
+      minAvailable: 0
+    - name: webhook-pdb
+      minAvailable: 0
   ingress:
     gateway-api:
       enabled: true
