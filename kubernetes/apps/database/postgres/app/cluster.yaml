@@ -15,6 +15,10 @@ metadata:
   name: postgres
 spec:
   instances: 1
+  # 1 instance: the primary PDB (minAvailable 1) can never be met, so every node
+  # drain stalls on the Talos 5m timeout, then kills Postgres. Off = clean
+  # shutdown + reschedule (iSCSI follows). Re-enable at instances >= 2.
+  enablePDB: false
   # -standard flavor bundles pgvector (needed by Hindsight); default operand is
   # the -system flavor (no extensions). Must be >= the running minor — CNPG
   # rejects downgrades and in-place major changes.

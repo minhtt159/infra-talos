@@ -34,6 +34,8 @@ spec:
               labelSelector:
                 matchLabels:
                   app.kubernetes.io/name: envoy
+                  # name alone matches every gateway's pods -> spread as one set
+                  gateway.envoyproxy.io/owning-gateway-name: envoy-internal
         container:
           imageRepository: mirror.gcr.io/envoyproxy/envoy
           resources:
