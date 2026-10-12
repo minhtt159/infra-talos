@@ -1,6 +1,7 @@
 ---
-# Public route edge policy. Route BTP does NOT merge with gateway BTP:
-# restate every field.
+# Public route edge policy. mergeType: StrategicMerge layers this onto the
+# envoy-external gateway BTP (compression, circuit breaker, outlier ejection,
+# retry, 3000/min rate limit); without it EG applies only this policy.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
@@ -10,13 +11,15 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       name: hindsight-external
+  mergeType: StrategicMerge
   timeout:
     http:
       # else Envoy 15s default -> slow recall/reflect 504s. Whole-request,
       # not idle (SSE pings don't extend). Keep > REFLECT_LLM_TIMEOUT.
       requestTimeout: 600s
   # 600/min per client IP (XFF via cloudflared): leaked-token blast cap,
-  # tighter than gateway 3000/min. Global = gateway's ratelimit + Valkey.
+  # tighter than gateway 3000/min. Merged rules are keyed per policy, so both
+  # apply (600 binds first). Global = gateway's ratelimit + Valkey.
   rateLimit:
     type: Global
     global:
