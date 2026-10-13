@@ -12,6 +12,12 @@ spec:
     - port: metrics
       path: /stats/prometheus
       honorLabels: true
+      # Envoy emits envoy_cluster_total_match_count twice per cluster (same labels,
+      # different values) -> PrometheusDuplicateTimestamps. Unused here; drop it.
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: envoy_cluster_total_match_count
+          action: drop
   selector:
     matchLabels:
       app.kubernetes.io/component: proxy
