@@ -19,7 +19,7 @@
 # Access is the second factor. Rationale: bank0 docs/04-deployment.md §3.
 #
 # The LAN answer stays envoy-internal because unifi-dns ignores every route on
-# envoy-external (Gateway label, unifi-dns helmrelease). Before that the LAN
+# envoy-external (only gateways labelled dns.hnimn.art/lan=true are published). Before that the LAN
 # flipped to envoy-external on first apply, where the SecurityPolicy 401s.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

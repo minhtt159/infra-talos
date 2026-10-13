@@ -53,18 +53,13 @@ spec:
             memory: 32Mi
     triggerLoopOnEvent: true
     policy: sync
-    # Routes on envoy-external never become LAN records: a hostname on BOTH
-    # gateways is two CNAME candidates for one LAN name, and external-dns keeps
-    # whichever it iterated first (the LAN flipped to envoy-external once). The
-    # Gateway carries `dns.hnimn.art/lan: "false"`; `!=` matches unlabelled
-    # gateways, so envoy-internal and knative-internal stay in. Opt-out rather
-    # than opt-in so the rollout is order-safe: `policy: sync` would delete every
-    # route record if this flag landed before an opt-in Gateway label.
+    # LAN records come only from gateways labelled `dns.hnimn.art/lan: "true"`
+    # (envoy-internal, knative-internal). envoy-external stays out: a hostname on
+    # both gateways would be two CNAME candidates and the LAN answer could flip.
     # External-only hosts (bank0-api, flux-webhook, echo) resolve via public DNS.
-    # Gateway filter only: the `service` source is unaffected.
-    # cloudflare-dns filters on --gateway-name=envoy-external instead.
+    # The `service` source is not affected. cloudflare-dns: --gateway-name=envoy-external.
     extraArgs:
-      - --gateway-label-filter=dns.hnimn.art/lan!=false
+      - --gateway-label-filter=dns.hnimn.art/lan=true
     sources:
       - gateway-httproute
       - service

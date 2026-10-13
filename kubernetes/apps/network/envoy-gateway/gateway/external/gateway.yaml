@@ -4,8 +4,6 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: envoy-external
-  labels:
-    dns.hnimn.art/lan: "false" # unifi-dns --gateway-label-filter: never a LAN answer
   annotations:
     external-dns.kubernetes.io/target: &hostname external.${SECRET_DOMAIN}
 spec:
