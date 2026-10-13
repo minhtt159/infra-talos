@@ -45,7 +45,7 @@ endpoints:
     alerts:
       - type: discord
 
-  # TrueNAS apps via NPM: LAN DNS -> 10.1.0.6; internet -> the TrueNAS tunnel.
+  # TrueNAS apps via NPM: LAN DNS -> the TrueNAS host; internet -> the TrueNAS tunnel.
   - name: git
     <<: *lan
     url: https://git.${SECRET_DOMAIN}/api/healthz
