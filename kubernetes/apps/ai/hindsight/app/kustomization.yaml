@@ -10,3 +10,4 @@ resources:
   - ./httproute.yaml
   - ./httproute-external.yaml
   - ./backendtrafficpolicy.yaml
+  - ./securitypolicy.yaml

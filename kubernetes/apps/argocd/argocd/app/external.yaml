@@ -1,0 +1,60 @@
+---
+# Public path (homelab-platform docs/identity/public-k8s-uis.md). The internal
+# route stays the LAN + break-glass path; this one sits behind Cloudflare Access
+# app k8s-uis, whose JWT is re-verified here so a bypass (envoy-external VIP from
+# the LAN, a same-zone Worker) never reaches the local-password login.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd-external
+  annotations:
+    gatus.home-operations.com/enabled: "false" # the internal route keeps the probe
+spec:
+  hostnames:
+    - "argocd.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - backendRefs:
+        - name: argocd-server
+          port: 80
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: argocd-access-jwt
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: argocd-external
+  jwt:
+    providers:
+      - name: cloudflare-access
+        issuer: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com"
+        audiences:
+          - "${SECRET_K8S_UIS_ACCESS_AUD}"
+        remoteJWKS:
+          uri: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com/cdn-cgi/access/certs"
+        extractFrom:
+          headers:
+            - name: Cf-Access-Jwt-Assertion
+---
+# Streams (SSE / Connect / Grafana Live) outlive the gateway's 300s requestTimeout.
+# StrategicMerge keeps the rest of the envoy-external BTP (rate limit etc.);
+# without it EG applies only this policy.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: argocd-external-streams
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: argocd-external
+  mergeType: StrategicMerge
+  timeout:
+    http:
+      requestTimeout: 0s

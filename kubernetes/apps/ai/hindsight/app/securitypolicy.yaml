@@ -1,0 +1,28 @@
+---
+# Access JWT re-verified at Envoy (bank0-portal precedent): without it the
+# envoy-external VIP from the LAN or a same-zone Worker reaches hindsight past
+# Cloudflare Access. hindsight-external carries two hostnames in two Access apps,
+# so both AUDs are accepted on both.
+# ponytail: either AUD passes on either host - both apps are owner/MCP-only; split
+# the route per host if one ever admits guests.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: hindsight-access-jwt
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: hindsight-external
+  jwt:
+    providers:
+      - name: cloudflare-access
+        issuer: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com"
+        audiences:
+          - "${SECRET_K8S_UIS_ACCESS_AUD}" # hindsight.  (Access app k8s-uis)
+          - "${SECRET_HINDSIGHT_API_ACCESS_AUD}" # hindsight-api.  (incl. the claude-mcp service token)
+        remoteJWKS:
+          uri: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com/cdn-cgi/access/certs"
+        extractFrom:
+          headers:
+            - name: Cf-Access-Jwt-Assertion
