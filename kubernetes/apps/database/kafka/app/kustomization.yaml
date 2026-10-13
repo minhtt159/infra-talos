@@ -6,4 +6,3 @@ resources:
   - ./kafkanodepool.yaml
   - ./kafka.yaml
   - ./podmonitor.yaml
-  - ./grafanadashboard.yaml

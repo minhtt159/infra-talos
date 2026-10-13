@@ -10,6 +10,11 @@ spec:
     name: strimzi-operator
   interval: 1h
   values:
+    # Ship dashboards as ConfigMaps so they track the chart version;
+    # grafanadashboard.yaml reads them via configMapRef (no sidecar label).
+    dashboards:
+      enabled: true
+      label: ~
     # Operands run in the PSS-restricted `database` namespace; the chart has no
     # dedicated value for the provider, so set the operator env directly. Default
     # is `baseline` which fails restricted enforcement on Kafka/entity pods.
