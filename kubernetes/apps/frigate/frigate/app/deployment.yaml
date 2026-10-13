@@ -35,7 +35,7 @@ spec:
       containers:
         - name: frigate
           # -rk (Rockchip) variant: hardware video decode on the RK1
-          image: ghcr.io/blakeblackshear/frigate:0.17.2-rk
+          image: ghcr.io/blakeblackshear/frigate:0.18.0-rk
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
