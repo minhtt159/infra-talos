@@ -42,7 +42,8 @@ spec:
             # (CF rejects larger at the edge before it reaches us — bump both
             # if you move to Business/Enterprise). ProcessPartial: inspect up
             # to the limit, then pass rather than 413 a legit large upload.
-            # NoFilesLimit keeps non-upload bodies (JSON/form) fully inspected.
+            # NoFilesLimit is a no-op in coraza v3.3.3 (corazawaf/coraza#896): the
+            # 100MB limit + ProcessPartial governs every body, uploads or not.
             - SecRequestBodyLimit 104857600
             - SecRequestBodyNoFilesLimit 1048576
             - SecRequestBodyLimitAction ProcessPartial
@@ -73,9 +74,10 @@ spec:
           # PromQL/SQL, ES query DSL, manifests and LLM prompts are what CRS scores, so
           # DetectionOnly first, same 8-days-of-evidence treatment as bank0, then
           # drop the hosts below back to `default`. 900220 widens the allowed
-          # content types (CRS 920420) for Kibana ndjson, Kargo Connect and the
-          # gRPC-web CLIs; it must precede the CRS include and moves with the
-          # hosts into `default`.
+          # content types (CRS 920420) for Kibana ndjson and Kargo Connect; it must
+          # precede the CRS include and moves with the hosts into `default`. The
+          # grpc-web types are spare (the CLIs stay LAN-only). Watch for 920420 on
+          # text/plain (sendBeacon) before enforcing.
           k8s-uis:
             - Include @recommended-conf
             - SecRuleEngine DetectionOnly
@@ -96,3 +98,6 @@ spec:
           grafana.${SECRET_DOMAIN}: k8s-uis
           kibana.${SECRET_DOMAIN}: k8s-uis
           litellm.${SECRET_DOMAIN}: k8s-uis
+          # memory text trips CRS like bank0's free text (942100 on SQL-ish recalls)
+          hindsight.${SECRET_DOMAIN}: k8s-uis
+          hindsight-api.${SECRET_DOMAIN}: k8s-uis
