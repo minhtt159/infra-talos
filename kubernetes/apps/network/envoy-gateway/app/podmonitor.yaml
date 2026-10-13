@@ -12,6 +12,15 @@ spec:
     - port: metrics
       path: /stats/prometheus
       honorLabels: true
+      # envoy_cluster_total_match_count: Envoy Gateway's tag regex truncates
+      # envoy_cluster_name at the first dot, so dotted route names (Knative's
+      # hello.functions.svc.cluster.local / hello-functions.fn.<domain>) collapse
+      # into one series with two values -> PrometheusDuplicateTimestamps
+      # (envoyproxy/gateway#9576). Unused here; drop it.
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: envoy_cluster_total_match_count
+          action: drop
   selector:
     matchLabels:
       app.kubernetes.io/component: proxy
