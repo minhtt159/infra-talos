@@ -32,7 +32,7 @@ Charts are OCI artifacts, not classic Helm repositories.
 | `frigate` | frigate | NVR on the Intel dGPU (OpenVINO); raw manifests |
 | `ai` | ollama, litellm, hindsight | LLM serving (IPEX), OpenAI-compatible proxy, agent memory |
 | `flux-system` | flux-operator, flux-instance | Flux + dashboards |
-| `default` | echo | smoke test |
+| `default` | echo | debug page (headers as Envoy sees them), owner-only behind Access |
 
 ## Adding an app
 

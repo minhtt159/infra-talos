@@ -62,6 +62,17 @@ spec:
           - port: http
     route:
       app:
+        # Owner-only debug page behind Access app k8s-uis + JWT (securitypolicy.yaml).
+        labels:
+          access-jwt: echo
+        annotations:
+          # Pods resolve via UniFi -> Cloudflare; an anonymous probe gets the
+          # Access 302 at the edge. Proves DNS + Access, not the tunnel.
+          gatus.home-operations.com/endpoint: |
+            client:
+              ignore-redirect: true
+            conditions:
+              - "[STATUS] == 302"
         hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
         parentRefs:
           - name: envoy-external
