@@ -10,3 +10,4 @@ resources:
   - ./httproute.yaml
   - ./servicemonitor.yaml
   - ./grafanadashboard.yaml
+  - ./external.yaml

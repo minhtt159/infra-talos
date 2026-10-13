@@ -70,7 +70,7 @@ spec:
             - SecRequestBodyNoFilesLimit 1048576
             - SecRequestBodyLimitAction ProcessPartial
           # Public k8s UIs (homelab-platform docs/identity/public-k8s-uis.md):
-          # PromQL/SQL, ES query DSL and manifests are what CRS scores, so
+          # PromQL/SQL, ES query DSL, manifests and LLM prompts are what CRS scores, so
           # DetectionOnly first, same 8-days-of-evidence treatment as bank0, then
           # drop the hosts below back to `default`. 900220 widens the allowed
           # content types (CRS 920420) for Kibana ndjson, Kargo Connect and the
@@ -95,3 +95,4 @@ spec:
           kargo.${SECRET_DOMAIN}: k8s-uis
           grafana.${SECRET_DOMAIN}: k8s-uis
           kibana.${SECRET_DOMAIN}: k8s-uis
+          litellm.${SECRET_DOMAIN}: k8s-uis
