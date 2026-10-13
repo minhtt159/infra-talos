@@ -10,8 +10,8 @@ spec:
     name: strimzi-operator
   interval: 1h
   values:
-    # Ship dashboards as ConfigMaps so they track the chart version; the kafka
-    # app's GrafanaDashboards read them via configMapRef (no sidecar label).
+    # Ship dashboards as ConfigMaps so they track the chart version;
+    # grafanadashboard.yaml reads them via configMapRef (no sidecar label).
     dashboards:
       enabled: true
       label: ~

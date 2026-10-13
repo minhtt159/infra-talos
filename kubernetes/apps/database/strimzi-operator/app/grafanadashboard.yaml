@@ -14,7 +14,7 @@ spec:
     - inputName: DS_PROMETHEUS
       datasourceName: prometheus
   configMapRef:
-    name: strimzi-kafka # created by the strimzi-operator chart (dashboards.enabled)
+    name: strimzi-kafka # created by this chart (dashboards.enabled)
     key: strimzi-kafka.json
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
@@ -32,7 +32,7 @@ spec:
     - inputName: DS_PROMETHEUS
       datasourceName: prometheus
   configMapRef:
-    name: strimzi-kraft # created by the strimzi-operator chart (dashboards.enabled)
+    name: strimzi-kraft # created by this chart (dashboards.enabled)
     key: strimzi-kraft.json
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
@@ -50,5 +50,5 @@ spec:
     - inputName: DS_PROMETHEUS
       datasourceName: prometheus
   configMapRef:
-    name: strimzi-operators # created by the strimzi-operator chart (dashboards.enabled)
+    name: strimzi-operators # created by this chart (dashboards.enabled)
     key: strimzi-operators.json
