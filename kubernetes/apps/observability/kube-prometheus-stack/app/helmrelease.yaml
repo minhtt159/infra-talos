@@ -95,6 +95,9 @@ spec:
         # (helm-charts#5483).
         honorTimestamps: false
         trackTimestampsStaleness: false
+        # With scrape-time stamps, a 10s scrape mostly stores repeats (cAdvisor
+        # refreshes every 10-20s, 15-30s idle); 30s = upstream kube-prometheus.
+        cAdvisorInterval: 30s
     kubeEtcd:
       enabled: true
       service:
