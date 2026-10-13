@@ -76,3 +76,15 @@ spec:
           - name: envoy-internal
             namespace: network
             sectionName: https
+      # Public path behind Cloudflare Access; policy in external.yaml.
+      external:
+        labels:
+          access-jwt: kibana
+          dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
+        annotations:
+          gatus.home-operations.com/enabled: "false" # the internal route is the LAN path
+        hostnames: ["kibana.${SECRET_DOMAIN}"]
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+            sectionName: https

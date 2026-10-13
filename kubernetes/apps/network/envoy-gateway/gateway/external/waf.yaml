@@ -69,8 +69,29 @@ spec:
             - SecRequestBodyLimit 104857600
             - SecRequestBodyNoFilesLimit 1048576
             - SecRequestBodyLimitAction ProcessPartial
+          # Public k8s UIs (homelab-platform docs/identity/public-k8s-uis.md):
+          # PromQL/SQL, ES query DSL and manifests are what CRS scores, so
+          # DetectionOnly first, same 8-days-of-evidence treatment as bank0, then
+          # drop the hosts below back to `default`. 900220 widens the allowed
+          # content types (CRS 920420) for Kibana ndjson, Kargo Connect and the
+          # gRPC-web CLIs; it must precede the CRS include and moves with the
+          # hosts into `default`.
+          k8s-uis:
+            - Include @recommended-conf
+            - SecRuleEngine DetectionOnly
+            - Include @crs-setup-conf
+            - "SecAction \"id:900220,phase:1,pass,nolog,setvar:'tx.allowed_request_content_type=|application/x-www-form-urlencoded| |multipart/form-data| |application/json| |application/x-ndjson| |application/connect+json| |application/connect+proto| |application/grpc-web+proto| |application/grpc-web-text|'\""
+            - Include @owasp_crs/*.conf
+            - SecResponseBodyAccess Off
+            - SecRequestBodyLimit 104857600
+            - SecRequestBodyNoFilesLimit 1048576
+            - SecRequestBodyLimitAction ProcessPartial
         default_directives: default
         per_authority_directives:
           flux-webhook.${SECRET_DOMAIN}: flux-webhook
           bank0-api.${SECRET_DOMAIN}: bank0
           bank0-portal.${SECRET_DOMAIN}: bank0
+          argocd.${SECRET_DOMAIN}: k8s-uis
+          kargo.${SECRET_DOMAIN}: k8s-uis
+          grafana.${SECRET_DOMAIN}: k8s-uis
+          kibana.${SECRET_DOMAIN}: k8s-uis

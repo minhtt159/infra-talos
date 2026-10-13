@@ -1,0 +1,45 @@
+---
+# Public path for kibana (homelab-platform docs/identity/public-k8s-uis.md).
+# Route = helmrelease route.external (label access-jwt: kibana, deliberately NO
+# forward-auth label so kube-prometheus-stack's shared policy skips it). This one
+# policy carries both checks: EG runs ext_authz (authentik) before jwt_authn
+# (Cloudflare Access JWT); both must pass. extAuth mirrors
+# components/authentik-forward-auth; the observability ReferenceGrant covers it.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: kibana-access-jwt
+spec:
+  targetSelectors:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      matchLabels:
+        access-jwt: kibana
+  jwt:
+    providers:
+      - name: cloudflare-access
+        issuer: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com"
+        audiences:
+          - "${SECRET_K8S_UIS_ACCESS_AUD}"
+        remoteJWKS:
+          uri: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com/cdn-cgi/access/certs"
+        extractFrom:
+          headers:
+            - name: Cf-Access-Jwt-Assertion
+  extAuth:
+    timeout: 3s
+    http:
+      backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: authentik-outpost
+          namespace: network
+      path: /outpost.goauthentik.io/auth/envoy
+      headersToBackend:
+        - x-authentik-username
+        - x-authentik-groups
+        - x-authentik-email
+        - x-authentik-name
+        - x-authentik-uid
+    headersToExtAuth:
+      - cookie
