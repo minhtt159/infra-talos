@@ -6,6 +6,21 @@ metadata:
   name: envoy-external
   annotations:
     external-dns.kubernetes.io/target: &hostname external.${SECRET_DOMAIN}
+    # Gatus internet view: every route here inherits this - public DNS, through
+    # Cloudflare Access with the gatus-access token (passes the gate only; each
+    # app's own login still applies). ignore-redirect: an Access 302 must fail.
+    # $$ escapes Flux postBuild; Gatus expands ${VAR} from its own env
+    # (homelab-platform docs/observability/healthchecks.md).
+    gatus.home-operations.com/endpoint: |
+      group: internet
+      client:
+        dns-resolver: tcp://1.1.1.1:53
+        ignore-redirect: true
+      headers:
+        CF-Access-Client-Id: $${GATUS_CF_ACCESS_CLIENT_ID}
+        CF-Access-Client-Secret: $${GATUS_CF_ACCESS_CLIENT_SECRET}
+      alerts:
+        - type: discord
 spec:
   # class envoy-external → EnvoyProxy envoy-external-proxy (ECS logs, WAF).
   gatewayClassName: envoy-external

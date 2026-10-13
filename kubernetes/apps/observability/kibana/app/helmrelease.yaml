@@ -81,7 +81,9 @@ spec:
         labels:
           access-jwt: kibana
         annotations:
-          gatus.home-operations.com/enabled: "false" # the internal route is the LAN path
+          # no internet-view probe: its only answer (authentik 302) is also what Access
+          # returns for a rejected token - a false green (docs/observability/healthchecks.md)
+          gatus.home-operations.com/enabled: "false"
         hostnames: ["kibana.${SECRET_DOMAIN}"]
         parentRefs:
           - name: envoy-external

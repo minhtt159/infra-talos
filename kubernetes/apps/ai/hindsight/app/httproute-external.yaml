@@ -8,8 +8,9 @@ kind: HTTPRoute
 metadata:
   name: hindsight-external
   annotations:
-    # split-horizon: the LAN route probes hindsight; this one would only test CF Access
-    gatus.home-operations.com/enabled: "false"
+    # / redirects to /dashboard; the internet view ignores redirects
+    gatus.home-operations.com/endpoint: |
+      path: /dashboard
 spec:
   hostnames:
     - "hindsight.${SECRET_DOMAIN}" # UI

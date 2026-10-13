@@ -59,6 +59,13 @@ spec:
         # GATUS_POSTGRES_DSN — storage backend, see externalsecret.yaml
         - secretRef:
             name: gatus-db
+        # SECRET_DOMAIN for the static endpoints in config.yaml (that ConfigMap
+        # skips Flux substitution, so gatus expands it from env instead)
+        - secretRef:
+            name: cluster-secrets
+        # DISCORD_WEBHOOK_URL + GATUS_CF_ACCESS_CLIENT_ID/SECRET (externalsecret.yaml)
+        - secretRef:
+            name: homelab-alerts
     sidecar:
       # Skip knative-internal: net-gateway-api strips annotations from the
       # routes it generates, so the per-route opt-out can't reach them, and a

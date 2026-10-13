@@ -8,6 +8,12 @@ metadata:
     dns.hnimn.art/lan: "true" # unifi-dns publishes this gateway's routes on the LAN
   annotations:
     external-dns.kubernetes.io/target: &hostname internal.${SECRET_DOMAIN}
+    # Gatus LAN view: every route here inherits this (homelab-platform
+    # docs/observability/healthchecks.md). Routes add their own path/conditions.
+    gatus.home-operations.com/endpoint: |
+      group: lan
+      alerts:
+        - type: discord
 spec:
   gatewayClassName: envoy-internal
   infrastructure:

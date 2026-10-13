@@ -1,0 +1,31 @@
+---
+# Global Alertmanager config (alertmanagerSpec.alertmanagerConfiguration), so no
+# namespace matcher is injected. Everything warning/critical -> Discord
+# #homelab-alerts; the rest (Watchdog, InfoInhibitor, severity none) -> null.
+# Watchdog -> external heartbeat (dead-man) is deferred: add a webhook receiver +
+# route with groupWait 0s / repeatInterval 2m when the heartbeat URL exists.
+# Design: homelab-platform docs/observability/healthchecks.md.
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: alertmanager
+spec:
+  route:
+    receiver: "null"
+    groupBy: ["alertname", "namespace"]
+    routes:
+      - receiver: discord
+        matchers:
+          - name: severity
+            matchType: "=~"
+            value: "warning|critical"
+        # default 4h re-posts a lingering warning six times a day
+        repeatInterval: 24h
+  receivers:
+    - name: "null"
+    - name: discord
+      discordConfigs:
+        - apiURL:
+            name: homelab-alerts # gatus/app/externalsecret.yaml, same namespace
+            key: DISCORD_WEBHOOK_URL
+          sendResolved: true

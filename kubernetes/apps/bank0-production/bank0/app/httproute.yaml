@@ -172,7 +172,12 @@ kind: HTTPRoute
 metadata:
   name: bank0-portal-external
   annotations:
-    gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
+    # Internet view of the portal: 401 from the app's own login. Only unambiguous
+    # while Access strict service-token mode stays off (a rejected token is then
+    # a 302, not 401/403).
+    gatus.home-operations.com/endpoint: |
+      conditions:
+        - "[STATUS] == 401"
 spec:
   hostnames:
     - "bank0-portal.${SECRET_DOMAIN}"
