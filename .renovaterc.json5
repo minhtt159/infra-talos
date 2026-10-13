@@ -91,6 +91,15 @@
       },
     },
     {
+      description: "Intel Device Plugins Group — operator + gpu charts release in lockstep",
+      groupName: "intel-device-plugins",
+      matchDatasources: ["helm"],
+      matchPackageNames: ["/^intel-device-plugins-/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+    {
       description: "Auto-merge GitHub Actions",
       matchManagers: ["github-actions"],
       automerge: true,
