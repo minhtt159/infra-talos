@@ -78,6 +78,18 @@ spec:
             memory: 256Mi
           limits:
             memory: 1Gi
+    defaultRules:
+      disabled:
+        # Agent-mode Prometheus never talks to Alertmanager (Thanos Ruler does),
+        # so this fires permanently.
+        PrometheusNotConnectedToAlertmanagers: true
+    kubelet:
+      serviceMonitor:
+        # cAdvisor stamps its own sample timestamps and they go backwards across
+        # scrapes (~700 samples/s dropped as out-of-order, PrometheusOutOfOrderTimestamps
+        # on every node). Scrape-time timestamps instead; trackTimestampsStaleness
+        # has no effect once this is false.
+        honorTimestamps: false
     kubeEtcd:
       enabled: true
       service:
