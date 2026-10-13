@@ -18,12 +18,9 @@
 # (securitypolicy.yaml). The portal has no MFA of its own (minhtt159/bank0#116);
 # Access is the second factor. Rationale: bank0 docs/04-deployment.md §3.
 #
-# The LAN answer is deterministic only because the three external routes carry
-# `dns.hnimn.art/lan: "false"`, which unifi-dns's --label-filter excludes. Without
-# it external-dns sees two CNAME candidates for one name and keeps whichever it
-# iterated first - the LAN flipped to envoy-external on first apply, where the
-# SecurityPolicy 401s every request. Keep the label on any new route for this
-# hostname on envoy-external.
+# The LAN answer stays envoy-internal because unifi-dns ignores every route on
+# envoy-external (Gateway label, unifi-dns helmrelease). Before that the LAN
+# flipped to envoy-external on first apply, where the SecurityPolicy 401s.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -176,8 +173,6 @@ metadata:
   name: bank0-portal-external
   annotations:
     gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
-  labels:
-    dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
 spec:
   hostnames:
     - "bank0-portal.${SECRET_DOMAIN}"
@@ -200,8 +195,6 @@ metadata:
   name: bank0-portal-external-login
   annotations:
     gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
-  labels:
-    dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
 spec:
   hostnames:
     - "bank0-portal.${SECRET_DOMAIN}"
@@ -229,8 +222,6 @@ metadata:
   name: bank0-portal-internal-paths
   annotations:
     gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
-  labels:
-    dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
 spec:
   hostnames:
     - "bank0-portal.${SECRET_DOMAIN}"

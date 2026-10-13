@@ -80,7 +80,6 @@ spec:
       external:
         labels:
           access-jwt: kibana
-          dns.hnimn.art/lan: "false" # LAN resolves this name to envoy-internal (unifi-dns label filter)
         annotations:
           gatus.home-operations.com/enabled: "false" # the internal route is the LAN path
         hostnames: ["kibana.${SECRET_DOMAIN}"]
