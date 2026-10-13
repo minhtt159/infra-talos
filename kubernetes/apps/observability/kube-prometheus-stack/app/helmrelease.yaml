@@ -85,11 +85,16 @@ spec:
         PrometheusNotConnectedToAlertmanagers: true
     kubelet:
       serviceMonitor:
-        # cAdvisor stamps its own sample timestamps and they go backwards across
-        # scrapes (~700 samples/s dropped as out-of-order, PrometheusOutOfOrderTimestamps
-        # on every node). Scrape-time timestamps instead; trackTimestampsStaleness
-        # has no effect once this is false.
+        # cAdvisor refreshes stats every 10-15s but is scraped every 10s, so about a
+        # third of scrapes resend the previous timestamp. Agent-mode Prometheus
+        # rejects t <= last t as out-of-order (a server would accept the repeat):
+        # ~700 samples/s, PrometheusOutOfOrderTimestamps on every node. The dropped
+        # samples are exact repeats (no data loss), but the alert never clears.
+        # Scrape-time timestamps instead. Both keys: the chart forces
+        # honorTimestamps=true on cAdvisor while trackTimestampsStaleness is on
+        # (helm-charts#5483).
         honorTimestamps: false
+        trackTimestampsStaleness: false
     kubeEtcd:
       enabled: true
       service:
