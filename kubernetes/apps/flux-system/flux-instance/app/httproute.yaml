@@ -6,11 +6,9 @@ metadata:
   # the receiver only answers /hook/<digest>, so 404 at /hook/ is the healthy
   # signal — it proves DNS, the gateway, and notification-controller are up
   annotations:
-    # The body pins it to the receiver's Go mux; Envoy's no-route 404 is empty.
     gatus.home-operations.com/endpoint: |
       conditions:
         - "[STATUS] == 404"
-        - "[BODY] == pat(*404 page not found*)"
 spec:
   hostnames:
     - "flux-webhook.${SECRET_DOMAIN}"

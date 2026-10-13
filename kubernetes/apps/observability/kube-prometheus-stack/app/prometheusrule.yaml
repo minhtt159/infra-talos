@@ -12,12 +12,14 @@ spec:
     - name: metrics-pipeline
       rules:
         - alert: MetricsStale
-          expr: time() - max(timestamp(up{job="kube-state-metrics"})) > 300
+          # absent(), not time()-timestamp(): once samples stop, the series leaves
+          # the 5m lookback and max() returns nothing - that form never fires.
+          expr: absent(up{job="kube-state-metrics"})
           for: 5m
           labels:
             severity: warning
           annotations:
-            summary: No fresh kube-state-metrics samples in promeo for 5m
+            summary: No kube-state-metrics samples in promeo for ~10m
             description: >-
               remote_write from the in-cluster Prometheus agent to promeo has
               stalled (or kube-state-metrics is down). Every other data-based alert
