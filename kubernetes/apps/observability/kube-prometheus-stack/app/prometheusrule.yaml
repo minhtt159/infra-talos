@@ -1,0 +1,24 @@
+---
+# Prometheus runs in agent mode; Thanos Ruler evaluates every rule against promeo
+# (TrueNAS). If remote_write stalls while promeo stays up, every data-based rule
+# (KubePodCrashLooping included) goes quiet while Watchdog (vector(1)) keeps
+# firing. This is the one rule that notices.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: metrics-pipeline
+spec:
+  groups:
+    - name: metrics-pipeline
+      rules:
+        - alert: MetricsStale
+          expr: time() - max(timestamp(up{job="kube-state-metrics"})) > 300
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: No fresh kube-state-metrics samples in promeo for 5m
+            description: >-
+              remote_write from the in-cluster Prometheus agent to promeo has
+              stalled (or kube-state-metrics is down). Every other data-based alert
+              is blind until this clears.

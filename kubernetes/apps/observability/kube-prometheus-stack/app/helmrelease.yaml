@@ -35,8 +35,8 @@ spec:
             - name: envoy-internal
               namespace: network
       alertmanagerSpec:
-        # alertmanagerConfiguration:
-        #   name: alertmanager
+        alertmanagerConfiguration:
+          name: alertmanager # alertmanagerconfig.yaml
         externalUrl: https://alertmanager.${SECRET_DOMAIN}
         resources:
           requests:

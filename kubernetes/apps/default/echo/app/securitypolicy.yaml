@@ -1,0 +1,25 @@
+---
+# Access JWT re-verified at Envoy (bank0-portal precedent), so the envoy-external
+# VIP from the LAN or a same-zone Worker can't reach echo past Access. Selected by
+# label: the route name comes from app-template.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: echo-access-jwt
+spec:
+  targetSelectors:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      matchLabels:
+        access-jwt: echo
+  jwt:
+    providers:
+      - name: cloudflare-access
+        issuer: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com"
+        audiences:
+          - "${SECRET_K8S_UIS_ACCESS_AUD}"
+        remoteJWKS:
+          uri: "https://${SECRET_CF_ACCESS_TEAM}.cloudflareaccess.com/cdn-cgi/access/certs"
+        extractFrom:
+          headers:
+            - name: Cf-Access-Jwt-Assertion

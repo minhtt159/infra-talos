@@ -1,8 +1,39 @@
 ---
+# Gatus = the outside oracle: every entry point probed twice, LAN view and
+# internet view (homelab-platform docs/observability/healthchecks.md). Routes
+# come from gatus-sidecar and inherit their Gateway's annotation; the TrueNAS
+# apps below are not routes, so their two views are spelled out here.
 connectivity:
   checker:
     target: 1.1.1.1:53
     interval: 1m
+
+alerting:
+  discord:
+    webhook-url: ${DISCORD_WEBHOOK_URL}
+    default-alert:
+      failure-threshold: 3
+      success-threshold: 2
+      send-on-resolved: true
+
+# Anchors only (Gatus ignores these keys). Each endpoint still needs its own
+# `alerts:` entry - default-alert only fills in values.
+default-lan: &lan
+  group: lan
+  interval: 1m
+  alerts:
+    - type: discord
+default-internet: &internet
+  group: internet
+  interval: 1m
+  client:
+    dns-resolver: tcp://1.1.1.1:53
+    ignore-redirect: true # an Access 302 must fail, not follow to the login page
+  headers:
+    CF-Access-Client-Id: ${GATUS_CF_ACCESS_CLIENT_ID}
+    CF-Access-Client-Secret: ${GATUS_CF_ACCESS_CLIENT_SECRET}
+  alerts:
+    - type: discord
 
 endpoints:
   - name: Cloudflare
@@ -11,13 +42,42 @@ endpoints:
     interval: 1m
     conditions:
       - "[CONNECTED] == true"
+    alerts:
+      - type: discord
 
-  - name: Quad9
-    group: connectivity
-    url: icmp://9.9.9.9
-    interval: 1m
-    conditions:
-      - "[CONNECTED] == true"
+  # TrueNAS apps via NPM: LAN DNS -> 10.1.0.6; internet -> the TrueNAS tunnel.
+  - name: git
+    <<: *lan
+    url: https://git.${SECRET_DOMAIN}/api/healthz
+    conditions: ["[STATUS] == 200"]
+  - name: git
+    <<: *internet
+    url: https://git.${SECRET_DOMAIN}/api/healthz
+    conditions: ["[STATUS] == 200"]
+  - name: vault
+    <<: *lan
+    url: https://vault.${SECRET_DOMAIN}/alive
+    conditions: ["[STATUS] == 200"]
+  - name: vault # /alive is outside the /admin-only Access app
+    <<: *internet
+    url: https://vault.${SECRET_DOMAIN}/alive
+    conditions: ["[STATUS] == 200"]
+  - name: auth
+    <<: *lan
+    url: https://auth.${SECRET_DOMAIN}/-/health/live/
+    conditions: ["[STATUS] < 300"]
+  - name: auth # public by design, no Access
+    <<: *internet
+    url: https://auth.${SECRET_DOMAIN}/-/health/live/
+    conditions: ["[STATUS] < 300"]
+  - name: minipve-03
+    <<: *lan
+    url: https://minipve-03.${SECRET_DOMAIN}/
+    conditions: ["[STATUS] == 200"]
+  - name: minipve-03
+    <<: *internet
+    url: https://minipve-03.${SECRET_DOMAIN}/
+    conditions: ["[STATUS] == 200"]
 
 metrics: true
 
