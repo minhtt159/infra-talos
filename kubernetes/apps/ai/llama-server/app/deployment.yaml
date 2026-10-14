@@ -1,14 +1,12 @@
 ---
-# Upstream llama.cpp llama-server on the Intel dGPU (mini-talos-04), SYCL build
-# (oneAPI + NEO bundled in the image). Replaces Ollama, which wrapped the same
-# llama-server but pinned qwen35 to one slot, exposed no /metrics and shipped an
-# old Mesa. Measured on this card (homelab-platform
-# docs/ai/inference/b580-qwen-speed-research.md): qwen3.5:9b Q4_K_M decodes at
-# 63 tok/s here vs 25 under Ollama.
+# Upstream llama.cpp llama-server on the Intel dGPU, SYCL build (oneAPI + NEO
+# bundled in the image). Replaces Ollama, which wrapped the same llama-server
+# but exposed no /metrics, pinned qwen35 to one slot and shipped an old Mesa;
+# on this card the SYCL build decodes ~2.5x faster than Ollama did.
 #
 # Router mode: no model on the command line; models come from the preset
 # ConfigMap and are pulled from Hugging Face into the PVC on first load. Clients
-# pick the model by name on the OpenAI endpoints (litellm: openai/<name>).
+# pick the model by name on the OpenAI endpoints.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
