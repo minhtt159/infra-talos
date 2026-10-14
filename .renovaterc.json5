@@ -43,6 +43,12 @@
       versioning: "loose",
     },
     {
+      description: "llama.cpp server images are tagged server-<backend>-b<build>; the build number is the version",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/ggml-org/llama.cpp"],
+      versioning: "regex:^server-intel-b(?<major>\\d+)$",
+    },
+    {
       description: "Kibana must never exceed the ES version on TrueNAS — manual approval only",
       matchDatasources: ["docker"],
       matchPackageNames: ["docker.elastic.co/kibana/kibana"],

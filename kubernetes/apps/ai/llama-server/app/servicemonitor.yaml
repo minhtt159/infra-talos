@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/servicemonitor_v1.json
+# llamacpp:* counters (prompt/predicted tokens, timings, KV usage, requests
+# processing/deferred). In router mode GET endpoints take the model as a query
+# param - one endpoint per preset. Scraping does not count as activity for the
+# idle timer.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: llama-server
+spec:
+  jobLabel: app
+  selector:
+    matchLabels:
+      app: llama-server
+  endpoints:
+    - port: http
+      path: /metrics
+      params:
+        model: ["qwen3.5-9b"]
