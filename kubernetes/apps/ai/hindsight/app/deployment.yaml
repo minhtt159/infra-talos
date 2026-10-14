@@ -45,6 +45,10 @@ spec:
             # tasks. Safe at replicas=1.
             - name: HINDSIGHT_API_WORKER_ID
               value: hindsight-0
+            # Hermes retains use update_mode='append'; needs stored doc text
+            # (0.10.x rejects append otherwise). Stores raw text in the DB.
+            - name: HINDSIGHT_API_STORE_DOCUMENT_TEXT
+              value: "true"
             # LLM via litellm (openai-compatible); routing in litellm DB.
             # Key: HINDSIGHT_API_LLM_API_KEY (scoped virtual key, hindsight-auth).
             - name: HINDSIGHT_API_LLM_PROVIDER
