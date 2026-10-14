@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llama-server-models
+spec:
+  accessModes:
+    - ReadWriteOnce
+  # Local NVMe on the GPU node: GGUFs are re-mmap'd on every (re)load. Pod is
+  # GPU-pinned anyway. Node loss = re-pull from Hugging Face. Cache, not state.
+  storageClassName: openebs-hostpath
+  resources:
+    requests:
+      storage: 50Gi

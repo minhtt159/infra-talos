@@ -6,5 +6,6 @@ namespace: ai
 resources:
   - ./namespace.yaml
   - ./ollama/ks.yaml
+  - ./llama-server/ks.yaml
   - ./hindsight/ks.yaml
   - ./litellm/ks.yaml

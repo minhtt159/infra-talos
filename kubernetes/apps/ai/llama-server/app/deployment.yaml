@@ -1,0 +1,82 @@
+---
+# Upstream llama.cpp llama-server on the Intel dGPU, SYCL build (oneAPI + NEO
+# bundled in the image). Replaces Ollama, which wrapped the same llama-server
+# but exposed no /metrics, pinned qwen35 to one slot and shipped an old Mesa;
+# on this card the SYCL build decodes ~2.5x faster than Ollama did.
+#
+# Router mode: no model on the command line; models come from the preset
+# ConfigMap and are pulled from Hugging Face into the PVC on first load. Clients
+# pick the model by name on the OpenAI endpoints.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name llama-server
+  annotations:
+    # bounce on configmap change (model presets)
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: *name
+  template:
+    metadata:
+      labels:
+        app: *name
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        intel.feature.node.kubernetes.io/gpu: "true"
+      containers:
+        - name: llama-server
+          image: ghcr.io/ggml-org/llama.cpp:server-intel-b11610
+          imagePullPolicy: IfNotPresent
+          args:
+            - --models-preset
+            - /config/models.ini
+            # one process per loaded model; VRAM is the real cap (12 GB)
+            - --models-max
+            - "2"
+            - --metrics
+          env:
+            - name: ONEAPI_DEVICE_SELECTOR
+              value: level_zero:0
+            # HF downloads + router model discovery
+            - name: LLAMA_CACHE
+              value: /models
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 4Gi
+            limits:
+              # SYCL peaks past 8Gi while loading a model (SIGBUS below that);
+              # steady state is <1Gi
+              memory: 14Gi
+              gpu.intel.com/xe: "1"
+          volumeMounts:
+            - name: models
+              mountPath: /models
+            - name: config
+              mountPath: /config
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: llama-server-models
+        - name: config
+          configMap:
+            name: llama-server-presets
