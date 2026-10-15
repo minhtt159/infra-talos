@@ -3,6 +3,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: llama-server
+  labels:
+    app: llama-server # ServiceMonitor selects on this
 spec:
   selector:
     app: llama-server

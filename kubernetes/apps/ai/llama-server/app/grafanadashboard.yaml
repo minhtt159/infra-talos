@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
+# The B580 serving view: llamacpp:* from llama-server's own /metrics
+# (servicemonitor.yaml) for speed, cache and queueing, Envoy for direct LAN
+# traffic LiteLLM never sees, drm-exporter for the GPU. Per-key/per-model
+# gateway usage is the upstream LiteLLM dashboard's job.
+#
+# Repo-owned JSON rather than a grafanaCom id or upstream url: no upstream
+# llama.cpp dashboard covers router mode on an Intel dGPU. The operator
+# replaces ${DS_PROMETHEUS} with the datasource *name*
+# (grafana-operator controllers/content/resolver.go), which Grafana resolves.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: llama-server
+spec:
+  allowCrossNamespaceImport: true
+  folderUID: ai
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+  datasources:
+    - inputName: DS_PROMETHEUS
+      datasourceName: prometheus
+  configMapRef:
+    name: llama-server-dashboard
+    key: llama-server.json
