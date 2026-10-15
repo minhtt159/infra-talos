@@ -31,7 +31,7 @@ spec:
         intel.feature.node.kubernetes.io/gpu: "true"
       containers:
         - name: llama-server
-          image: ghcr.io/ggml-org/llama.cpp:server-intel-b11610
+          image: ghcr.io/ggml-org/llama.cpp:server-intel-b11669
           imagePullPolicy: IfNotPresent
           args:
             - --models-preset
