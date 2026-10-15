@@ -95,6 +95,19 @@ spec:
             # the alias is one litellm slot (mpr=1); inherited 2 -> self-inflicted 429s
             - name: HINDSIGHT_API_CONSOLIDATION_LLM_MAX_CONCURRENT
               value: "1"
+            # Output caps = the runaway guard for non-streaming calls, which
+            # llama-server's router does not cancel on client disconnect
+            # (llama.cpp#29707, open). A request's max_tokens beats every server/
+            # litellm default, so the caps must come from the client. Counts
+            # include thinking tokens. Observed: extraction max 2855 (default
+            # 64000; overflow splits the chunk and retries), consolidation ~3.3k
+            # (2048 thinking budget), reflect synthesis ~7.3k (8192 budget).
+            - name: HINDSIGHT_API_RETAIN_MAX_COMPLETION_TOKENS
+              value: "8192"
+            - name: HINDSIGHT_API_CONSOLIDATION_MAX_COMPLETION_TOKENS
+              value: "8192"
+            - name: HINDSIGHT_API_REFLECT_MAX_COMPLETION_TOKENS
+              value: "12288"
             # = llama-server slots (parallel = 2); default 32 just queues in
             # litellm/llama-server and runs into the per-call timeout.
             - name: HINDSIGHT_API_LLM_MAX_CONCURRENT
