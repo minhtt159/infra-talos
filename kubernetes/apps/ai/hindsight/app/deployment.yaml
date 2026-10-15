@@ -54,37 +54,39 @@ spec:
             - name: HINDSIGHT_API_LLM_MODEL
               # alias pins think:false; thinking breaks JSON extraction
               value: qwen3.5:9b-json
-            # reuses chat model already resident on 3080Ti: no extra model, no
-            # swap. Won on-task benchmark (deepest, English-clean, ~56s).
+            # same B580 weights as LLM_MODEL, thinking on (alias sets
+            # enable_thinking: true); no extra VRAM, no model swap.
             - name: HINDSIGHT_API_REFLECT_LLM_MODEL
-              value: qwen3.6:35b-a3b
-            # 120s default overruns, then 3x retry. Stay < edge 600s.
+              value: qwen3.5:9b-think
+            # worst call ~200s: 48k prefill at ~2k tok/s + ~8k thinking tokens
+            # at ~55 tok/s. A timed-out call is cancelled server-side (no
+            # orphan holding the slot), so this is a plain ceiling.
             - name: HINDSIGHT_API_REFLECT_LLM_TIMEOUT
               value: "300"
-            # default 100k > reflect num_ctx 32k -> ollama truncated or timed
-            # out. 32k - 4k output - margin.
+            # llama-server ctx 64k - ~12k thinking + answer - margin.
             - name: HINDSIGHT_API_REFLECT_MAX_CONTEXT_TOKENS
-              value: "24000"
-            # reflect model is one litellm slot (mpr=1); inherited 2 -> reflect
-            # 429'd itself until the 300s wall limit killed every refresh.
+              value: "48000"
+            # the think alias is one litellm slot (mpr=1); reflect's tool loop is
+            # sequential anyway.
             - name: HINDSIGHT_API_REFLECT_LLM_MAX_CONCURRENT
               value: "1"
             # serialized calls run longer than 300s default. Stay < edge 600s.
             - name: HINDSIGHT_API_REFLECT_WALL_TIMEOUT
               value: "540"
             # mental-model refresh ignores REFLECT_LLM_*: own knobs, else global
-            # (120s, 2 concurrent). 120s cut qwen3.6 mid-generation; orphan held
-            # the slot -> every retry 429'd. Match reflect.
+            # (120s, 2 concurrent). Refresh runs the reflect loop with thinking
+            # on - 120s cuts a long synthesis. Match reflect.
             - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_TIMEOUT
               value: "300"
             - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_MAX_CONCURRENT
               value: "1"
-            # default 32 vs 2 single-slot backends (B580 + pc): bursts queued
-            # ~5min, spilled onto pc.
+            # = llama-server slots (parallel = 2); default 32 just queues in
+            # litellm/llama-server and runs into the per-call timeout.
             - name: HINDSIGHT_API_LLM_MAX_CONCURRENT
               value: "2"
-            # litellm 429s (mpr=1 backends) mean "busy", not broken; default 3
-            # retries exhausted under batch retain -> chunks failed, data lost.
+            # retain chunks that exhaust retries are lost. 429 (litellm mpr full)
+            # and a llama-server restart (model reload) both clear on retry;
+            # default 3 is too few for a reload.
             - name: HINDSIGHT_API_LLM_MAX_RETRIES
               value: "10"
             # CPU cross-encoder on 8-core arm64: default 4 concurrent x 8 torch
