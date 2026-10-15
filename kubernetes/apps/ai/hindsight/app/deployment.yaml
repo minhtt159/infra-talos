@@ -77,13 +77,30 @@ spec:
             # serialized calls run longer than 300s default. Stay < edge 600s.
             - name: HINDSIGHT_API_REFLECT_WALL_TIMEOUT
               value: "540"
-            # mental-model refresh ignores REFLECT_LLM_*: own knobs, else global
-            # (120s, 2 concurrent). Refresh runs the reflect loop with thinking
-            # on - 120s cuts a long synthesis. Match reflect.
+            # Mental-model / knowledge-page refresh gets its own no-think lane
+            # (Hindsight docs: on a single-GPU box the background refresh wants a
+            # fast no-think model that cannot blow the wall timeout or starve
+            # interactive reflect). Own litellm alias = own in-flight slot, so a
+            # refresh no longer 429s interactive reflect. Measured 2026-10-16 on the
+            # thinking alias: a broad page built a 32k prompt and decoded to the
+            # 12288 cap in 363s (> 300s timeout), then retried to the 540s wall.
+            - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_MODEL
+              value: hindsight-refresh
+            # falls back to LLM_TIMEOUT (not REFLECT_LLM_TIMEOUT) when unset
             - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_TIMEOUT
               value: "300"
+            # process-wide: refresh tasks queue here instead of 429ing litellm
             - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_MAX_CONCURRENT
               value: "1"
+            # a timed-out call keeps generating upstream and holds the litellm
+            # slot, so a retry mostly 429s; fail fast, the nightly cron retries
+            - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_MAX_RETRIES
+              value: "1"
+            # defaults for NEW knowledge pages (existing pages keep their trigger):
+            # nightly-cron-friendly, smaller reflect context (search_observations
+            # 5000 -> 2500 tokens, no entity names, half the agent steps).
+            - name: HINDSIGHT_API_KNOWLEDGE_PAGE_DEFAULT_TRIGGER
+              value: '{"refresh_after_consolidation": false, "tags_match": "any", "reflect_search_observations_max_tokens": 2500, "reflect_search_observations_include_entities": false, "budget": "low"}'
             # consolidation on the B580 with thinking capped at 2048 tokens
             # (hindsight-consolidate). Consolidation benchmark, 12-fact batches:
             # 31/32 scenarios clean vs 11/32 without thinking; budget 1024 = 25/32,
