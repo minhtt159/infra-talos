@@ -12,9 +12,9 @@ configMapGenerator:
   - name: llama-server-presets
     files:
       - models.ini=./models.ini
-  - name: llm-serving-dashboard
+  - name: llama-server-dashboard
     files:
-      - llm-serving.json=./dashboards/llm-serving.json
+      - llama-server.json=./dashboards/llama-server.json
     options:
       annotations:
         # the dashboard JSON uses ${DS_PROMETHEUS} (grafana-operator substitutes it)

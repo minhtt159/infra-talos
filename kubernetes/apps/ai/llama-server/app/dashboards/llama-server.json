@@ -1,0 +1,735 @@
+{
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "title": "llama-server",
+  "uid": "llama-server",
+  "tags": [
+    "llm",
+    "llama-server",
+    "gpu"
+  ],
+  "panels": [
+    {
+      "type": "row",
+      "title": "llama-server (B580)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": [],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Processing",
+      "description": "Requests in flight. -np 1, so 1 = the slot is busy.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "idle"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(llamacpp:requests_processing{job=\"llama-server\"})",
+          "legendFormat": ""
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Deferred",
+      "description": "Requests queued behind a busy slot. Sustained > 0 = raise -np or move load.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "idle"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(llamacpp:requests_deferred{job=\"llama-server\"})",
+          "legendFormat": ""
+        }
+      ],
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Decode tok/s (1h)",
+      "description": "Generation speed while generating, last hour.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "idle",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(increase(llamacpp:tokens_predicted_total{job=\"llama-server\"}[1h])) / sum(increase(llamacpp:tokens_predicted_seconds_total{job=\"llama-server\"}[1h]))",
+          "legendFormat": ""
+        }
+      ],
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Prefill tok/s (1h)",
+      "description": "Prompt processing speed while processing, last hour.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "idle",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(increase(llamacpp:prompt_tokens_total{job=\"llama-server\"}[1h])) / sum(increase(llamacpp:prompt_seconds_total{job=\"llama-server\"}[1h]))",
+          "legendFormat": ""
+        }
+      ],
+      "id": 5
+    },
+    {
+      "type": "stat",
+      "title": "Prompt cache hit (24h)",
+      "description": "Share of prompt tokens reused from the KV cache instead of re-processed.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "idle"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(increase(llamacpp:prompt_tokens_cached_total{job=\"llama-server\"}[24h])) / (sum(increase(llamacpp:prompt_tokens_cached_total{job=\"llama-server\"}[24h])) + sum(increase(llamacpp:prompt_tokens_total{job=\"llama-server\"}[24h])))",
+          "legendFormat": ""
+        }
+      ],
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "Longest sequence",
+      "description": "Largest prompt + generation seen since start. Preset ctx is 16384 - near it = raise -c or expect truncation.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "idle"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "max(llamacpp:n_tokens_max{job=\"llama-server\"})",
+          "legendFormat": ""
+        }
+      ],
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "Decode speed",
+      "description": "Tokens/s while generating (gaps = idle). B580 SYCL baseline ~60.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(rate(llamacpp:tokens_predicted_total{job=\"llama-server\"}[$__rate_interval])) / sum(rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-server\"}[$__rate_interval]))",
+          "legendFormat": "decode"
+        }
+      ],
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "Prefill speed",
+      "description": "Prompt tokens/s while processing (gaps = idle).",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(rate(llamacpp:prompt_tokens_total{job=\"llama-server\"}[$__rate_interval])) / sum(rate(llamacpp:prompt_seconds_total{job=\"llama-server\"}[$__rate_interval]))",
+          "legendFormat": "prefill"
+        }
+      ],
+      "id": 9
+    },
+    {
+      "type": "timeseries",
+      "title": "Token throughput",
+      "description": "Wall-clock tokens/s through the server.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(rate(llamacpp:prompt_tokens_total{job=\"llama-server\"}[$__rate_interval]))",
+          "legendFormat": "prompt"
+        },
+        {
+          "refId": "B",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(rate(llamacpp:prompt_tokens_cached_total{job=\"llama-server\"}[$__rate_interval]))",
+          "legendFormat": "prompt (cached)"
+        },
+        {
+          "refId": "C",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(rate(llamacpp:tokens_predicted_total{job=\"llama-server\"}[$__rate_interval]))",
+          "legendFormat": "generated"
+        }
+      ],
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "Busy share",
+      "description": "Fraction of wall time spent in prefill or decode - how close the single slot is to saturation.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(rate(llamacpp:prompt_seconds_total{job=\"llama-server\"}[$__rate_interval]))",
+          "legendFormat": "prefill"
+        },
+        {
+          "refId": "B",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-server\"}[$__rate_interval]))",
+          "legendFormat": "decode"
+        }
+      ],
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests in flight / deferred",
+      "description": "",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(llamacpp:requests_processing{job=\"llama-server\"})",
+          "legendFormat": "processing"
+        },
+        {
+          "refId": "B",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(llamacpp:requests_deferred{job=\"llama-server\"})",
+          "legendFormat": "deferred"
+        }
+      ],
+      "id": 12
+    },
+    {
+      "type": "timeseries",
+      "title": "Busy slots per decode",
+      "description": "Average slots batched into each llama_decode() call. Stays <= 1 at -np 1.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "avg(llamacpp:n_busy_slots_per_decode{job=\"llama-server\"})",
+          "legendFormat": "slots"
+        }
+      ],
+      "id": 13
+    },
+    {
+      "type": "row",
+      "title": "Direct traffic (invisible to LiteLLM)",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "collapsed": false,
+      "panels": [],
+      "id": 14
+    },
+    {
+      "type": "timeseries",
+      "title": "Direct requests/s by response class",
+      "description": "LAN clients calling the llama-server HTTPRoute directly. LiteLLM reaches llama-server over the cluster service, so none of this appears in its metrics.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 30
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 20,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum by (envoy_response_code_class) (rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"httproute/ai/llama-server.*\"}[$__rate_interval]))",
+          "legendFormat": "{{envoy_response_code_class}}xx"
+        }
+      ],
+      "id": 15
+    },
+    {
+      "type": "stat",
+      "title": "Direct requests (24h)",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 30
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum(increase(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"httproute/ai/llama-server.*\"}[24h]))",
+          "legendFormat": "requests",
+          "instant": true
+        }
+      ],
+      "id": 16
+    },
+    {
+      "type": "row",
+      "title": "GPU",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 38
+      },
+      "collapsed": false,
+      "panels": [],
+      "id": 17
+    },
+    {
+      "type": "timeseries",
+      "title": "Compute engine utilization",
+      "description": "ccs is the compute engine — the one LLM inference uses. Video engines (vcs/vecs) belong to transcoding workloads and are deliberately excluded.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 39
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "avg by (node, engine) (drm_engine_utilization_ratio{engine=\"ccs\"})",
+          "legendFormat": "{{node}} compute"
+        }
+      ],
+      "id": 18
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU memory used",
+      "description": "vram is the discrete card's memory — the pool a model has to fit in. smem is shared system memory.",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 39
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last",
+            "max"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "${DS_PROMETHEUS}",
+          "expr": "sum by (pool) (drm_memory_used_bytes) / sum by (pool) (drm_memory_total_bytes)",
+          "legendFormat": "{{pool}}"
+        }
+      ],
+      "id": 19
+    }
+  ]
+}
