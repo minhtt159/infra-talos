@@ -1,9 +1,9 @@
 {
-  "title": "LLM serving — Ollama + LiteLLM",
+  "title": "LLM serving — llama-server + LiteLLM",
   "uid": "llm-serving",
   "tags": [
     "llm",
-    "ollama",
+    "llama-server",
     "litellm",
     "gpu"
   ],
@@ -139,7 +139,7 @@
     {
       "type": "timeseries",
       "title": "Generation cost p95 (seconds per output token)",
-      "description": "Lower is faster. Inverse of tokens/sec — the closest thing to a throughput measure available without an Ollama exporter.",
+      "description": "Lower is faster. Inverse of tokens/sec — the closest thing to a throughput measure available from LiteLLM alone.",
       "datasource": "${DS_PROMETHEUS}",
       "gridPos": {
         "h": 8,
@@ -318,7 +318,7 @@
     {
       "type": "timeseries",
       "title": "Direct requests/s by response class",
-      "description": "LAN clients calling the Ollama HTTPRoute directly. LiteLLM reaches Ollama over the cluster service, so none of this appears in its metrics.",
+      "description": "LAN clients calling the llama-server HTTPRoute directly. LiteLLM reaches llama-server over the cluster service, so none of this appears in its metrics.",
       "datasource": "${DS_PROMETHEUS}",
       "gridPos": {
         "h": 8,
@@ -349,7 +349,7 @@
         {
           "refId": "A",
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "sum by (envoy_response_code_class) (rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"httproute/ai/ollama.*\"}[$__rate_interval]))",
+          "expr": "sum by (envoy_response_code_class) (rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"httproute/ai/llama-server.*\"}[$__rate_interval]))",
           "legendFormat": "{{envoy_response_code_class}}xx"
         }
       ]
@@ -393,7 +393,7 @@
         {
           "refId": "A",
           "datasource": "${DS_PROMETHEUS}",
-          "expr": "sum(increase(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"httproute/ai/ollama.*\"}[24h]))",
+          "expr": "sum(increase(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"httproute/ai/llama-server.*\"}[24h]))",
           "legendFormat": "requests",
           "instant": true
         }
