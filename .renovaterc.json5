@@ -47,6 +47,9 @@
       matchDatasources: ["docker"],
       matchPackageNames: ["ghcr.io/ggml-org/llama.cpp"],
       versioning: "regex:^server-intel-b(?<major>\\d+)$",
+      // b11669 hung the B580 (2026-10-16): no bump without a benchmark on the card
+      dependencyDashboardApproval: true,
+      automerge: false,
     },
     {
       description: "Kibana must never exceed the ES version on TrueNAS — manual approval only",

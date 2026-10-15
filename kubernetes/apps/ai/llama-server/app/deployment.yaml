@@ -31,7 +31,9 @@ spec:
         intel.feature.node.kubernetes.io/gpu: "true"
       containers:
         - name: llama-server
-          image: ghcr.io/ggml-org/llama.cpp:server-intel-b11669
+          # pinned: b11669 (v0.7.0, new SYCL runtime packaging) hung the B580 and
+          # took the node down 2026-10-16; bump only after a benchmark on the card
+          image: ghcr.io/ggml-org/llama.cpp:server-intel-b11610
           imagePullPolicy: IfNotPresent
           args:
             - --models-preset
