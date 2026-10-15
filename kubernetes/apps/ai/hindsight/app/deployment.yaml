@@ -45,7 +45,9 @@ spec:
             # tasks. Safe at replicas=1.
             - name: HINDSIGHT_API_WORKER_ID
               value: hindsight-0
-            # LLM via litellm (openai-compatible); routing in litellm DB.
+            # LLM via litellm (openai-compatible); routing in litellm DB. Aliases
+            # are named by role (hindsight-*), not by model: swapping the model
+            # behind one is a litellm-only change, no PR here.
             # Key: HINDSIGHT_API_LLM_API_KEY (scoped virtual key, hindsight-auth).
             - name: HINDSIGHT_API_LLM_PROVIDER
               value: openai
@@ -53,11 +55,11 @@ spec:
               value: http://litellm.ai.svc.cluster.local:4000/v1
             - name: HINDSIGHT_API_LLM_MODEL
               # alias pins think:false; thinking breaks JSON extraction
-              value: qwen3.5:9b-json
+              value: hindsight-retain
             # same B580 weights as LLM_MODEL, thinking on (alias sets
             # enable_thinking: true); no extra VRAM, no model swap.
             - name: HINDSIGHT_API_REFLECT_LLM_MODEL
-              value: qwen3.5:9b-think
+              value: hindsight-reflect
             # worst call ~200s: 48k prefill at ~2k tok/s + ~8k thinking tokens
             # at ~55 tok/s. (!) llama-server cancels only *streaming* requests on
             # client disconnect; Hindsight's non-streaming calls keep generating
@@ -83,11 +85,11 @@ spec:
             - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_MAX_CONCURRENT
               value: "1"
             # consolidation on the B580 with thinking capped at 2048 tokens
-            # (qwen3.5:9b-json-think). Consolidation benchmark, 12-fact batches:
+            # (hindsight-consolidate). Consolidation benchmark, 12-fact batches:
             # 31/32 scenarios clean vs 11/32 without thinking; budget 1024 = 25/32,
-            # unbudgeted ran away. Retain stays on qwen3.5:9b-json (no thinking).
+            # unbudgeted ran away. Retain stays on hindsight-retain (no thinking).
             - name: HINDSIGHT_API_CONSOLIDATION_LLM_MODEL
-              value: qwen3.5:9b-json-think
+              value: hindsight-consolidate
             # ~60-115s per batch (2048 thinking + ~1.5k output, up to 16k prompt);
             # default 120s would cut it when both slots are busy.
             - name: HINDSIGHT_API_CONSOLIDATION_LLM_TIMEOUT
