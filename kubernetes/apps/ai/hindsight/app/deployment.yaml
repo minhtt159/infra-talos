@@ -74,9 +74,19 @@ spec:
             # sequential anyway.
             - name: HINDSIGHT_API_REFLECT_LLM_MAX_CONCURRENT
               value: "1"
-            # serialized calls run longer than 300s default. Stay < edge 600s.
+            # Whole-task ceiling for reflect AND mental-model refresh: the worker
+            # maps refresh_mental_model onto reflect_wall_timeout, there is no
+            # separate refresh knob. 540 was sized for interactive reflect behind
+            # the 600s edge, but refreshes routinely took 450-545s (2026-10-16) and
+            # a broad page dies at the wall. Background calls go pod -> litellm
+            # svc -> llama-server, no edge in that path, so the wall only needs to
+            # catch a wedged task (a held permit, a hung connection), not pace a
+            # healthy one. Trade-off: an interactive reflect whose MCP client has
+            # already given up can now hold its own litellm slot for up to 1200s;
+            # its per-call REFLECT_LLM_TIMEOUT (300) and thinking budget still bound
+            # each call.
             - name: HINDSIGHT_API_REFLECT_WALL_TIMEOUT
-              value: "540"
+              value: "1200"
             # Mental-model / knowledge-page refresh gets its own no-think lane
             # (Hindsight docs: on a single-GPU box the background refresh wants a
             # fast no-think model that cannot blow the wall timeout or starve
@@ -86,14 +96,28 @@ spec:
             # 12288 cap in 363s (> 300s timeout), then retried to the 540s wall.
             - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_MODEL
               value: hindsight-refresh
-            # falls back to LLM_TIMEOUT (not REFLECT_LLM_TIMEOUT) when unset
+            # falls back to LLM_TIMEOUT (not REFLECT_LLM_TIMEOUT) when unset.
+            # A per-call timeout protects nothing here: llama-server keeps
+            # generating a timed-out non-streaming call, so cutting it only throws
+            # the work away while the slot stays busy, and the retry then 429s on
+            # the orphan (2026-10-16: a full-mode page refresh timed out at 300s and
+            # failed exactly this way). The real bound is the output cap
+            # (REFLECT_MAX_COMPLETION_TOKENS 12288, measured 363s at the cap) plus
+            # prefill, so ~8 min worst case; llama-server n-predict 16384 is the
+            # backstop. 900 sits above that: it only fires on a hung connection.
+            # (!) litellm's global request_timeout (600) cuts first unless the
+            # hindsight-refresh alias carries its own timeout >= 900 in the DB.
             - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_TIMEOUT
-              value: "300"
+              value: "900"
             # process-wide: refresh tasks queue here instead of 429ing litellm
             - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_MAX_CONCURRENT
               value: "1"
-            # a timed-out call keeps generating upstream and holds the litellm
-            # slot, so a retry mostly 429s; fail fast, the nightly cron retries
+            # A retry after a *timeout* 429s on the still-generating orphan, but
+            # with the timeout above the output bound that case is gone. What is
+            # left are real transient errors (llama-server model reload, pod
+            # restart), where no orphan holds the slot and one retry succeeds.
+            # Keep 1: a failed refresh flags the page and blocks its cron until a
+            # manual refresh succeeds.
             - name: HINDSIGHT_API_MENTAL_MODEL_REFRESH_LLM_MAX_RETRIES
               value: "1"
             # defaults for NEW knowledge pages (existing pages keep their trigger):
@@ -107,10 +131,17 @@ spec:
             # unbudgeted ran away. Retain stays on hindsight-retain (no thinking).
             - name: HINDSIGHT_API_CONSOLIDATION_LLM_MODEL
               value: hindsight-consolidate
-            # ~60-115s per batch (2048 thinking + ~1.5k output, up to 16k prompt);
-            # default 120s would cut it when both slots are busy.
+            # ~60-115s per batch (2048 thinking + ~1.5k output, up to 16k prompt).
+            # Same reasoning as the refresh timeout: background work, the call is
+            # not cancelled upstream, so the timeout must sit above the output cap
+            # (CONSOLIDATION_MAX_COMPLETION_TOKENS 8192, ~240s alone, longer when
+            # both llama-server slots decode at once), not at the typical case.
+            # The task-level CONSOLIDATION_WALL_TIMEOUT (default 7200s, counted
+            # from the last progress) stays the wedge backstop.
+            # (!) needs a matching per-alias timeout on hindsight-consolidate in
+            # the litellm DB, or litellm's global 600s cuts first.
             - name: HINDSIGHT_API_CONSOLIDATION_LLM_TIMEOUT
-              value: "300"
+              value: "900"
             # the alias is one litellm slot (mpr=1); inherited 2 -> self-inflicted 429s
             - name: HINDSIGHT_API_CONSOLIDATION_LLM_MAX_CONCURRENT
               value: "1"
