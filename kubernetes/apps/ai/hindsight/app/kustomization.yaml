@@ -11,3 +11,7 @@ resources:
   - ./httproute-external.yaml
   - ./backendtrafficpolicy.yaml
   - ./securitypolicy.yaml
+configMapGenerator:
+  - name: hindsight-env
+    envs:
+      - hindsight.env
