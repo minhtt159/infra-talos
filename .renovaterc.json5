@@ -66,6 +66,12 @@
       automerge: false,
     },
     {
+      description: "yoke hub image lives in the private Forgejo registry — hand-bumped",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["git.hnimn.art/minhtt159/yoke"],
+      enabled: false,
+    },
+    {
       description: "Override Helmfile Dependency Name",
       matchDatasources: ["docker"],
       matchManagers: ["helmfile"],
