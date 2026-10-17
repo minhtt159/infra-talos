@@ -24,7 +24,7 @@ spec:
           app:
             image:
               repository: git.hnimn.art/minhtt159/yoke
-              tag: v0.1.0
+              tag: v0.1.1
             # args replace the image CMD, so the program is named here too
             command: ["kp-harness"]
             args: ["hub", "--bind", "0.0.0.0:8099", "--sweep-every", "300"]
