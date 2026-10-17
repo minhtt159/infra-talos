@@ -1,0 +1,87 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# Yoke hub - the page, /api, SSE, worker registry and job queue for the owner's Claude Code
+# sessions; workers (laptop, agent-vm) dial out to it and run the sessions. LAN-only (phase 1:
+# envoy-internal, the hub's own basic auth). Holds no model credential: no ANTHROPIC_* here.
+# State is JSON files on one RWO volume, so one replica and Recreate. The audit sweep runs as
+# a thread in the hub (--sweep-every) and needs ES_API_KEY.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: yoke
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: yoke
+  interval: 1h
+  values:
+    controllers:
+      yoke:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              repository: git.hnimn.art/minhtt159/yoke
+              tag: v0.1.0
+            # args replace the image CMD, so the program is named here too
+            command: ["kp-harness"]
+            args: ["hub", "--bind", "0.0.0.0:8099", "--sweep-every", "300"]
+            envFrom:
+              - secretRef:
+                  name: yoke-secrets
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: 8099
+                  initialDelaySeconds: 5
+                  periodSeconds: 30
+                  timeoutSeconds: 3
+                  failureThreshold: 3
+              readiness: *probes
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: yoke-registry
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+    persistence:
+      data:
+        # sessions.json, events/*.jsonl, sweep offsets; block storage, the sweep takes a flock
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: truenas-iscsi
+        retain: true
+        globalMounts:
+          - path: /data
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+    service:
+      app:
+        ports:
+          http:
+            port: 8099

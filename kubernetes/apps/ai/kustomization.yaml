@@ -8,3 +8,4 @@ resources:
   - ./llama-server/ks.yaml
   - ./hindsight/ks.yaml
   - ./litellm/ks.yaml
+  - ./yoke/ks.yaml
