@@ -57,6 +57,8 @@ spec:
                 memory: 512Mi
     defaultPodOptions:
       automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: yoke-registry
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
