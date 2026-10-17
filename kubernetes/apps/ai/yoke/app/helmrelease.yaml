@@ -57,6 +57,9 @@ spec:
                 memory: 512Mi
     defaultPodOptions:
       automountServiceAccountToken: false
+      # the image is built amd64-only (Forgejo runner); arm64 nodes give exec format error
+      nodeSelector:
+        kubernetes.io/arch: amd64
       imagePullSecrets:
         - name: yoke-registry
       securityContext:
