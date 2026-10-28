@@ -74,6 +74,8 @@ spec:
     # consistent backend pick across nodes → survives router ECMP rehash of BGP VIPs
     loadBalancer:
       algorithm: maglev
+      # honour trafficDistribution: PreferSameNode (spegel 0.8 registry NodePort)
+      serviceTopology: true
 
     # pod↔pod WireGuard :51871; nodeEncryption wedged etcd (July 2026, cilium#28965)
     encryption:
