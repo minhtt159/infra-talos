@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
+# Repo-owned JSON: Spegel 0.8 removed the chart dashboard (spegel#1512) and
+# replaced spegel_advertised_{image_tags,image_digests,content_digests} with
+# spegel_advertised_keys, so the old one would be half empty anyway.
+#
+# Not named "spegel": that GrafanaDashboard belonged to the 0.7 Helm release,
+# and the upgrade prunes it - sharing the name would let Helm delete this one.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: spegel-mirror
+spec:
+  allowCrossNamespaceImport: true
+  folderUID: kubernetes
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+  datasources:
+    - inputName: DS_PROMETHEUS
+      datasourceName: prometheus
+  configMapRef:
+    name: spegel-dashboard
+    key: spegel.json

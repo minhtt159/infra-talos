@@ -4,3 +4,16 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
+  - ./grafanadashboard.yaml
+configMapGenerator:
+  - name: spegel-dashboard
+    files:
+      - spegel.json=./dashboards/spegel.json
+    options:
+      annotations:
+        # the dashboard JSON uses ${DS_PROMETHEUS} (grafana-operator substitutes it)
+        # and $__rate_interval (Grafana expands it) — keep Flux's postBuild
+        # substitution away from both
+        kustomize.toolkit.fluxcd.io/substitute: disabled
+generatorOptions:
+  disableNameSuffixHash: true

@@ -9,18 +9,17 @@ spec:
     kind: OCIRepository
     name: spegel
   interval: 1h
+  # 0.8 dropped the registry hostPort: containerd mirrors to the NodePort
+  # (:30020) and the Service's trafficDistribution: PreferSameNode keeps it on
+  # the local pod (Cilium needs loadBalancer.serviceTopology for that).
+  # 0.8 also dropped the chart dashboard; ours is ./grafanadashboard.yaml.
   values:
-    grafanaDashboard:
-      enabled: true
-      mode: GrafanaOperator
-      grafanaOperator:
-        matchLabels:
-          grafana.internal/instance: grafana
-    service:
-      registry:
-        hostPort: 29999
     serviceMonitor:
       enabled: true
+      # DaemonSet: label series by node for the dashboard's $node variable
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
     # Talos paths. Requires a machine-config patch in the Omni template so
     # containerd keeps unpacked layers available for serving:
     #   [plugins."io.containerd.cri.v1.images"]
@@ -35,23 +34,3 @@ spec:
         memory: 128Mi
       limits:
         memory: 128Mi
-  # The chart-rendered GrafanaDashboard doesn't expose spec.datasources, so its
-  # ${DS_PROMETHEUS} input never resolves (panels query a literal datasource).
-  # Patch the remap in post-render, matching the repo convention (→ prometheus),
-  # plus folderUID (the chart only offers a title-based folder).
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              kind: GrafanaDashboard
-              name: spegel
-            patch: |-
-              apiVersion: grafana.integreatly.org/v1beta1
-              kind: GrafanaDashboard
-              metadata:
-                name: spegel
-              spec:
-                folderUID: kubernetes
-                datasources:
-                  - inputName: DS_PROMETHEUS
-                    datasourceName: prometheus
