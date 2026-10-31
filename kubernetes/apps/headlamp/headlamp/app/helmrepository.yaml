@@ -1,6 +1,6 @@
 ---
 # Headlamp's OCI chart on ghcr isn't public — classic HelmRepository, same
-# legacy exception as kyverno.
+# legacy exception as intel-device-plugin.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
