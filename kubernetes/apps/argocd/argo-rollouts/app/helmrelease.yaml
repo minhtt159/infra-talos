@@ -15,29 +15,13 @@ spec:
   interval: 1h
   values:
     controller:
-      # Gateway API traffic router — canary weights on an HTTPRoute. Controller
-      # downloads the binary at startup, once; a restart re-downloads. Needs
-      # egress to github releases.
-      # sha256 pinned: the controller fetches and executes this on every restart
-      # while holding cluster-wide RBAC over Deployments and HTTPRoutes.
-      # Hand-bumped (URL + sha256 together); Renovate can't update the hash.
-      trafficRouterPlugins:
-        - name: argoproj-labs/gatewayAPI # must match what the plugin expects
-          location: https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.16.0/gatewayapi-plugin-linux-amd64
-          sha256: 3f129e6a1ea948932f440b16dfb9eae636a065857eb27311928e5790593103c1
-      # One location = one url = one arch. Cluster is mixed (arm64 RK1 workers);
-      # a replica on arm64 can't load an amd64 binary — latent behind leader
-      # election until failover. Pin amd64 over a plugin that works on some pods.
-      nodeSelector:
-        kubernetes.io/arch: amd64
       resources:
         requests:
           cpu: 25m
           memory: 128Mi
         limits:
           memory: 256Mi
-    # Traffic routers we don't run. Gateway API stays — envoy-gateway
-    # implements it, so canary routing later needs no RBAC change.
+    # No Rollout objects, so no traffic router needs RBAC.
     providerRBAC:
       providers:
         istio: false
@@ -49,4 +33,4 @@ spec:
         apisix: false
         contour: false
         glooPlatform: false
-        gatewayAPI: true
+        gatewayAPI: false
