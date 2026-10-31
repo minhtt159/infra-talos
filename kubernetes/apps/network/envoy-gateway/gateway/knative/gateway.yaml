@@ -12,7 +12,7 @@ metadata:
   labels:
     dns.hnimn.art/lan: "true" # unifi-dns publishes this gateway's routes on the LAN
   annotations:
-    external-dns.kubernetes.io/target: &hostname knative.${SECRET_DOMAIN}
+    external-dns.kubernetes.io/target: &hostname knative.hnimn.art
 spec:
   gatewayClassName: knative-internal
   infrastructure:
@@ -43,4 +43,4 @@ spec:
       tls:
         certificateRefs:
           - kind: Secret
-            name: ${SECRET_DOMAIN/./-}-production-tls
+            name: hnimn-art-production-tls

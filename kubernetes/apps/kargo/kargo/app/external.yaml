@@ -12,7 +12,7 @@ metadata:
       path: /healthz
 spec:
   hostnames:
-    - "kargo.${SECRET_DOMAIN}"
+    - "kargo.hnimn.art"
   parentRefs:
     - name: envoy-external
       namespace: network

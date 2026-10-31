@@ -48,35 +48,35 @@ endpoints:
   # TrueNAS apps via NPM: LAN DNS -> the TrueNAS host; internet -> the TrueNAS tunnel.
   - name: git
     <<: *lan
-    url: https://git.${SECRET_DOMAIN}/api/healthz
+    url: https://git.hnimn.art/api/healthz
     conditions: ["[STATUS] == 200"]
   - name: git
     <<: *internet
-    url: https://git.${SECRET_DOMAIN}/api/healthz
+    url: https://git.hnimn.art/api/healthz
     conditions: ["[STATUS] == 200"]
   - name: vault
     <<: *lan
-    url: https://vault.${SECRET_DOMAIN}/alive
+    url: https://vault.hnimn.art/alive
     conditions: ["[STATUS] == 200"]
   - name: vault # /alive is outside the /admin-only Access app
     <<: *internet
-    url: https://vault.${SECRET_DOMAIN}/alive
+    url: https://vault.hnimn.art/alive
     conditions: ["[STATUS] == 200"]
   - name: auth
     <<: *lan
-    url: https://auth.${SECRET_DOMAIN}/-/health/live/
+    url: https://auth.hnimn.art/-/health/live/
     conditions: ["[STATUS] < 300"]
   - name: auth # public by design, no Access
     <<: *internet
-    url: https://auth.${SECRET_DOMAIN}/-/health/live/
+    url: https://auth.hnimn.art/-/health/live/
     conditions: ["[STATUS] < 300"]
   - name: minipve-03
     <<: *lan
-    url: https://minipve-03.${SECRET_DOMAIN}/
+    url: https://minipve-03.hnimn.art/
     conditions: ["[STATUS] == 200"]
   - name: minipve-03
     <<: *internet
-    url: https://minipve-03.${SECRET_DOMAIN}/
+    url: https://minipve-03.hnimn.art/
     conditions: ["[STATUS] == 200"]
 
 metrics: true

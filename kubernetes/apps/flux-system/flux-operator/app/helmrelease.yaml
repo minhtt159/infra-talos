@@ -21,12 +21,12 @@ spec:
     # (rbac.yaml). Client id/secret come in through valuesFrom below.
     web:
       config:
-        baseURL: https://flux.${SECRET_DOMAIN}
+        baseURL: https://flux.hnimn.art
         authentication:
           type: OAuth2
           oauth2:
             provider: OIDC
-            issuerURL: https://auth.${SECRET_DOMAIN}/application/o/flux-web/
+            issuerURL: https://auth.hnimn.art/application/o/flux-web/
             # The defaults add `groups` + `offline_access`; authentik has no
             # groups scope (profile carries the claim).
             scopes: [openid, profile, email]

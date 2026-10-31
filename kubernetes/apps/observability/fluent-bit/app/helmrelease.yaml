@@ -97,7 +97,7 @@ spec:
         [OUTPUT]
             Name es
             Match envoy.access
-            Host elastic.${SECRET_DOMAIN}
+            Host elastic.hnimn.art
             Port 443
             Tls On
             HTTP_User $${ES_USER}
@@ -122,7 +122,7 @@ spec:
         [OUTPUT]
             Name es
             Match kube.*
-            Host elastic.${SECRET_DOMAIN}
+            Host elastic.hnimn.art
             Port 443
             Tls On
             HTTP_User $${ES_USER}

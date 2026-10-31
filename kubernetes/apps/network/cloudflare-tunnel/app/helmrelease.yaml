@@ -74,10 +74,10 @@ spec:
         data:
           config.yaml: |-
             ingress:
-              - hostname: "*.${SECRET_DOMAIN}"
+              - hostname: "*.hnimn.art"
                 originRequest:
                   http2Origin: true
-                  originServerName: external.${SECRET_DOMAIN}
+                  originServerName: external.hnimn.art
                 service: https://envoy-external.{{ .Release.Namespace }}.svc.cluster.local:443
               - service: http_status:404
     persistence:

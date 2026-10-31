@@ -30,14 +30,14 @@ spec:
           annotations:
             gatus.home-operations.com/enabled: "false" # gated by authentik forward-auth
           hostnames:
-            - alertmanager.${SECRET_DOMAIN}
+            - alertmanager.hnimn.art
           parentRefs:
             - name: envoy-internal
               namespace: network
       alertmanagerSpec:
         alertmanagerConfiguration:
           name: alertmanager # alertmanagerconfig.yaml
-        externalUrl: https://alertmanager.${SECRET_DOMAIN}
+        externalUrl: https://alertmanager.hnimn.art
         resources:
           requests:
             cpu: 10m
@@ -62,7 +62,7 @@ spec:
         evaluationInterval: 1m
         # skip seconds promeo hasn't received yet (remote_write lag)
         ruleQueryOffset: 1m
-        alertQueryUrl: https://promeo.${SECRET_DOMAIN}
+        alertQueryUrl: https://promeo.hnimn.art
         alertmanagersUrl:
           - http://alertmanager-operated.observability.svc.cluster.local:9093
         # --query = http only; https needs query config file → secret.yaml
@@ -71,7 +71,7 @@ spec:
             name: thanos-ruler-query-config
             key: query-configs.yaml
         remoteWrite:
-          - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
+          - url: https://promeo.hnimn.art/api/v1/write
         resources:
           requests:
             cpu: 50m
@@ -118,12 +118,12 @@ spec:
           annotations:
             gatus.home-operations.com/enabled: "false" # gated by authentik forward-auth
           hostnames:
-            - prometheus.${SECRET_DOMAIN}
+            - prometheus.hnimn.art
           parentRefs:
             - name: envoy-internal
               namespace: network
       prometheusSpec:
-        externalUrl: https://prometheus.${SECRET_DOMAIN}
+        externalUrl: https://prometheus.hnimn.art
         securityContext:
           runAsNonRoot: true
           runAsUser: 64535
@@ -138,7 +138,7 @@ spec:
         # shards, filtered set already wanted 112. Watch shards_desired,
         # samples_dropped_total.
         remoteWrite:
-          - url: https://promeo.${SECRET_DOMAIN}/api/v1/write
+          - url: https://promeo.hnimn.art/api/v1/write
             queueConfig:
               maxShards: 200
               maxSamplesPerSend: 2000

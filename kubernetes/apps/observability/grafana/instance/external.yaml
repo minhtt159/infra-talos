@@ -12,7 +12,7 @@ metadata:
       path: /api/health
 spec:
   hostnames:
-    - "grafana.${SECRET_DOMAIN}"
+    - "grafana.hnimn.art"
   parentRefs:
     - name: envoy-external
       namespace: network

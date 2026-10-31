@@ -12,7 +12,7 @@ metadata:
         - "[STATUS] == 200"
 spec:
   hostnames:
-    - "kargo.${SECRET_DOMAIN}"
+    - "kargo.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

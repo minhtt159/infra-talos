@@ -90,14 +90,14 @@ spec:
             - SecRequestBodyLimitAction ProcessPartial
         default_directives: default
         per_authority_directives:
-          flux-webhook.${SECRET_DOMAIN}: flux-webhook
-          bank0-api.${SECRET_DOMAIN}: bank0
-          bank0-portal.${SECRET_DOMAIN}: bank0
-          argocd.${SECRET_DOMAIN}: k8s-uis
-          kargo.${SECRET_DOMAIN}: k8s-uis
-          grafana.${SECRET_DOMAIN}: k8s-uis
-          kibana.${SECRET_DOMAIN}: k8s-uis
-          litellm.${SECRET_DOMAIN}: k8s-uis
+          flux-webhook.hnimn.art: flux-webhook
+          bank0-api.hnimn.art: bank0
+          bank0-portal.hnimn.art: bank0
+          argocd.hnimn.art: k8s-uis
+          kargo.hnimn.art: k8s-uis
+          grafana.hnimn.art: k8s-uis
+          kibana.hnimn.art: k8s-uis
+          litellm.hnimn.art: k8s-uis
           # memory text trips CRS like bank0's free text (942100 on SQL-ish recalls)
-          hindsight.${SECRET_DOMAIN}: k8s-uis
-          hindsight-api.${SECRET_DOMAIN}: k8s-uis
+          hindsight.hnimn.art: k8s-uis
+          hindsight-api.hnimn.art: k8s-uis

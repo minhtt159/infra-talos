@@ -16,7 +16,7 @@ metadata:
         - "[STATUS] == 200"
 spec:
   hostnames:
-    - "bank0-api.${SECRET_DOMAIN}"
+    - "bank0-api.hnimn.art"
   parentRefs:
     - name: envoy-external
       namespace: network
@@ -43,7 +43,7 @@ metadata:
     gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
 spec:
   hostnames:
-    - "bank0-api.${SECRET_DOMAIN}"
+    - "bank0-api.hnimn.art"
   parentRefs:
     - name: envoy-external
       namespace: network
@@ -69,7 +69,7 @@ metadata:
         - "[STATUS] == 401"
 spec:
   hostnames:
-    - "bank0-portal.${SECRET_DOMAIN}"
+    - "bank0-portal.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network
@@ -102,7 +102,7 @@ metadata:
     gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
 spec:
   hostnames:
-    - "bank0-api.${SECRET_DOMAIN}"
+    - "bank0-api.hnimn.art"
   parentRefs:
     - name: envoy-external
       namespace: network
@@ -132,7 +132,7 @@ spec:
 # JWT itself, so a request that reaches this route without having passed Access
 # - a Worker subrequest, anyone on the LAN hitting the external VIP by IP - gets
 # 401 here. Flat name for the same Universal-SSL reason as bank0-api.
-# cloudflare-dns publishes it from this route; the tunnel's `*.${SECRET_DOMAIN}`
+# cloudflare-dns publishes it from this route; the tunnel's `*.hnimn.art`
 # rule and the gateway cert's wildcard SAN already cover it. Gatus opted out
 # (the sidecar auto-probes every route): the LAN route above probes /.
 apiVersion: gateway.networking.k8s.io/v1
@@ -148,7 +148,7 @@ metadata:
         - "[STATUS] == 401"
 spec:
   hostnames:
-    - "bank0-portal.${SECRET_DOMAIN}"
+    - "bank0-portal.hnimn.art"
   parentRefs:
     - name: envoy-external
       namespace: network
@@ -170,7 +170,7 @@ metadata:
     gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
 spec:
   hostnames:
-    - "bank0-portal.${SECRET_DOMAIN}"
+    - "bank0-portal.hnimn.art"
   parentRefs:
     - name: envoy-external
       namespace: network
@@ -197,7 +197,7 @@ metadata:
     gatus.home-operations.com/enabled: "false" # see bank0-portal / bank0-api for the probes
 spec:
   hostnames:
-    - "bank0-portal.${SECRET_DOMAIN}"
+    - "bank0-portal.hnimn.art"
   parentRefs:
     - name: envoy-external
       namespace: network

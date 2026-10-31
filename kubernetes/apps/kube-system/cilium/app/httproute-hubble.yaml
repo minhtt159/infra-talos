@@ -11,7 +11,7 @@ metadata:
     gatus.home-operations.com/enabled: "false"
 spec:
   hostnames:
-    - "hubble.${SECRET_DOMAIN}"
+    - "hubble.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

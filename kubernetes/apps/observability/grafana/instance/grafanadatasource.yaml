@@ -15,7 +15,7 @@ spec:
     name: prometheus
     access: proxy
     isDefault: true
-    url: https://promeo.${SECRET_DOMAIN}
+    url: https://promeo.hnimn.art
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadatasource_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1

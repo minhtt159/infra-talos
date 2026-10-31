@@ -16,10 +16,6 @@ spec:
       namespace: ai
   interval: 1h
   path: ./kubernetes/apps/ai/llama-server/app
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
   prune: true
   sourceRef:
     kind: GitRepository

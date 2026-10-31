@@ -12,9 +12,9 @@ spec:
   issuerRef:
     name: internal-ca-issuer
     kind: ClusterIssuer
-  commonName: "auth-direct.${SECRET_DOMAIN}"
+  commonName: "auth-direct.hnimn.art"
   dnsNames:
-    - "auth-direct.${SECRET_DOMAIN}"
+    - "auth-direct.hnimn.art"
   duration: 87600h # 10 years
   privateKey:
     algorithm: ECDSA

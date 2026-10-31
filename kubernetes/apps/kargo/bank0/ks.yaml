@@ -40,8 +40,8 @@ spec:
   wait: false
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-# Own ks for `${SECRET_DOMAIN}`: Flux envsubst chokes on Kargo `${{ … }}` in
-# the pipeline dir, so substitution runs only here.
+# Own ks, apart from the pipeline dir (its Kargo `${{ … }}` breaks Flux
+# envsubst), so this one can take postBuild substitution if it needs it again.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -51,10 +51,6 @@ spec:
     - name: bank0-project
   interval: 1h
   path: ./kubernetes/apps/kargo/bank0/analysis
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
   prune: true
   sourceRef:
     kind: GitRepository

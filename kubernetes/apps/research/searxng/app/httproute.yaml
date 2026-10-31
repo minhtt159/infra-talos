@@ -15,14 +15,14 @@ metadata:
     # and re-serializes, which escapes `?` to %3F and 404s. `url:` is assigned
     # verbatim, so it's the only way to probe with a query string.
     gatus.home-operations.com/endpoint: |
-      url: https://searxng.${SECRET_DOMAIN}/search?q=talos+linux&format=json
+      url: https://searxng.hnimn.art/search?q=talos+linux&format=json
       interval: 10m
       conditions:
         - "[STATUS] == 200"
         - "len([BODY].results) > 0"
 spec:
   hostnames:
-    - "searxng.${SECRET_DOMAIN}"
+    - "searxng.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

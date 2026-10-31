@@ -59,10 +59,6 @@ spec:
         # GATUS_POSTGRES_DSN — storage backend, see externalsecret.yaml
         - secretRef:
             name: gatus-db
-        # SECRET_DOMAIN for the static endpoints in config.yaml (that ConfigMap
-        # skips Flux substitution, so gatus expands it from env instead)
-        - secretRef:
-            name: cluster-secrets
         # DISCORD_WEBHOOK_URL + GATUS_CF_ACCESS_CLIENT_ID/SECRET (externalsecret.yaml)
         - secretRef:
             name: homelab-alerts
@@ -90,7 +86,7 @@ spec:
         # don't let the sidecar generate an endpoint for gatus itself
         gatus.home-operations.com/enabled: "false"
       hostnames:
-        - status.${SECRET_DOMAIN}
+        - status.hnimn.art
       parentRefs:
         - name: envoy-internal
           namespace: network
