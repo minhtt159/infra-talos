@@ -139,6 +139,8 @@ metadata:
       again, new tags are rejected until the key below is re-pinned.
 spec:
   # verifyImages honours a per-rule failureAction; Enforce blocks admission.
+  # Spec-level too so `kubectl get cpol` (which reads only this) shows Enforce.
+  validationFailureAction: Enforce
   background: false
   rules:
     - name: check-litellm-cosign
