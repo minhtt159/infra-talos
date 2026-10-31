@@ -31,8 +31,12 @@ spec:
         intel.feature.node.kubernetes.io/gpu: "true"
       containers:
         - name: llama-server
-          # pinned: b11669 (v0.7.0, new SYCL runtime packaging) hung the B580 and
-          # took the node down 2026-10-16; bump only after a benchmark on the card
+          # b11669 (v0.7.0, new SYCL build packaging) hung the B580 and took the
+          # node down 2026-10-16 after ~50 min of load; we sat on b11610 until
+          # b12019 (2026-10-31). Bumps stay gated on Renovate dashboard approval;
+          # watch the first hour after each one (/health, logs, node uptime).
+          # If decode misbehaves, GGML_SYCL_FA_DPAS=0 turns off the q8_0-KV
+          # flash-attention kernel added in b12019's window (#31125).
           image: ghcr.io/ggml-org/llama.cpp:server-intel-b12019
           imagePullPolicy: IfNotPresent
           args:
