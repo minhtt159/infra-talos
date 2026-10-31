@@ -15,7 +15,7 @@ spec:
 
     # Talos mounts cgroup2 itself
     cgroup:
-      automount:
+      autoMount:
         enabled: false
       hostRoot: /sys/fs/cgroup
 
