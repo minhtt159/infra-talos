@@ -109,6 +109,7 @@ spec:
                 - cert-manager
                 - observability
                 - democratic-csi
+                - truenas-csi
                 - openebs
                 - network # controllers legitimately need the API
                 - argocd # ditto — every component watches/writes cluster state

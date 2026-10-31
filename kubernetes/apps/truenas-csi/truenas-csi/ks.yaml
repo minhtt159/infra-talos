@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: truenas-csi
+spec:
+  # Suspended until Phase 1 of docs/runbooks/truenas-csi-migration.md: the
+  # Vaultwarden item (externalsecret.yaml) has to exist first. Delete this line
+  # to deploy.
+  suspend: true
+  dependsOn:
+    - name: snapshot-controller # VolumeSnapshotClass CRD
+      namespace: kube-system
+  interval: 1h
+  path: ./kubernetes/apps/truenas-csi/truenas-csi/app/
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: truenas-csi
+  wait: false

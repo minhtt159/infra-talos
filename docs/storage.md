@@ -8,6 +8,8 @@ loss) and the Ollama model cache (re-pullable). iSCSI ≈ 1GbE, ~125 MB/s.
 - **democratic-csi** — iSCSI (block) + NFS (shared) from TrueNAS; creds via
   `ExternalSecret`; setup in [democratic-csi/README.md](../kubernetes/apps/democratic-csi/README.md).
   `reclaimPolicy: Retain`: deleting a PVC or the cluster never deletes data.
+  Being replaced by **truenas-csi** (official driver, `truenas-csi-{iscsi,nfs}` classes):
+  [migration runbook](runbooks/truenas-csi-migration.md).
 - **openebs** — hostpath, pinned to the creating node, dies with it. Kafka on
   `openebs-hostpath-sata` (`/var/mnt/sata`, node `storage=sata`); Ollama cache on
   `openebs-hostpath` (`/var/mnt/data` on the GPU node = Talos EPHEMERAL partition).
