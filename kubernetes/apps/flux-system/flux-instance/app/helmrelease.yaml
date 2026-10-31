@@ -14,18 +14,10 @@ spec:
     instance:
       distribution:
         artifact: oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests:v0.62.1
-        version: 2.x
       cluster:
         # ref: https://fluxoperator.dev/docs/crd/fluxinstance/#cluster-configuration
         size: medium
-        networkPolicy: true
-      components:
-        - source-controller
-        - kustomize-controller
-        - helm-controller
-        - notification-controller
       sync:
-        kind: GitRepository
         url: "https://github.com/minhtt159/infra-talos.git"
         ref: "refs/heads/main"
         path: kubernetes/flux/cluster
