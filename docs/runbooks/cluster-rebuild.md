@@ -5,7 +5,7 @@ Tear down, rebuild, re-attach every democratic-csi volume. Works because
 re-mounts the same dataset/zvol.
 
 > Object-level reclaim only. No protection against data loss on TrueNAS itself
-> (VolSync/restic = future). Node-local PVs (Kafka, Ollama cache) are not
+> (VolSync/restic = future). Node-local PVs (Kafka, llama-server cache) are not
 > reclaimable — [node loss](node-loss.md).
 
 ## 0. Preconditions
@@ -13,17 +13,19 @@ re-mounts the same dataset/zvol.
 ```sh
 # every democratic-csi PV must be Retain
 kubectl get pv -o custom-columns=NAME:.metadata.name,RECLAIM:.spec.persistentVolumeReclaimPolicy,SC:.spec.storageClassName
-task pv:patch-retain    # if any say Delete
+# if any say Delete:
+# kubectl patch pv <name> -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
 ```
 
 ## 1. Export
 
 ```sh
 task pv:export          # backups/pv/persistentvolumes.yaml + persistentvolumeclaims.yaml
-git add backups/pv && git commit -m "chore: pv export before rebuild"
 ```
 
 Check: every PV present, each has `spec.csi.volumeHandle`, PVC namespaces right.
+`backups/` is gitignored: PVs carry the TrueNAS portal/server LAN IPs, so never
+commit it here. Keep it outside any worktree that teardown might clean up.
 
 ## 2. Teardown
 
@@ -45,15 +47,17 @@ Before Flux reconciles the apps, or they create fresh empty PVCs.
 
 ```sh
 kubectl get pvc -A -L kustomize.toolkit.fluxcd.io/name
-flux suspend kustomization frigate ollama hindsight postgres grafana-instance kube-prometheus-stack -n flux-system
-# + the bank0-platform Kustomizations for the bank0 Postgres clusters
+# Kustomizations owning TrueNAS PVCs (namespace/name; CNPG + alertmanager PVCs are unlabeled):
+KS=(ai/hindsight ai/yoke frigate/frigate database/postgres observability/grafana-instance
+    observability/kube-prometheus-stack bank0-staging/bank0-platform bank0-production/bank0-platform)
+for k in "${KS[@]}"; do flux suspend kustomization "${k#*/}" -n "${k%/*}"; done
 
 kubectl apply -f backups/pv/persistentvolumes.yaml
 kubectl get pv -o name | xargs -I{} kubectl patch {} --type json \
   -p '[{"op":"remove","path":"/spec/claimRef/uid"},{"op":"remove","path":"/spec/claimRef/resourceVersion"}]' 2>/dev/null || true
 kubectl apply -f backups/pv/persistentvolumeclaims.yaml   # namespaces must exist
 kubectl get pvc -A                                         # every PVC Bound to its ORIGINAL PV
-flux resume kustomization frigate ollama hindsight postgres grafana-instance kube-prometheus-stack -n flux-system
+for k in "${KS[@]}"; do flux resume kustomization "${k#*/}" -n "${k%/*}"; done
 ```
 
 ## 5. Post-checks
