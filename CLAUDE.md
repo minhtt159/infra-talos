@@ -4,75 +4,42 @@ Guidance for AI assistants (and humans) working in this repo. Read this before m
 
 ## What this repo is
 
-Public GitOps for a home Kubernetes cluster on **Talos Linux** (provisioned by
-**Sidero Omni**), reconciled by **Flux**. This repo owns **cluster prerequisites +
-applications**: `bootstrap/helmfile.d/` (CNI/DNS/cert-manager/Flux seed) and
-`kubernetes/` (everything Flux reconciles). Node/OS provisioning (the Omni cluster
-template) lives in a **separate private repo** — **don't add machine/topology detail
-(UUIDs, disk serials, node IPs/hostnames) here.**
+Public GitOps for a home **Talos** cluster: **Flux** reconciles `kubernetes/flux/cluster` + `kubernetes/apps`; **Argo CD** reads `kubernetes/argocd/` (see its README).
+Node/OS provisioning (the Omni cluster template) lives in a **separate private repo**. Architecture and ops: [README.md](README.md).
 
 ## Security posture — hard rules
 
-- **This repo is PUBLIC. No private information.** Functional network values the
-  manifests need — CIDRs, LoadBalancer VIPs, the router IP — are fine; never node IPs,
-  node hostnames, disk serials, machine UUIDs, or hardware inventory. If you're about
-  to write one of those, stop — it belongs in a private repo.
-- **No secrets in git, ever.** Secrets come from **Vaultwarden** at runtime via an
-  `ExternalSecret` (`secretStoreRef` → `ClusterSecretStore/bitwarden-fields`) — reference
-  the Vaultwarden item by UUID + field, never inline the value. This repo has **no SOPS
-  and no age key** (fully decommissioned); the single ESO bootstrap credential
-  (`bitwarden-cli`) is seeded out-of-band from the private Omni repo.
-- Non-secret, cluster-wide values (`${SECRET_DOMAIN}`, …) come from the `cluster-secrets`
-  Secret via `postBuild.substituteFrom` — don't hardcode them.
-- **Before every commit:** no secrets, no private topology.
+- **This repo is PUBLIC. No private information.** Functional network values the manifests need — CIDRs, LoadBalancer VIPs, the router IP — are fine; never node IPs, node hostnames, disk serials, machine UUIDs, or hardware inventory. If you're about to write one of those, stop — it belongs in a private repo.
+- The domain `hnimn.art` is public — write it literally.
+- **No secrets in git, ever.** Secrets come from **Vaultwarden** via an `ExternalSecret` (item UUID + field, never the value); no SOPS, no age key. How-to: [docs/secrets.md](docs/secrets.md).
+- `postBuild.substituteFrom: cluster-secrets` is only for the remaining `SECRET_*` keys (Cloudflare Access team, Access AUD tags, TrueNAS IP).
 
 ## Kyverno policies — write compliant manifests
 
-Policies live in `kubernetes/apps/kyverno/kyverno/policies/policies.yaml`. They're in
-**Enforce** mode (non-compliant pods are rejected at admission). New workloads must satisfy:
+`kubernetes/apps/kyverno/kyverno/policies/policies.yaml`: three validate policies plus the litellm cosign verify, all **Enforce** (non-compliant pods are rejected). New workloads need:
 
-1. **Pinned image tags** — no `:latest`, no tagless image. A chart's `appVersion`
-   default resolves to a pinned tag, which is fine.
+1. **Pinned image tags** — no `:latest`, no tagless image (a chart's `appVersion` default is fine).
 2. **Resource requests** — every container sets `resources.requests.cpu` **and** `memory`.
-3. **ServiceAccount token automount** — set `automountServiceAccountToken: false` unless
-   the workload actually calls the Kubernetes API. Several infra namespaces are excluded;
-   check the policy's exclude list rather than assuming yours is covered.
+3. **`automountServiceAccountToken: false`** unless the workload calls the Kubernetes API. Exclusions live in the policy file — check it, don't assume.
 
 ## Application pattern — match existing apps exactly
 
-- One directory per app: `kubernetes/apps/<namespace>/<app>/`
-  - `ks.yaml` — Flux `Kustomization`: `path:` → the app's `app/` dir, `targetNamespace`,
-    `dependsOn` as needed, and `postBuild.substituteFrom: cluster-secrets` if manifests
-    use `${…}` substitutions.
-  - `app/` — an `OCIRepository` (the chart), a `HelmRelease` (`chartRef` → that
-    OCIRepository), any `ExternalSecret`/extra CRs, and a `kustomization.yaml` listing them.
-- Register the app's `ks.yaml` in the namespace's `kustomization.yaml`.
-- **Charts are OCI artifacts** (`OCIRepository`, pinned by tag) — not classic
-  `HelmRepository` (a few legacy exceptions remain).
-- Copy an existing app (e.g. `kubernetes/apps/cert-manager/cert-manager/`) as the template.
+- Copy `kubernetes/apps/cert-manager/cert-manager/`: `ks.yaml` + `app/` (`OCIRepository` pinned by tag, `HelmRelease` with `chartRef`, extra CRs, `kustomization.yaml`); register `ks.yaml` in the namespace's `kustomization.yaml`.
+- Classic `HelmRepository` only when the chart has no OCI artifact (today: headlamp, intel-device-plugin, knative-operator).
+- `ks.yaml` carries only `path`, `targetNamespace`, `dependsOn`, `healthChecks`, `postBuild`; `sourceRef`/`prune`/`interval` are defaulted by the `cluster-apps` patch.
 
 ## Dependencies — Renovate owns versions
 
-- Everything is pinned and Renovate-tracked. **Don't hand-bump** versions — let Renovate
-  open the PR.
-- Annotate non-standard versions with `# renovate: datasource=… depName=…` on the line
-  above the value. OCIRepository tags are picked up by the native `flux` manager; inline
-  `oci://…:tag` by the OCI custom manager.
+- Everything is pinned and Renovate-tracked. **Don't hand-bump.** Non-standard versions get `# renovate: datasource=… depName=…` on the line above.
+- Dashboard-approval gates (no automatic PR) hold llama.cpp, kibana and bitwarden-cli — `.renovaterc.json5` says why.
 
 ## Grafana dashboards
 
-- Prefer the chart's **mixin** dashboards (they auto-update with the chart bump).
-- If a chart ships none: a `GrafanaDashboard` with `grafanaCom` id **+ revision**, tracked
-  by the `custom.grafana-dashboards` Renovate datasource (see `.renovaterc.json5`).
-  **Don't** commit static, un-tracked grafana.com JSON — that goes stale.
-- Every dashboard sets `spec.folderUID` to an existing topic folder (`GrafanaFolder` CRs in
-  `kubernetes/apps/observability/grafana/instance/grafanafolder.yaml`): `kubernetes`, `network`,
-  `network-cilium`, `network-envoy-gateway`, `observability`, `data`, `ai`, `platform`. **Never**
-  `spec.folder` (a title): it adopts existing folders case-insensitively and lands in the wrong
-  one. Chart-rendered dashboards that only offer a title get `folderUID` via a postRenderer patch.
+- Chart **mixin** first; else a `GrafanaDashboard` with `grafanaCom` id **+ revision**, or a pinned upstream `url:`. Repo-owned JSON only when no upstream dashboard exists.
+- Always `spec.folderUID` (folders in `kubernetes/apps/observability/grafana/instance/grafanafolder.yaml`); **never** `spec.folder` — it adopts folders by title and lands in the wrong one.
 
-## Conventions
+## Working here
 
-- Conventional Commits (`type(scope): summary`).
-- Match the surrounding style; keep diffs minimal.
-- Full architecture, layers, and ops: see [README.md](README.md).
+- Worktrees lack `./kubeconfig` (gitignored) — use the main checkout's. Read-only cluster checks are fine.
+- Design rationale and incident history go to the private homelab-platform repo; manifest comments stay "what + gotcha", ≤3 lines.
+- Conventional Commits (`type(scope): summary`); match the surrounding style, keep diffs minimal. **Before every commit:** no secrets, no private topology.
