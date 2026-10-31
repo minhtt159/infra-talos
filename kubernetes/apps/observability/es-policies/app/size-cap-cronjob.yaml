@@ -28,7 +28,7 @@ spec:
               command:
                 - python3
                 - /scripts/es_size_cap.py
-                - --es-url=https://elastic.${SECRET_DOMAIN}
+                - --es-url=https://elastic.hnimn.art
                 - --pattern=logs-*
                 - --max-bytes=53687091200 # 50 GiB total across logs-* streams
               env:

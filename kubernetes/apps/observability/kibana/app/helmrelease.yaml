@@ -22,9 +22,9 @@ spec:
               repository: docker.elastic.co/kibana/kibana
               tag: 9.5.5
             env:
-              ELASTICSEARCH_HOSTS: https://elastic.${SECRET_DOMAIN}
+              ELASTICSEARCH_HOSTS: https://elastic.hnimn.art
               ELASTICSEARCH_USERNAME: kibana_system
-              SERVER_PUBLICBASEURL: https://kibana.${SECRET_DOMAIN}
+              SERVER_PUBLICBASEURL: https://kibana.hnimn.art
               TELEMETRY_ENABLED: "false"
             envFrom:
               - secretRef:
@@ -71,7 +71,7 @@ spec:
           forward-auth: authentik
         annotations:
           gatus.home-operations.com/enabled: "false" # gated by authentik forward-auth
-        hostnames: ["kibana.${SECRET_DOMAIN}"]
+        hostnames: ["kibana.hnimn.art"]
         parentRefs:
           - name: envoy-internal
             namespace: network
@@ -84,7 +84,7 @@ spec:
           # no internet-view probe: its only answer (authentik 302) is also what Access
           # returns for a rejected token - a false green (docs/observability/healthchecks.md)
           gatus.home-operations.com/enabled: "false"
-        hostnames: ["kibana.${SECRET_DOMAIN}"]
+        hostnames: ["kibana.hnimn.art"]
         parentRefs:
           - name: envoy-external
             namespace: network

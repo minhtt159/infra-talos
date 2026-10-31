@@ -16,7 +16,7 @@ spec:
   interval: 1h
   values:
     global:
-      domain: argocd.${SECRET_DOMAIN}
+      domain: argocd.hnimn.art
     configs:
       params:
         # TLS ends at envoy-internal. HTTPS here too = second self-signed hop,
@@ -27,7 +27,7 @@ spec:
       cm:
         oidc.config: |
           name: authentik
-          issuer: https://auth.${SECRET_DOMAIN}/application/o/argocd/
+          issuer: https://auth.hnimn.art/application/o/argocd/
           clientID: $argocd-oidc:clientID
           clientSecret: $argocd-oidc:clientSecret
           requestedScopes: ["openid", "profile", "email"]

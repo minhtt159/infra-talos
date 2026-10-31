@@ -22,7 +22,7 @@ spec:
     replicaCount: 2
     servers:
       # Internal domain is split-horizon: only the router (10.1.80.1) knows
-      # *.${SECRET_DOMAIN} (elastic, promeo, truenas...). The default `.`
+      # *.hnimn.art (elastic, promeo, truenas...). The default `.`
       # server forwards to /etc/resolv.conf = [10.1.80.1, 1.1.1.1], so ~half
       # of cache-miss queries hit 1.1.1.1 -> NXDOMAIN. Pin the internal zone
       # to the router only.
@@ -30,7 +30,7 @@ spec:
       # (-> 1.1.1.1 half the time), bypassing this pin - pods following the
       # ndots:5 search path got Cloudflare's public IPs for LAN-only answers.
       - zones:
-          - zone: ${SECRET_DOMAIN}
+          - zone: hnimn.art
             scheme: dns://
         port: 53
         plugins:

@@ -5,7 +5,7 @@ metadata:
   name: llama-server
 spec:
   hostnames:
-    - "llama.${SECRET_DOMAIN}"
+    - "llama.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

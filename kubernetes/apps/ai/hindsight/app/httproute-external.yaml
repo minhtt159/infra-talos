@@ -1,5 +1,5 @@
 ---
-# Public via CF tunnel (*.${SECRET_DOMAIN} -> envoy-external). CF Access:
+# Public via CF tunnel (*.hnimn.art -> envoy-external). CF Access:
 #   hindsight     (UI)      -> Entra SSO
 #   hindsight-api (API/MCP) -> service token (+ Entra for UI->API)
 # Plus app Bearer key (hindsight-auth).
@@ -13,8 +13,8 @@ metadata:
       path: /dashboard
 spec:
   hostnames:
-    - "hindsight.${SECRET_DOMAIN}" # UI
-    - "hindsight-api.${SECRET_DOMAIN}" # REST + MCP
+    - "hindsight.hnimn.art" # UI
+    - "hindsight-api.hnimn.art" # REST + MCP
   parentRefs:
     - name: envoy-external
       namespace: network
@@ -23,7 +23,7 @@ spec:
     - matches:
         - headers:
             - name: Host
-              value: "hindsight-api.${SECRET_DOMAIN}"
+              value: "hindsight-api.hnimn.art"
       backendRefs:
         - name: hindsight
           port: 8888

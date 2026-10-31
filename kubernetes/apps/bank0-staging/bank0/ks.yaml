@@ -13,10 +13,6 @@ spec:
       namespace: database
   interval: 1h
   path: ./kubernetes/apps/bank0-staging/bank0/app
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
   prune: true
   sourceRef:
     kind: GitRepository

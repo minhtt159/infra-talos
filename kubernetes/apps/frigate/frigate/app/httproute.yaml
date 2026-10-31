@@ -7,7 +7,7 @@ metadata:
   # envoy terminates TLS and speaks plaintext to 8971
 spec:
   hostnames:
-    - "frigate.${SECRET_DOMAIN}"
+    - "frigate.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

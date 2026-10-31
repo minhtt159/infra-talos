@@ -18,7 +18,7 @@ spec:
         address: "${SECRET_TRUENAS_IP}"
         port: 30141
   tls:
-    sni: "auth-direct.${SECRET_DOMAIN}"
+    sni: "auth-direct.hnimn.art"
     caCertificateRefs:
       - group: ""
         kind: Secret

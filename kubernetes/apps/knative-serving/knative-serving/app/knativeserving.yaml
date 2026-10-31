@@ -26,7 +26,7 @@ spec:
       # one-level Universal SSL limit never applies.
       domain-template: "{{.Name}}-{{.Namespace}}.{{.Domain}}"
     domain:
-      fn.${SECRET_DOMAIN}: ""
+      fn.hnimn.art: ""
     gateway:
       # `service:` omitted — net-gateway-api falls back to
       # Gateway.status.addresses[0].

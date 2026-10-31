@@ -11,10 +11,6 @@ metadata:
 spec:
   interval: 1h
   path: ./kubernetes/apps/observability/es-policies/app
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
   prune: true
   force: true # recreate the immutable Job on content-hash change
   wait: true

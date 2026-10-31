@@ -8,7 +8,7 @@ metadata:
       path: /health/readiness
 spec:
   hostnames:
-    - "litellm.${SECRET_DOMAIN}"
+    - "litellm.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

@@ -32,7 +32,7 @@ spec:
     txtPrefix: k8s.
     txtOwnerId: default
     domainFilters:
-      - "${SECRET_DOMAIN}"
+      - "hnimn.art"
     serviceMonitor:
       enabled: true
     resources:

@@ -23,7 +23,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
     api:
-      host: kargo.${SECRET_DOMAIN}
+      host: kargo.hnimn.art
       # TLS ends at envoy-internal. API serves plain HTTP, still must emit
       # https:// URLs for UI + token issuer.
       tls:
@@ -38,7 +38,7 @@ spec:
       # break-glass.
       oidc:
         enabled: true
-        issuerURL: https://auth.${SECRET_DOMAIN}/application/o/kargo/
+        issuerURL: https://auth.hnimn.art/application/o/kargo/
         clientID: qIUxqMMMgjkoBY5BgxXl53bKgw2pYWHSX7odkRGY
         # authentik's profile scope already carries groups; it has no groups scope.
         additionalScopes: []
@@ -53,7 +53,7 @@ spec:
       # wins over the envFrom ConfigMap.
       env:
         - name: ARGOCD_URLS
-          value: "=https://argocd.${SECRET_DOMAIN}"
+          value: "=https://argocd.hnimn.art"
         - name: ARGOCD_NAMESPACE
           value: argocd
       resources:

@@ -12,8 +12,8 @@ spec:
   values:
     # ref: https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-elasticsearch-exporter/values.yaml
     es:
-      uri: https://elastic.${SECRET_DOMAIN}
-      # elastic.${SECRET_DOMAIN} is fronted with a valid cert; flip to true only on x509 errors
+      uri: https://elastic.hnimn.art
+      # elastic.hnimn.art is fronted with a valid cert; flip to true only on x509 errors
       sslSkipVerify: false
       all: true
       indices: true

@@ -11,7 +11,7 @@ metadata:
         - "[STATUS] == 404"
 spec:
   hostnames:
-    - "flux-webhook.${SECRET_DOMAIN}"
+    - "flux-webhook.hnimn.art"
   parentRefs:
     - name: envoy-external
       namespace: network

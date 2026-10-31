@@ -24,7 +24,7 @@ spec:
             - python3
             - /scripts/apply_es_policies.py
             - --dir=/policies
-            - --es-url=https://elastic.${SECRET_DOMAIN}
+            - --es-url=https://elastic.hnimn.art
             - --wait-healthy
           env:
             - name: ES_API_KEY

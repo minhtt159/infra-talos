@@ -2,19 +2,19 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "${SECRET_DOMAIN/./-}-production"
+  name: "hnimn-art-production"
 spec:
-  secretName: "${SECRET_DOMAIN/./-}-production-tls"
+  secretName: "hnimn-art-production-tls"
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
-  commonName: "${SECRET_DOMAIN}"
+  commonName: "hnimn.art"
   # A wildcard covers exactly one label, so anything nested deeper than
-  # <host>.${SECRET_DOMAIN} needs its own SAN — hence the bank0 entries.
+  # <host>.hnimn.art needs its own SAN — hence the bank0 entries.
   dnsNames:
-    - "${SECRET_DOMAIN}"
-    - "*.${SECRET_DOMAIN}"
-    - "*.bank0.${SECRET_DOMAIN}"
-    - "*.staging.bank0.${SECRET_DOMAIN}"
-    # ksvc hostnames: <name>-<namespace>.fn.${SECRET_DOMAIN}
-    - "*.fn.${SECRET_DOMAIN}"
+    - "hnimn.art"
+    - "*.hnimn.art"
+    - "*.bank0.hnimn.art"
+    - "*.staging.bank0.hnimn.art"
+    # ksvc hostnames: <name>-<namespace>.fn.hnimn.art
+    - "*.fn.hnimn.art"

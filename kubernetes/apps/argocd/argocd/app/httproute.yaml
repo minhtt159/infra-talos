@@ -12,7 +12,7 @@ metadata:
         - "[STATUS] == 200"
 spec:
   hostnames:
-    - "argocd.${SECRET_DOMAIN}"
+    - "argocd.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

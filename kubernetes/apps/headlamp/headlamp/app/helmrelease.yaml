@@ -20,11 +20,11 @@ spec:
   values:
     config:
       oidc:
-        issuerURL: https://auth.${SECRET_DOMAIN}/application/o/kubernetes/
+        issuerURL: https://auth.hnimn.art/application/o/kubernetes/
         # authentik has no groups scope (profile carries the claim);
         # offline_access gets a refresh token for the 15 min id_token.
         scopes: profile,email,offline_access
-        callbackURL: https://headlamp.${SECRET_DOMAIN}/oidc-callback
+        callbackURL: https://headlamp.hnimn.art/oidc-callback
     # the chart binds its own SA to cluster-admin by default. Not needed:
     # every request uses the logged-in user's token.
     clusterRoleBinding:
@@ -73,7 +73,7 @@ spec:
       annotations:
         gatus.home-operations.com/enabled: "false" # gated by authentik forward-auth
       hostnames:
-        - headlamp.${SECRET_DOMAIN}
+        - headlamp.hnimn.art
       parentRefs:
         - name: envoy-internal
           namespace: network

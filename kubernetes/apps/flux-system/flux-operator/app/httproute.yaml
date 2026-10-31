@@ -5,7 +5,7 @@ metadata:
   name: flux-web
 spec:
   hostnames:
-    - "flux.${SECRET_DOMAIN}"
+    - "flux.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

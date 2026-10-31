@@ -16,7 +16,7 @@ metadata:
         - "[STATUS] == 200"
 spec:
   hostnames:
-    - "api.staging.bank0.${SECRET_DOMAIN}"
+    - "api.staging.bank0.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network
@@ -38,7 +38,7 @@ metadata:
         - "[STATUS] == 401"
 spec:
   hostnames:
-    - "portal.staging.bank0.${SECRET_DOMAIN}"
+    - "portal.staging.bank0.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network
@@ -71,8 +71,8 @@ metadata:
     gatus.home-operations.com/enabled: "false" # see bank0-api / bank0-portal for the probes
 spec:
   hostnames:
-    - "api.staging.bank0.${SECRET_DOMAIN}"
-    - "portal.staging.bank0.${SECRET_DOMAIN}"
+    - "api.staging.bank0.hnimn.art"
+    - "portal.staging.bank0.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

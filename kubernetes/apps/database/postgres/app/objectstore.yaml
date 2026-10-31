@@ -9,7 +9,7 @@ spec:
   configuration:
     # TODO: create the bucket in Garage and set the real endpoint host.
     destinationPath: s3://cnpg-backups/
-    endpointURL: https://s3.${SECRET_DOMAIN}
+    endpointURL: https://s3.hnimn.art
     s3Credentials:
       accessKeyId:
         name: postgres-backup-s3

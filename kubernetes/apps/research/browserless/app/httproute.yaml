@@ -21,7 +21,7 @@ metadata:
         - "[BODY].pressure.isAvailable == true"
 spec:
   hostnames:
-    - "browser.${SECRET_DOMAIN}"
+    - "browser.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

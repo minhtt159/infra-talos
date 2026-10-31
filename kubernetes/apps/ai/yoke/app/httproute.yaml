@@ -11,7 +11,7 @@ metadata:
         - "[STATUS] == 200"
 spec:
   hostnames:
-    - "yoke.${SECRET_DOMAIN}"
+    - "yoke.hnimn.art"
   parentRefs:
     - name: envoy-internal
       namespace: network

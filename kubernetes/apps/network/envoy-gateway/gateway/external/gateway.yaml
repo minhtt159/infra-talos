@@ -5,7 +5,7 @@ kind: Gateway
 metadata:
   name: envoy-external
   annotations:
-    external-dns.kubernetes.io/target: &hostname external.${SECRET_DOMAIN}
+    external-dns.kubernetes.io/target: &hostname external.hnimn.art
     # Gatus internet view: every route here inherits this - public DNS, through
     # Cloudflare Access with the gatus-access token (passes the gate only; each
     # app's own login still applies). ignore-redirect: an Access 302 must fail.
@@ -44,4 +44,4 @@ spec:
       tls:
         certificateRefs:
           - kind: Secret
-            name: ${SECRET_DOMAIN/./-}-production-tls
+            name: hnimn-art-production-tls

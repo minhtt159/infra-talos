@@ -18,7 +18,7 @@ spec:
       provider:
         prometheus:
           # promeo = Prometheus on TrueNAS. In-cluster one is agent, no query API.
-          address: https://promeo.${SECRET_DOMAIN}
+          address: https://promeo.hnimn.art
           query: |
             sum(rate(envoy_cluster_external_upstream_rq_xx{envoy_cluster_name="httproute/bank0-staging/bank0-api/rule/0",envoy_response_code_class!="5"}[5m]))
             /
