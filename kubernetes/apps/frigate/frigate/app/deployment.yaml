@@ -1,7 +1,7 @@
 ---
-# Detection back on the Coral TPU (turing-01, arm64/Rockchip) — frees the Intel
-# dGPU (mini-talos-04) for Ollama only. Coral = PCIe /dev/apex_0 via hostPath,
-# which needs a privileged pod (no Coral device plugin) + PSA privileged ns.
+# Detection back on the Coral TPU (the Coral node, arm64/Rockchip) — frees the
+# Intel dGPU (the Intel GPU node) for llama-server. Coral = PCIe /dev/apex_0 via
+# hostPath, which needs a privileged pod (no Coral device plugin) + PSA privileged ns.
 # Config (detectors.coral edgetpu/pci, cameras) lives in the config PVC, not here.
 apiVersion: apps/v1
 kind: Deployment
@@ -28,7 +28,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: capability # Omni nodeLabel on turing-01 (Coral PCIe)
+                  - key: capability # Omni nodeLabel on the Coral node (Coral PCIe)
                     operator: In
                     values:
                       - coral
