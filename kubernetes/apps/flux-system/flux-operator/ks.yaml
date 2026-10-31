@@ -5,13 +5,7 @@ kind: Kustomization
 metadata:
   name: flux-operator
 spec:
-  interval: 1h
   path: ./kubernetes/apps/flux-system/flux-operator/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: flux-system
   wait: true
 ---
@@ -21,12 +15,6 @@ kind: Kustomization
 metadata:
   name: flux-monitor
 spec:
-  interval: 1h
   path: ./kubernetes/apps/flux-system/flux-operator/flux-monitor
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: flux-system
   wait: true

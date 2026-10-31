@@ -5,12 +5,5 @@ kind: Kustomization
 metadata:
   name: searxng
 spec:
-  interval: 1h
   path: ./kubernetes/apps/research/searxng/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: research
-  wait: false

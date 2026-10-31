@@ -4,12 +4,5 @@ kind: Kustomization
 metadata:
   name: democratic-nfs
 spec:
-  interval: 1h
   path: ./kubernetes/apps/democratic-csi/nfs/app/
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: democratic-csi
-  wait: false

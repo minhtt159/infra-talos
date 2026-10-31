@@ -12,17 +12,11 @@ spec:
       namespace: argocd
     - name: argo-rollouts # same check, AnalysisRun CRDs
       namespace: argocd
-  interval: 1h
   path: ./kubernetes/apps/kargo/kargo/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: kargo
   # false: API waits on the Vaultwarden item in externalsecret.yaml. Don't
   # wedge the reconcile on it.

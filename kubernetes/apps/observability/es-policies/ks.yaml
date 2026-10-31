@@ -9,14 +9,8 @@ kind: Kustomization
 metadata:
   name: es-policies
 spec:
-  interval: 1h
   path: ./kubernetes/apps/observability/es-policies/app
-  prune: true
   force: true # recreate the immutable Job on content-hash change
   wait: true
   timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: observability

@@ -5,12 +5,5 @@ kind: Kustomization
 metadata:
   name: rbac
 spec:
-  interval: 1h
   path: ./kubernetes/apps/kube-system/rbac/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: kube-system
-  wait: false

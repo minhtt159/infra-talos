@@ -8,12 +8,5 @@ spec:
   dependsOn:
     - name: knative-serving
       namespace: knative-serving
-  interval: 1h
   path: ./kubernetes/apps/functions/hello/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: functions
-  wait: false

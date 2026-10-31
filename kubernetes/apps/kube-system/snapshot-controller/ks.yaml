@@ -5,13 +5,7 @@ kind: Kustomization
 metadata:
   name: snapshot-controller
 spec:
-  interval: 1h
   path: ./kubernetes/apps/kube-system/snapshot-controller/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: kube-system
   # CRDs (VolumeSnapshot & co.) must be established before consumers appear
   wait: true

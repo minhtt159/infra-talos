@@ -5,12 +5,6 @@ kind: Kustomization
 metadata:
   name: frigate
 spec:
-  interval: 1h
   path: ./kubernetes/apps/frigate/frigate/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: frigate
   wait: true

@@ -10,13 +10,7 @@ spec:
       kind: HelmRelease
       name: knative-operator
       namespace: knative-serving
-  interval: 1h
   path: ./kubernetes/apps/knative-serving/knative-operator/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: knative-serving
   # the KnativeServing CR (next ks) needs the operator's CRDs to exist first
   wait: true
