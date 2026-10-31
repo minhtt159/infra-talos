@@ -52,7 +52,7 @@ spec:
       # a restart needs internet. Bake an image if that ever bites. baseImage
       # is untracked: the annotation regex can't split an image:tag value —
       # it only runs npx, bump by hand on a node LTS change.
-      baseImage: docker.io/library/node:24.22.1-alpine
+      baseImage: docker.io/library/node:26.13.0-alpine
       # renovate: datasource=npm depName=@headlamp-k8s/pluginctl
       version: 0.1.1
       resources:
