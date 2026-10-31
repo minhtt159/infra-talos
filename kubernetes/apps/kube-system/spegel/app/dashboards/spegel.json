@@ -38,7 +38,7 @@
   },
   "title": "Spegel",
   "uid": "spegel",
-  "description": "Spegel v0.8 P2P registry mirror: cache hits, registry traffic, DHT routing, resources.",
+  "description": "Spegel v0.8 P2P registry mirror: cache hits, registry traffic, DHT routing. Pod CPU/memory: the kubernetes mixin dashboards.",
   "tags": [
     "spegel",
     "registry",
@@ -939,119 +939,6 @@
         }
       ],
       "id": 22
-    },
-    {
-      "type": "row",
-      "title": "Resources",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 56
-      },
-      "panels": [],
-      "id": 23
-    },
-    {
-      "type": "timeseries",
-      "title": "CPU",
-      "description": "Registry container CPU per pod.",
-      "datasource": "${DS_PROMETHEUS}",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 57
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "cores",
-          "min": 0,
-          "custom": {
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "last",
-            "max"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}",
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"kube-system\", pod=~\"spegel-[a-z0-9]{5}\", container=\"registry\"}[$__rate_interval]))",
-          "legendFormat": "{{pod}}"
-        }
-      ],
-      "id": 24
-    },
-    {
-      "type": "timeseries",
-      "title": "Memory",
-      "description": "Working set per pod vs the container limit.",
-      "datasource": "${DS_PROMETHEUS}",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 57
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "min": 0,
-          "custom": {
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "last",
-            "max"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}",
-          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"kube-system\", pod=~\"spegel-[a-z0-9]{5}\", container=\"registry\"})",
-          "legendFormat": "{{pod}}"
-        },
-        {
-          "refId": "B",
-          "datasource": "${DS_PROMETHEUS}",
-          "expr": "max(kube_pod_container_resource_limits{namespace=\"kube-system\", pod=~\"spegel-[a-z0-9]{5}\", container=\"registry\", resource=\"memory\"})",
-          "legendFormat": "limit"
-        }
-      ],
-      "id": 25
     }
   ]
 }
