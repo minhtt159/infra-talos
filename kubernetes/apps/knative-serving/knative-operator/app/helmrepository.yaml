@@ -1,6 +1,6 @@
 ---
 # Knative publishes no OCI chart — classic HelmRepository, same legacy
-# exception as kyverno.
+# exception as intel-device-plugin.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:

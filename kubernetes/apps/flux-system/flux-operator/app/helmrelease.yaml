@@ -34,11 +34,6 @@ spec:
             impersonation:
               username: claims.email
               groups: claims.groups
-    # NOTE: I made a PR to fix networkPolicy
-    # https://github.com/controlplaneio-fluxcd/charts/pull/135
-    # web:
-    #   networkPolicy:
-    #     create: false
   valuesFrom:
     - kind: Secret
       name: flux-web-client

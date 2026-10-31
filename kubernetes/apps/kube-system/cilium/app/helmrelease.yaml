@@ -62,9 +62,6 @@ spec:
       # being a device (now excluded). KubeSpan must stay off (Talos: needs legacy)
       hostLegacyRouting: false
 
-    cni:
-      exclusive: true
-
     # fq qdisc/EDT pacing + BBR for pods (needs eBPF host routing)
     # netkit skipped: can't switch with veth pods running, needs per-node drain
     bandwidthManager:
@@ -77,11 +74,11 @@ spec:
       # honour trafficDistribution: PreferSameNode (spegel 0.8 registry NodePort)
       serviceTopology: true
 
-    # pod↔pod WireGuard :51871; nodeEncryption wedged etcd (July 2026, cilium#28965)
+    # pod↔pod WireGuard :51871. Leave nodeEncryption at its default (off): it
+    # wedged etcd (July 2026, cilium#28965)
     encryption:
       enabled: true
       type: wireguard
-      nodeEncryption: false
 
     # LB VIPs over BGP (bgp.yaml, networks.yaml); L2 announcements retired Sept 2026
     bgpControlPlane:
@@ -89,8 +86,6 @@ spec:
 
     # embedded Envoy unused (no L7 policy); edge = ../../../network/envoy-gateway
     envoy:
-      enabled: false
-    gatewayAPI:
       enabled: false
 
     hubble:
@@ -121,14 +116,9 @@ spec:
       ui:
         enabled: *hubble-state
         rollOutPods: true
-        replicas: 1
-        ingress:
-          enabled: false # not exposed
       tls:
         enabled: *hubble-state
         auto:
-          enabled: true
-          method: helm
           certValidityDuration: 1095
 
     dashboards:
@@ -140,19 +130,10 @@ spec:
         trustCRDsExist: true
 
     operator:
-      replicas: 2
       rollOutPods: true
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - topologyKey: kubernetes.io/hostname
-              labelSelector:
-                matchLabels:
-                  io.cilium/app: operator
       dashboards:
         enabled: true
       prometheus:
-        enabled: true
         serviceMonitor:
           enabled: true
 

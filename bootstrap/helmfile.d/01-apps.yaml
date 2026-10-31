@@ -11,7 +11,6 @@ helmDefaults:
 releases:
   - name: cilium
     namespace: kube-system
-    # chart: https://helm.cilium.io
     chart: oci://quay.io/cilium/charts/cilium
     version: 1.20.4
     values:
@@ -30,21 +29,11 @@ releases:
   - name: coredns
     namespace: kube-system
     chart: oci://ghcr.io/coredns/charts/coredns
-    # chart: https://coredns.github.io/helm
     version: 1.49.0
     values:
       - ./templates/values.yaml.gotmpl
     needs:
       - kube-system/cilium
-
-  # - name: spegel
-  #   namespace: kube-system
-  #   chart: oci://ghcr.io/spegel-org/helm-charts/spegel
-  #   version: 0.5.1
-  #   values:
-  #     - ./templates/values.yaml.gotmpl
-  #   needs:
-  #     - kube-system/coredns
 
   - name: cert-manager
     namespace: cert-manager
