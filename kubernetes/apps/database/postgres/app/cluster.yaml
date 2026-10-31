@@ -22,7 +22,7 @@ spec:
   # -standard flavor bundles pgvector (needed by Hindsight); default operand is
   # the -system flavor (no extensions). Must be >= the running minor — CNPG
   # rejects downgrades and in-place major changes.
-  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  # Renovate: tracked by the CNPG imageName custom manager (minor/patch only).
   imageName: ghcr.io/cloudnative-pg/postgresql:18.4-standard-trixie
   managed:
     roles:

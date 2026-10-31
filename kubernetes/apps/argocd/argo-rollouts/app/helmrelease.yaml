@@ -20,7 +20,7 @@ spec:
       # egress to github releases.
       # sha256 pinned: the controller fetches and executes this on every restart
       # while holding cluster-wide RBAC over Deployments and HTTPRoutes.
-      # renovate: datasource=github-releases depName=argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi
+      # Hand-bumped (URL + sha256 together); Renovate can't update the hash.
       trafficRouterPlugins:
         - name: argoproj-labs/gatewayAPI # must match what the plugin expects
           location: https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.16.0/gatewayapi-plugin-linux-amd64
