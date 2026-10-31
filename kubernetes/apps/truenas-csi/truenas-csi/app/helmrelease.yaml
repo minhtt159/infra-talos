@@ -1,0 +1,105 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# Official TrueNAS CSI driver (TrueNAS 25.10+, WebSocket API). Replaces
+# democratic-csi; both run side by side during the move — different driver
+# names and StorageClasses. Plan: docs/runbooks/truenas-csi-migration.md.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: truenas-csi
+spec:
+  chart:
+    spec:
+      chart: truenas-csi
+      version: 1.4.0
+      sourceRef:
+        kind: HelmRepository
+        name: truenas-csi
+  interval: 1h
+  valuesFrom:
+    - kind: Secret
+      name: truenas-csi-secret
+      valuesKey: url
+      targetPath: truenas.url
+    - kind: Secret
+      name: truenas-csi-secret
+      valuesKey: pool
+      targetPath: truenas.defaultPool
+  values:
+    # ref: https://github.com/truenas/truenas-csi/blob/master/charts/truenas-csi/values.yaml
+    fullnameOverride: truenas-csi
+
+    truenas:
+      # nfsServer / iscsiPortal are derived from truenas.url's host.
+      existingSecret: truenas-csi-secret
+      existingSecretKey: api-key
+      # false = verify the appliance cert (must match the host in url). Flip to
+      # true only for TrueNAS's stock self-signed cert, or set caBundle.
+      insecureSkipTLS: false
+
+    # klog -v; chart default 4 logs every CSI call. 2 keeps provision/attach/
+    # resize/errors (same reasoning as the democratic-csi sidecars).
+    logLevel: 2
+
+    controller:
+      defaultFSType: xfs
+
+    storageClasses:
+      - name: truenas-csi-iscsi
+        # Retain: zvol survives PVC/cluster deletion; reclaim via
+        # docs/runbooks/cluster-rebuild.md. Chart default is Delete.
+        reclaimPolicy: Retain
+        volumeBindingMode: Immediate
+        allowVolumeExpansion: true
+        parameters:
+          protocol: iscsi
+          datasetPath: truenas-csi/iscsi
+          csi.storage.k8s.io/fstype: xfs
+          # chart default false = thick zvol, full size reserved up front
+          sparse: "true"
+      - name: truenas-csi-nfs
+        reclaimPolicy: Retain
+        volumeBindingMode: Immediate
+        allowVolumeExpansion: true
+        mountOptions:
+          - noatime
+          - nfsvers=4
+        parameters:
+          protocol: nfs
+          datasetPath: truenas-csi/nfs
+          # default share squashes every client to root:wheel (mapall). Apps
+          # that chown their data dir need nfs.rootSquash: "false" + fsGroup.
+
+    volumeSnapshotClass:
+      enabled: true
+      name: truenas-csi
+      deletionPolicy: Delete
+
+    metrics:
+      enabled: true # controller only; node metrics bind a hostNetwork port on every node
+      serviceMonitor:
+        enabled: true
+
+  postRenderers:
+    # Talos: the chart's iscsi-dir hostPath is type Directory and kubelet's
+    # check fails ("/etc/iscsi is not a directory") even with iscsi-tools
+    # installed, so the node pods never start. The mount is unused (iscsiadm
+    # runs on the host via nsenter). truenas/truenas-csi#80, #84.
+    - kustomize:
+        patches:
+          - target:
+              kind: DaemonSet
+              name: truenas-csi-node
+            patch: |-
+              apiVersion: apps/v1
+              kind: DaemonSet
+              metadata:
+                name: truenas-csi-node
+              spec:
+                template:
+                  spec:
+                    volumes:
+                      - name: iscsi-dir
+                        hostPath:
+                          path: /etc/iscsi
+                          type: DirectoryOrCreate

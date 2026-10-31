@@ -1,0 +1,11 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/helmrepository_v1.json
+# Upstream ships no OCI chart yet (truenas/truenas-csi#83), only an index.yaml
+# on master — classic HelmRepository, same legacy exception as headlamp/kyverno.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: truenas-csi
+spec:
+  interval: 1h
+  url: https://raw.githubusercontent.com/truenas/truenas-csi/master/charts
