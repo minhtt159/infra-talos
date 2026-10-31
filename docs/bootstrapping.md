@@ -29,4 +29,4 @@ SECRET_DOMAIN=<domain> helmfile --file bootstrap/helmfile.d/01-apps.yaml sync
 |------|------|
 | `task cluster:kubeconfig` | kubeconfig from Omni → `./kubeconfig` |
 | `task bootstrap` | CRDs, then prerequisites |
-| `task reconcile` | force Flux sync |
+| `flux reconcile kustomization cluster-apps -n flux-system --with-source` | force Flux sync |

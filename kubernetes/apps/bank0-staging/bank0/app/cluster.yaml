@@ -19,7 +19,7 @@ spec:
   # shutdown + reschedule (iSCSI follows). Re-enable at instances >= 2.
   enablePDB: false
   # PG18 is a hard floor — bank0's schema uses uuidv7() with no polyfill.
-  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  # Renovate: tracked by the CNPG imageName custom manager (minor/patch only).
   imageName: ghcr.io/cloudnative-pg/postgresql:18.4-standard-trixie
   bootstrap:
     initdb:

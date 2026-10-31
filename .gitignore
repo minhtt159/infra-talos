@@ -2,3 +2,4 @@ kubeconfig
 talosconfig
 .env
 .DS_Store
+backups/
