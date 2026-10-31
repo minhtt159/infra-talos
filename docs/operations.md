@@ -1,10 +1,10 @@
 # Operations & automation
 
 - **Renovate** ([`.renovaterc.json5`](../.renovaterc.json5)) — weekends; pins Action
-  digests; groups Flux operator/instance; Conventional Commits + `type/*`, `renovate/*`
-  labels. Custom managers: `# renovate:` annotations and `oci://…:tag`.
-- **GitHub Actions** ([`.github/workflows/`](../.github/workflows)) — `labeler`,
-  `label-sync` ([`.github/labels.yaml`](../.github/labels.yaml)), PR title/size checks.
+  digests; groups Flux operator/instance; Conventional Commits. Custom managers:
+  `# renovate:` annotations, CNPG `imageName:` and `oci://…:tag`.
+- **GitHub Actions** ([`.github/workflows/`](../.github/workflows)) — PR title check
+  (Conventional Commits).
 - **Flux webhook** — [`receiver.yaml`](../kubernetes/apps/flux-system/flux-instance/app/receiver.yaml)
   reconciles on push.
 

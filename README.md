@@ -61,8 +61,8 @@ layer relies on:
 │   ├── flux/cluster/ks.yaml        # ROOT Kustomization "cluster-apps" → ./kubernetes/apps
 │   └── apps/<namespace>/<app>/     # ks.yaml + app/ (HelmRelease, OCIRepository, ExternalSecret, …)
 ├── docs/                          # the docs linked above + runbooks/
-├── .github/workflows/             # labeler, label-sync
-├── Taskfile.yaml                  # Omni cred fetch, helmfile bootstrap, Flux/PV ops
+├── .github/workflows/             # semantic PR title check
+├── Taskfile.yaml                  # kubeconfig fetch, helmfile bootstrap, PV export
 ├── .renovaterc.json5              # Renovate config
 ├── CLAUDE.md                      # contributor/AI conventions + security posture
 └── .envrc                         # direnv: exports KUBECONFIG
