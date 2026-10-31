@@ -19,7 +19,7 @@ one Flux `Kustomization` per app → `app/` with a `HelmRelease`.
 - **[Secrets](docs/secrets.md)** — External Secrets Operator + Vaultwarden.
 - **[Bootstrapping](docs/bootstrapping.md)** — standing up a fresh cluster.
 - **[Operations & automation](docs/operations.md)** — Renovate, GitHub Actions, Flux webhook, day-2 commands.
-- **Runbooks** — [cluster rebuild](docs/runbooks/cluster-rebuild.md), [node loss](docs/runbooks/node-loss.md).
+- **Runbooks** — [cluster rebuild](docs/runbooks/cluster-rebuild.md), [node loss](docs/runbooks/node-loss.md), [democratic-csi → truenas-csi](docs/runbooks/truenas-csi-migration.md).
 - **[CLAUDE.md](CLAUDE.md)** — conventions + security posture for contributors (incl. AI).
 
 ---

@@ -25,7 +25,7 @@ Node/OS provisioning (the Omni cluster template) lives in a **separate private r
 ## Application pattern — match existing apps exactly
 
 - Copy `kubernetes/apps/cert-manager/cert-manager/`: `ks.yaml` + `app/` (`OCIRepository` pinned by tag, `HelmRelease` with `chartRef`, extra CRs, `kustomization.yaml`); register `ks.yaml` in the namespace's `kustomization.yaml`.
-- Classic `HelmRepository` only when the chart has no OCI artifact (today: headlamp, intel-device-plugin, knative-operator).
+- Classic `HelmRepository` only when the chart has no OCI artifact (today: headlamp, intel-device-plugin, knative-operator, truenas-csi).
 - `ks.yaml` carries only `path`, `targetNamespace`, `dependsOn`, `healthChecks`, `postBuild`; `sourceRef`/`prune`/`interval` are defaulted by the `cluster-apps` patch.
 
 ## Dependencies — Renovate owns versions
