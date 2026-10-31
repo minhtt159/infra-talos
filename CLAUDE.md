@@ -36,7 +36,7 @@ Node/OS provisioning (the Omni cluster template) lives in a **separate private r
 ## Grafana dashboards
 
 - Chart **mixin** first; else a `GrafanaDashboard` with `grafanaCom` id **+ revision**, or a pinned upstream `url:`. Repo-owned JSON only when no upstream dashboard exists.
-- Always `spec.folderUID` (folders in `kubernetes/apps/observability/grafana/instance/grafanafolder.yaml`); **never** `spec.folder` — it adopts folders by title and lands in the wrong one.
+- Always `spec.folderUID` (folders in `kubernetes/apps/observability/grafana/instance/grafanafolder.yaml`); **never** `spec.folder` — it adopts folders by title and lands in the wrong one. Chart-rendered dashboards that only offer a title get `folderUID` through a `postRenderers` patch (see drm-exporter).
 
 ## Working here
 
