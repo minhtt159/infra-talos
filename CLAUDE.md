@@ -29,8 +29,7 @@ template) lives in a **separate private repo** — **don't add machine/topology 
 ## Kyverno policies — write compliant manifests
 
 Policies live in `kubernetes/apps/kyverno/kyverno/policies/policies.yaml`. They're in
-**Audit** mode today (they report, don't block) but are meant to flip to Enforce — so
-don't add to the violation backlog. New workloads must satisfy:
+**Enforce** mode (non-compliant pods are rejected at admission). New workloads must satisfy:
 
 1. **Pinned image tags** — no `:latest`, no tagless image. A chart's `appVersion`
    default resolves to a pinned tag, which is fine.
