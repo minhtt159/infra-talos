@@ -71,6 +71,12 @@
       overrideDepName: "{{packageName}}",
     },
     {
+      description: "mirror.gcr.io is a pull-through cache: its tag list only shows already-pulled tags, so look versions up on Docker Hub (manifests keep the mirror URL)",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["mirror.gcr.io/**"],
+      overridePackageName: "{{replace 'mirror.gcr.io/' 'docker.io/' packageName}}",
+    },
+    {
       description: "Flux Operator Group",
       groupName: "flux-operator",
       matchDatasources: ["docker"],
