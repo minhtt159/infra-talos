@@ -19,3 +19,22 @@ spec:
   # chart defaults already set requests on both operator pods; its CRDs are
   # plain templates (templates/crds/), so the crds install/upgrade knobs don't apply
   values: {}
+  # The chart ships config-logging/config-observability into this namespace, and
+  # Serving (installed here by the operator) owns the same two ConfigMaps. Serving's
+  # config webhook rejects any `_example` change that doesn't match its checksum
+  # annotation, so drop the chart's `_example` and let the operator own it.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: ConfigMap
+              name: config-logging
+            patch: |-
+              - op: remove
+                path: /data/_example
+          - target:
+              kind: ConfigMap
+              name: config-observability
+            patch: |-
+              - op: remove
+                path: /data/_example
