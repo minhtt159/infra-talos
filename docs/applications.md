@@ -18,20 +18,32 @@ Charts are OCI artifacts, not classic Helm repositories.
 
 ## Applications
 
+One row per namespace under [`kubernetes/apps/`](../kubernetes/apps); each app is a subdirectory.
+
 | Namespace | Apps | Purpose |
 |-----------|------|---------|
-| `kube-system` | cilium, coredns, metrics-server, reloader, node-feature-discovery, intel-device-plugin | CNI + BGP LB, DNS, HPA metrics, config-change restarts, GPU discovery (`gpu.intel.com/xe`) |
+| `ai` | hindsight, litellm, llama-server, yoke | agent memory, OpenAI-compatible LLM proxy, LLM serving on the B580, Claude Code session hub |
+| `argocd` | argo-rollouts, argocd | app delivery (reads `kubernetes/argocd/`, not Flux), progressive rollouts |
+| `bank0-production` | bank0 | bank0 platform half: Postgres, routes, Access JWT, rate limits (workload via Argo CD) |
+| `bank0-staging` | bank0 | same, staging |
 | `cert-manager` | cert-manager | Let's Encrypt + internal CA |
-| `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden |
-| `kyverno` | kyverno | Policies, all Audit |
-| `network` | envoy-gateway, cloudflare-dns, unifi-dns, cloudflare-tunnel | Gateway API edge, external-dns (Cloudflare + UniFi), tunnel |
-| `observability` | kube-prometheus-stack, grafana, elasticsearch-exporter | Prometheus agent → promeo (TrueNAS), Thanos Ruler + Alertmanager, Grafana (operator), external ES |
+| `database` | barman-cloud-plugin, cloudnative-pg, kafka, postgres, strimzi-operator, valkey | CNPG operator + S3 backups, shared Postgres, single-broker Kafka, cache |
+| `default` | (none) | namespace only |
 | `democratic-csi` | iscsi, nfs | TrueNAS-backed PVs |
-| `openebs` | openebs | Node-local hostpath (Kafka, Ollama cache) |
-| `database` | postgres, strimzi-operator, kafka, valkey | CloudNativePG on iSCSI, single-broker Kafka on SATA, cache |
-| `frigate` | frigate | NVR on the Intel dGPU (OpenVINO); raw manifests |
-| `ai` | ollama, litellm, hindsight | LLM serving (IPEX), OpenAI-compatible proxy, agent memory |
-| `flux-system` | flux-operator, flux-instance | Flux + dashboards |
+| `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden |
+| `flux-system` | flux-instance, flux-operator | Flux |
+| `frigate` | frigate | NVR, detection on the Coral TPU; raw manifests |
+| `functions` | hello | Knative smoke function / cold-start canary |
+| `headlamp` | headlamp | Kubernetes UI (mainly Knative), LAN-only |
+| `home` | mosquitto | MQTT broker on a LAN LoadBalancer |
+| `kargo` | bank0, kargo | promotion pipeline (bank0 staging → production) |
+| `knative-serving` | knative-operator, knative-serving | serverless functions (Serving only) |
+| `kube-system` | cilium, coredns, drm-exporter, intel-device-plugin, kubelet-csr-approver, metrics-server, node-feature-discovery, rbac, reloader, snapshot-controller, spegel | CNI + BGP LB, DNS, GPU discovery/metrics, cluster RBAC, image mirror, core controllers |
+| `kyverno` | kyverno | admission policies |
+| `network` | cloudflare-dns, cloudflare-tunnel, envoy-gateway, unifi-dns, valkey | Gateway API edge, external-dns (Cloudflare + UniFi), tunnel, rate-limit store |
+| `observability` | elasticsearch-exporter, es-policies, fluent-bit, gatus, grafana, kibana, kube-prometheus-stack, smartctl-exporter | metrics (agent → promeo), logs → TrueNAS ES, Grafana, uptime probes |
+| `openebs` | openebs | node-local hostpath (Kafka, llama-server models, mosquitto) |
+| `research` | browserless, searxng | headless Chrome, metasearch |
 
 ## Adding an app
 

@@ -21,7 +21,7 @@
   <rect class="box app" x="20" y="60" width="130" height="30"/><text class="t" x="85" y="80">hindsight · grafana</text>
   <rect class="box app" x="20" y="120" width="130" height="30"/><text class="t" x="85" y="140">frigate · alertmanager</text>
   <rect class="box app" x="20" y="190" width="130" height="30"/><text class="t" x="85" y="210">kafka</text>
-  <rect class="box app" x="20" y="240" width="130" height="30"/><text class="t" x="85" y="260">ollama models</text>
+  <rect class="box app" x="20" y="240" width="130" height="30"/><text class="t" x="85" y="260" font-size="12">llama-server · mqtt</text>
   <rect class="box app" x="20" y="290" width="130" height="30"/><text class="t" x="85" y="310">prometheus agent</text>
 
   <!-- TrueNAS group -->

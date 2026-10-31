@@ -50,16 +50,18 @@ layer relies on:
   `coredns` app replace them.
 - Control planes are schedulable.
 - **Coral TPU** (`capability=coral`) and **Intel Arc B580** (`gpu.intel.com/xe`) for
-  frigate and ollama.
+  frigate and llama-server.
 
 ## Repository layout
 
 ```
 .
 ├── bootstrap/helmfile.d/          # Layer 2 — cluster prerequisites (Flux not up yet)
-├── kubernetes/                    # Layer 3 — everything Flux reconciles
+├── kubernetes/                    # Layer 3 — in-cluster manifests
 │   ├── flux/cluster/ks.yaml        # ROOT Kustomization "cluster-apps" → ./kubernetes/apps
-│   └── apps/<namespace>/<app>/     # ks.yaml + app/ (HelmRelease, OCIRepository, ExternalSecret, …)
+│   ├── apps/<namespace>/<app>/     # ks.yaml + app/ (HelmRelease, OCIRepository, ExternalSecret, …)
+│   ├── components/                 # shared Kustomize components (authentik forward-auth)
+│   └── argocd/                     # read by Argo CD, NOT Flux (kubernetes/argocd/README.md)
 ├── docs/                          # the docs linked above + runbooks/
 ├── .github/workflows/             # semantic PR title check
 ├── Taskfile.yaml                  # kubeconfig fetch, helmfile bootstrap, PV export

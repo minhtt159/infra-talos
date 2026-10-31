@@ -16,7 +16,7 @@ Flux-triggered Job and to be SAFE TO RE-RUN ANY NUMBER OF TIMES:
     file from git does NOT delete it from the cluster (that stays a deliberate manual op).
 
 Scope: only `index-and-ilm*.txt` (ILM policies + index templates + bootstrap indices).
-RBAC roles (policy/role/*), users (policy/user/*, SOPS-encrypted) and cluster-settings
+RBAC roles (policy/role/*), users (policy/user/*) and cluster-settings
 are intentionally OUT of scope and applied separately.
 
 Usage:
@@ -145,8 +145,8 @@ def main():
         print("Waiting for Elasticsearch health...", flush=True)
         es.wait_healthy()
 
-    # Skip SOPS-managed *secret* files defensively — they must never be applied
-    # from a plain ConfigMap (would be ciphertext) and are handled out of band.
+    # Skip *secret* files defensively — secrets never ride in a plain ConfigMap;
+    # they are handled out of band.
     files = sorted(p for p in base.glob("index-and-ilm*.txt") if "secret" not in p.name)
     applied = skipped = failed = 0
     for f in files:

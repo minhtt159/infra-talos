@@ -1,26 +1,7 @@
 ---
-# Chart's own HTTPRoutes want a chart-created Gateway (sectionName
-# https-api/https-portal). Switched off (api/portal.exposed: false); routing
-# lives here, like every other app.
-#
-# The public API is `bank0-api.${SECRET_DOMAIN}`, NOT `api.bank0.${SECRET_DOMAIN}`:
-# Cloudflare's Universal SSL covers the apex and first-level subdomains only, so a
-# two-label name would need paid Total TLS/ACM at the edge. One label also means
-# the tunnel's existing `*.${SECRET_DOMAIN}` ingress rule already covers it — no
-# dashboard entry. Same reason hindsight uses `hindsight-api.${SECRET_DOMAIN}`.
-#
-# `api` is on envoy-external (public, via cloudflared). `portal` is ONE flat
-# name on BOTH gateways, split-horizon like hindsight: on the LAN unifi-dns
-# answers with envoy-internal (no Cloudflare, no Entra in the loop - the
-# break-glass path); from the internet cloudflare-dns (--gateway-name=
-# envoy-external) points it at the tunnel, behind Cloudflare Access (Entra SSO +
-# MFA, the `Only-Minh` policy) with the Access JWT re-verified at this gateway
-# (securitypolicy.yaml). The portal has no MFA of its own (minhtt159/bank0#116);
-# Access is the second factor. Rationale: bank0 docs/04-deployment.md §3.
-#
-# The LAN answer stays envoy-internal because unifi-dns ignores every route on
-# envoy-external (only gateways labelled dns.hnimn.art/lan=true are published). Before that the LAN
-# flipped to envoy-external on first apply, where the SecurityPolicy 401s.
+# Chart's own HTTPRoutes are off (api/portal.exposed: false); routing lives here.
+# One-label hostnames (bank0-api, not api.bank0): Universal SSL covers first-level only.
+# portal is split-horizon: LAN -> envoy-internal (unifi-dns), internet -> envoy-external + Access.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -98,22 +79,9 @@ spec:
         - name: bank0-portal
           port: 80
 ---
-# The non-client surface of both public hostnames, hidden from the internet.
-#
-# Access stops the internet reaching this hostname directly (403), but a
-# Cloudflare Worker subrequest to a same-zone hostname does NOT go through
-# Access - so each Worker is a hole as wide as its proxy, and both forward every
-# path. Measured 2026-09-16: bank0.hnimn.art/api/metrics and
-# fraudbank.hnimn.art/api/metrics both 200.
-#
-# Fixed on the route rather than in each Worker so it covers Workers that do not
-# exist yet. Exact matches take precedence over bank0-api's catch-all, the same
-# way bank0-api-auth does for /auth. 404 not 403: a 403 confirms something is
-# there.
-#
-# Still reachable on purpose: /readyz (Gatus probes it through this route), and
-# /metrics on the pods (Prometheus scrapes the Service's `http` port direct, so
-# this cannot affect monitoring).
+# 404 for the non-client paths on the public hostname. Gotcha: a Cloudflare Worker
+# subrequest to a same-zone host skips Access, so the block lives on the route, not
+# in each Worker. /readyz stays open (Gatus); Prometheus scrapes the pods direct.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: HTTPRouteFilter
 metadata:

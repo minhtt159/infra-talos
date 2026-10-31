@@ -1,7 +1,8 @@
 # Storage
 
 State on TrueNAS. Node-local disk only where speed beats durability: Kafka (accepts
-loss) and the Ollama model cache (re-pullable). iSCSI ≈ 1GbE, ~125 MB/s.
+loss), the llama-server model cache (re-pulled from Hugging Face) and mosquitto
+(retained messages only). iSCSI ≈ 1GbE, ~125 MB/s.
 
 ![Storage: apps → TrueNAS iSCSI/NFS or node-local openebs; prometheus agent remote-writes to promeo](storage.svg)
 
@@ -9,8 +10,8 @@ loss) and the Ollama model cache (re-pullable). iSCSI ≈ 1GbE, ~125 MB/s.
   `ExternalSecret`; setup in [democratic-csi/README.md](../kubernetes/apps/democratic-csi/README.md).
   `reclaimPolicy: Retain`: deleting a PVC or the cluster never deletes data.
 - **openebs** — hostpath, pinned to the creating node, dies with it. Kafka on
-  `openebs-hostpath-sata` (`/var/mnt/sata`, node `storage=sata`); Ollama cache on
-  `openebs-hostpath` (`/var/mnt/data` on the GPU node = Talos EPHEMERAL partition).
+  `openebs-hostpath-sata` (`/var/mnt/sata`, node `storage=sata`); llama-server models
+  (GPU node) and mosquitto on `openebs-hostpath` (`/var/mnt/data` = Talos EPHEMERAL partition).
 - **Metrics** not stored in-cluster: Prometheus agent remote-writes to `promeo`; Thanos
   Ruler evaluates rules there, alerts into in-cluster Alertmanager.
 
