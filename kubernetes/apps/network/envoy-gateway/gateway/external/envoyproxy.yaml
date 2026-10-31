@@ -1,18 +1,8 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/envoyproxy_v1alpha1.json
-# Dedicated proxy template for the EXTERNAL gateway (attached via
-# Gateway.spec.infrastructure.parametersRef) — log/WAF/limit experiments
-# here never roll the internal proxy.
-#
-# Access logs: ECS field names emitted straight from Envoy — dotted JSON
-# keys land in Elasticsearch as proper ECS objects. fluent-bit parses the
-# line under app.* (Merge_Log_Key), retags on event.dataset, and lifts the
-# keys back to the doc root for the logs-envoy template. @timestamp is
-# owned by fluent-bit's es output (CRI record time); Envoy's %START_TIME%
-# ships as ECS event.start. Envoy-specific telemetry with no clean ECS
-# home lives under the `envoy.*` namespace. Cookie header deliberately
-# dropped (PII). Numeric operators (%DURATION%, %BYTES_*%,
-# %RESPONSE_CODE%) emit as JSON numbers.
+# Proxy template for the EXTERNAL gateway only, so experiments never roll the internal one.
+# Access log = ECS JSON, shipped by fluent-bit to ES (logs-envoy). Gotcha: no @timestamp
+# key here - fluent-bit injects it, and a duplicate gets the bulk request rejected.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
@@ -111,14 +101,3 @@ spec:
         # zstd-only response never compresses — it negotiates to identity.
         compression:
           type: Gzip
-    # ── tier-3 scaffold: distributed tracing (disabled) ──────────────────
-    # Uncomment once an OTel collector exists in-cluster. Sampling low on the
-    # public edge; x-request-id already links traces to the ECS access logs.
-    # tracing:
-    #   samplingRate: 5
-    #   provider:
-    #     type: OpenTelemetry
-    #     backendRefs:
-    #       - name: otel-collector
-    #         namespace: observability
-    #         port: 4317

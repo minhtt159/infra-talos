@@ -38,12 +38,19 @@ kubectl get kafkatopics -A                  # recreated by the topic operator
 
 `RegistrationResponseHandler` errors for ~2 min while KRaft bootstraps are normal.
 
-## 3. Ollama (GPU node)
+## 3. llama-server and mosquitto
+
+Caches on `openebs-hostpath`. llama-server re-pulls each model from Hugging Face on
+its first load (slow first request); mosquitto loses retained messages. Flux recreates
+the PVC, then the pod binds it:
 
 ```sh
-kubectl -n ai delete pvc ollama-models
-kubectl -n ai delete pod -l app=ollama
-kubectl -n ai exec deploy/ollama -- ollama pull qwen3:8b   # per model
+kubectl -n ai delete pvc llama-server-models
+kubectl -n ai delete pod -l app=llama-server
+kubectl -n home delete pvc mosquitto-data
+kubectl -n home delete pod -l app=mosquitto
+flux reconcile kustomization llama-server -n ai
+flux reconcile kustomization mosquitto -n home
 ```
 
 ## 4. Nothing else

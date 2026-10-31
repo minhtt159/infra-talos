@@ -1,7 +1,7 @@
 ---
 # LiteLLM proxy config. No model_list here — models, endpoints, routing, pricing
 # all live in the CNPG `litellm` DB (store_model_in_db). Keeps topology out of
-# this public repo. Ops detail: homelab-platform/litellm-ops-notes.md.
+# this public repo. Ops detail: homelab-platform docs/ai/inference/litellm-ops-notes.md.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -16,10 +16,10 @@ data:
     litellm_settings:
       callbacks: ["prometheus"] # /metrics for the ServiceMonitor
       drop_params: true # drop unsupported params, don't 400
-      request_timeout: 600 # ollama budget
+      request_timeout: 600 # long local generations (llama-server, ollama-pc)
       num_retries: 2 # retry transient fails
       json_logs: true
-      # shared models are DB model-groups spanning both ollama servers — litellm
+      # shared models are DB model-groups spanning llama-server (B580) + ollama-pc — litellm
       # auto-routes (B580-weighted, spills to pc). No cross-model fallback:
       # qwen3.6:35b-a3b also serves hindsight reflect, and falling back to
       # chat-fast (8k ctx) silently truncated 25-70k reflect prompts.

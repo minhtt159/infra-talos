@@ -50,19 +50,9 @@ spec:
       # Auth handlers are bcrypt + one DB round trip; nothing here streams.
       # Far below the gateway's 300s so a wedged login can't hold a connection.
       requestTimeout: 30s
-  # --- the reason this policy exists ---
-  # 60 req/min per distinct client IP on /auth/* — login, refresh, logout,
-  # register, verify-contact, resend-code, mfa/verify. Matches the app's own
-  # rate_limit_per_min default, but counted ONCE for the whole deployment
-  # instead of once per replica. Behind cloudflared the client IP comes from
-  # XFF (gateway ClientTrafficPolicy, numTrustedHops: 1).
-  #
-  # This is the credential-stuffing control; the gateway's 3000/min is flood
-  # protection and far too loose to be one. The in-app limiter stays as defence
-  # in depth for anything that reaches a pod without passing the gateway.
-  #
-  # Fail-open, like every Global limit here (envoy-ratelimit + Valkey): a Valkey
-  # outage must not lock every customer out of their bank.
+  # The reason this policy exists: 60 req/min per client IP on /auth/*, counted once per
+  # deployment (the in-app limiter is per replica) - the credential-stuffing control.
+  # Fail-open like every Global limit here: a Valkey outage must not lock customers out.
   rateLimit:
     type: Global
     global:

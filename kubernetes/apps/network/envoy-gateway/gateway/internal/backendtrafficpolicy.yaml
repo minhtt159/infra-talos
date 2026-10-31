@@ -45,6 +45,6 @@ spec:
         maxInterval: 1s
   timeout:
     http:
-      # unmetered: internal carries LLM token streams (ollama/litellm) that
+      # unmetered: internal carries LLM token streams (llama-server/litellm) that
       # legitimately hold a response open for minutes.
       requestTimeout: 0s

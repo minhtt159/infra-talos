@@ -1,5 +1,5 @@
 ---
-# LiteLLM proxy + admin UI — OpenAI/Ollama-compatible gateway to the GPU fleet.
+# LiteLLM proxy + admin UI — OpenAI-compatible gateway to llama-server (B580) + ollama-pc.
 # All state (models, virtual keys, spend) lives in the CNPG `litellm` database;
 # no PVC. The -database image variant ships the Prisma client needed to run the
 # DB migrations on startup (the plain image can't).

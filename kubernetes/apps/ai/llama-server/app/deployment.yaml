@@ -1,12 +1,7 @@
 ---
-# Upstream llama.cpp llama-server on the Intel dGPU, SYCL build (oneAPI + NEO
-# bundled in the image). Replaces Ollama, which wrapped the same llama-server
-# but exposed no /metrics, pinned qwen35 to one slot and shipped an old Mesa;
-# on this card the SYCL build decodes ~2.5x faster than Ollama did.
-#
-# Router mode: no model on the command line; models come from the preset
-# ConfigMap and are pulled from Hugging Face into the PVC on first load. Clients
-# pick the model by name on the OpenAI endpoints.
+# Upstream llama.cpp llama-server on the Intel dGPU, SYCL build. Router mode: no model
+# on the command line; presets come from the ConfigMap, GGUFs are pulled from Hugging
+# Face into the PVC on first load. Clients pick the model by name (OpenAI endpoints).
 apiVersion: apps/v1
 kind: Deployment
 metadata:

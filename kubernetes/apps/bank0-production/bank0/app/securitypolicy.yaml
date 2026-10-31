@@ -1,25 +1,7 @@
 ---
-# Cloudflare Access is the gate on bank0-portal.${SECRET_DOMAIN}; this makes the
-# gateway verify Access's own JWT instead of trusting that every request came
-# through it. It did not, twice already: a Worker subrequest to a same-zone
-# hostname bypasses Access (measured 2026-09-16, see bank0-api-internal-paths),
-# and the LAN resolves this hostname to envoy-external's own VIP. Both now get
-# a 401 from Envoy. Validating the JWT is one SecurityPolicy; forwarding it to
-# the app would be Go code in every handler.
-#
-# Access puts the JWT in `Cf-Access-Jwt-Assertion` (and the CF_Authorization
-# cookie). Issuer is the Zero Trust team domain, audience the application's AUD
-# tag (Zero Trust -> Access -> Applications -> bank0-portal -> Overview). Both
-# come from cluster-secrets: the team domain is not committed anywhere in this
-# repo, and the AUD changes if the application is ever recreated.
-#
-# On the LAN the same hostname resolves to envoy-internal (httproute.yaml, top
-# comment), which this policy does not touch - that is the break-glass path.
-# The 404 route (bank0-portal-internal-paths) is deliberately not targeted: a
-# 404 gives nothing away, a 401 there would.
-#
-# First SecurityPolicy in the cluster. Envoy Gateway v1.9: remoteJWKS.uri alone is
-# enough, EG builds the egress cluster for the JWKS host itself.
+# Gateway re-verifies the Cloudflare Access JWT (Cf-Access-Jwt-Assertion) on the public
+# portal routes: a request that skipped Access gets 401. Issuer/AUD from cluster-secrets.
+# Gotcha: the LAN route (envoy-internal) is untouched on purpose - break-glass path.
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
