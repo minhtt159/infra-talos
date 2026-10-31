@@ -63,7 +63,7 @@ spec:
           resources:
             requests:
               cpu: 500m
-              memory: 4Gi
+              memory: 9Gi
             limits:
               # SYCL peaks past 8Gi while loading a model (SIGBUS below that);
               # steady state is <1Gi
