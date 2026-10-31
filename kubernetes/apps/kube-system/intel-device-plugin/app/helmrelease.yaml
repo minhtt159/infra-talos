@@ -37,5 +37,5 @@ spec:
   values:
     # ponytail: one dGPU shared by up to 5 inference pods; bump if contention shows
     sharedDevNum: 5
-    # only run on nodes NFD labeled with an Intel GPU (mini-talos-04)
+    # only run on nodes NFD labeled with an Intel GPU (the Intel GPU node)
     nodeFeatureRule: true

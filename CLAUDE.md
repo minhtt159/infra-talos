@@ -9,14 +9,14 @@ Public GitOps for a home Kubernetes cluster on **Talos Linux** (provisioned by
 applications**: `bootstrap/helmfile.d/` (CNI/DNS/cert-manager/Flux seed) and
 `kubernetes/` (everything Flux reconciles). Node/OS provisioning (the Omni cluster
 template) lives in a **separate private repo** — **don't add machine/topology detail
-(UUIDs, disk serials, LAN IPs) here.**
+(UUIDs, disk serials, node IPs/hostnames) here.**
 
 ## Security posture — hard rules
 
-- **This repo is PUBLIC. No private information.** Never commit node/machine UUIDs,
-  disk serials, LAN IPs, internal hostnames used as topology, hardware inventory, or
-  anything mapping the physical setup. If you're about to write a real internal
-  IP/serial/UUID, stop — it belongs in a private repo.
+- **This repo is PUBLIC. No private information.** Functional network values the
+  manifests need — CIDRs, LoadBalancer VIPs, the router IP — are fine; never node IPs,
+  node hostnames, disk serials, machine UUIDs, or hardware inventory. If you're about
+  to write one of those, stop — it belongs in a private repo.
 - **No secrets in git, ever.** Secrets come from **Vaultwarden** at runtime via an
   `ExternalSecret` (`secretStoreRef` → `ClusterSecretStore/bitwarden-fields`) — reference
   the Vaultwarden item by UUID + field, never inline the value. This repo has **no SOPS
