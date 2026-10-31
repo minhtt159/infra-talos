@@ -56,7 +56,7 @@ spec:
     # LAN records come only from gateways labelled `dns.hnimn.art/lan: "true"`
     # (envoy-internal, knative-internal). envoy-external stays out: a hostname on
     # both gateways would be two CNAME candidates and the LAN answer could flip.
-    # External-only hosts (bank0-api, flux-webhook, echo) resolve via public DNS.
+    # External-only hosts (bank0-api, flux-webhook) resolve via public DNS.
     # The `service` source is not affected. cloudflare-dns: --gateway-name=envoy-external.
     extraArgs:
       - --gateway-label-filter=dns.hnimn.art/lan=true
