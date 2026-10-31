@@ -9,9 +9,7 @@ helmfile --file bootstrap/helmfile.d/00-crds.yaml template \
   | kubectl apply --server-side -f -
 
 # 2. Prerequisites: cilium → coredns → cert-manager → flux-operator → flux-instance
-#    SECRET_DOMAIN: helmfile can't read cluster-secrets; coredns needs it for its
-#    split-horizon zone (same value as the cluster-secrets Secret).
-SECRET_DOMAIN=<domain> helmfile --file bootstrap/helmfile.d/01-apps.yaml sync
+helmfile --file bootstrap/helmfile.d/01-apps.yaml sync
 ```
 
 `flux-instance` then clones this repo and Flux owns `kubernetes/apps/**`.

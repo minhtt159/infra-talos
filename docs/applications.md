@@ -10,7 +10,7 @@ Chain, using `cert-manager` as the example:
    namespace by a ClusterExternalSecret (`external-secrets/.../stores/`).
 3. **App `ks.yaml`** — [`cert-manager/cert-manager/ks.yaml`](../kubernetes/apps/cert-manager/cert-manager/ks.yaml):
    Flux Kustomization → `app/`; `healthChecks`; `postBuild.substituteFrom: cluster-secrets`
-   for `${SECRET_DOMAIN}` and friends.
+   for the `${SECRET_*}` values.
 4. **`app/`** — `OCIRepository` (chart, pinned tag), `HelmRelease` (`chartRef`),
    `ExternalSecret`, extra CRs (ClusterIssuer, HTTPRoute, …), `kustomization.yaml`.
 

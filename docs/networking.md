@@ -9,8 +9,8 @@
   and gotchas: homelab-platform `docs/network/cluster-network.md` (private). Verify: `cilium bgp peers`,
   `cilium bgp routes advertised ipv4 unicast`.
 - **Gateways** (Envoy Gateway) — [`envoy-gateway/gateway/`](../kubernetes/apps/network/envoy-gateway/gateway):
-  `envoy-internal` → `10.1.81.11` (`internal.${SECRET_DOMAIN}`, LAN),
-  `envoy-external` → `10.1.81.12` (`external.${SECRET_DOMAIN}`, reached via the tunnel).
+  `envoy-internal` → `10.1.81.11` (`internal.hnimn.art`, LAN),
+  `envoy-external` → `10.1.81.12` (`external.hnimn.art`, reached via the tunnel).
   `knative-internal` (LAN, Knative function routes; serves plain :80 too, so no HSTS).
   Wildcard TLS from cert-manager; apps attach with `HTTPRoute`.
 - **MQTT** — `home/mosquitto` is its own `LoadBalancer` Service on the `bgp` pool (LAN only, no tunnel).

@@ -5,7 +5,7 @@ git — no SOPS, no age key.
 
 - App: `ExternalSecret` (`secretStoreRef` → `ClusterSecretStore/bitwarden-fields`),
   Vaultwarden item UUID + field → Kubernetes `Secret`.
-- Cluster-wide non-secret values (`${SECRET_DOMAIN}`, …): Vaultwarden item
+- Cluster-wide non-secret values (`${SECRET_*}`: Access team, AUD tags, TrueNAS IP): Vaultwarden item
   `cluster-secrets`, fanned out per namespace by a `ClusterExternalSecret`, injected via
   `postBuild.substituteFrom`.
 - ESO reaches Vaultwarden through an in-cluster `bitwarden-cli` bridge. Its login is the
