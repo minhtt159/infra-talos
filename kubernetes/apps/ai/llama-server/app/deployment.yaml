@@ -33,7 +33,7 @@ spec:
         - name: llama-server
           # pinned: b11669 (v0.7.0, new SYCL runtime packaging) hung the B580 and
           # took the node down 2026-10-16; bump only after a benchmark on the card
-          image: ghcr.io/ggml-org/llama.cpp:server-intel-b11610
+          image: ghcr.io/ggml-org/llama.cpp:server-intel-b12019
           imagePullPolicy: IfNotPresent
           args:
             - --models-preset
