@@ -11,17 +11,11 @@ spec:
   dependsOn:
     - name: cloudnative-pg # operator for this env's own Postgres cluster
       namespace: database
-  interval: 1h
   path: ./kubernetes/apps/bank0-production/bank0/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: bank0-production
   # false: HTTPRoutes stay unresolved until Argo CD creates the Services.
   wait: false

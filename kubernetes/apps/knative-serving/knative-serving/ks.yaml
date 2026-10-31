@@ -10,12 +10,6 @@ spec:
     # net-gateway-api crashloops without the Gateway API CRDs + knative-internal
     - name: envoy-gateway
       namespace: network
-  interval: 1h
   path: ./kubernetes/apps/knative-serving/knative-serving/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: knative-serving
   wait: true

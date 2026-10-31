@@ -10,12 +10,6 @@ spec:
       kind: HelmRelease
       name: strimzi-operator
       namespace: database
-  interval: 1h
   path: ./kubernetes/apps/database/strimzi-operator/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: database
   wait: true

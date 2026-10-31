@@ -5,12 +5,6 @@ kind: Kustomization
 metadata:
   name: mosquitto
 spec:
-  interval: 1h
   path: ./kubernetes/apps/home/mosquitto/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: home
   wait: true

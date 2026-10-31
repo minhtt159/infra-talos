@@ -10,13 +10,7 @@ spec:
       kind: HelmRelease
       name: external-secrets
       namespace: external-secrets
-  interval: 1h
   path: ./kubernetes/apps/external-secrets/external-secrets/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: external-secrets
   wait: true
 ---
@@ -33,15 +27,9 @@ spec:
       kind: Deployment
       name: bitwarden-cli
       namespace: external-secrets
-  interval: 1h
   path: ./kubernetes/apps/external-secrets/external-secrets/stores
   # No cluster-secrets postBuild: nothing here needs it, and the
   # bitwarden-cli command has literal bash ${BW_HOST}/${BW_SESSION} that
   # strict-mode envsubst would otherwise fail on ("variable not set").
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: external-secrets
   wait: true

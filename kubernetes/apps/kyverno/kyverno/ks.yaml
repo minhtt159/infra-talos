@@ -10,13 +10,7 @@ spec:
       kind: HelmRelease
       name: kyverno
       namespace: kyverno
-  interval: 1h
   path: ./kubernetes/apps/kyverno/kyverno/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: kyverno
   wait: true
 ---
@@ -28,11 +22,5 @@ metadata:
 spec:
   dependsOn:
     - name: kyverno
-  interval: 1h
   path: ./kubernetes/apps/kyverno/kyverno/policies
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   wait: true

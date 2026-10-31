@@ -14,12 +14,6 @@ spec:
       kind: Deployment
       name: llama-server
       namespace: ai
-  interval: 1h
   path: ./kubernetes/apps/ai/llama-server/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: ai
   wait: true

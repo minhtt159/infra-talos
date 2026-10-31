@@ -10,16 +10,10 @@ spec:
       kind: Deployment
       name: litellm
       namespace: ai
-  interval: 1h
   path: ./kubernetes/apps/ai/litellm/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: ai
   wait: true

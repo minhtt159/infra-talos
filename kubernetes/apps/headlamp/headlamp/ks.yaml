@@ -8,12 +8,6 @@ spec:
   dependsOn:
     - name: envoy-gateway # HTTPRoute needs Gateway API CRDs + envoy-internal
       namespace: network
-  interval: 1h
   path: ./kubernetes/apps/headlamp/headlamp/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: headlamp
   wait: true

@@ -5,12 +5,5 @@ kind: Kustomization
 metadata:
   name: kubelet-csr-approver
 spec:
-  interval: 1h
   path: ./kubernetes/apps/kube-system/kubelet-csr-approver/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: kube-system
-  wait: false

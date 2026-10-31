@@ -8,16 +8,10 @@ spec:
   dependsOn:
     - name: envoy-gateway # HTTPRoute needs Gateway API CRDs + envoy-internal
       namespace: network
-  interval: 1h
   path: ./kubernetes/apps/argocd/argocd/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: argocd
   wait: true

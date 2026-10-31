@@ -14,16 +14,10 @@ spec:
       kind: Deployment
       name: hindsight
       namespace: ai
-  interval: 1h
   path: ./kubernetes/apps/ai/hindsight/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   targetNamespace: ai
   wait: true

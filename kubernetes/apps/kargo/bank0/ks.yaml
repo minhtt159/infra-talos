@@ -11,13 +11,7 @@ metadata:
 spec:
   dependsOn:
     - name: kargo
-  interval: 1h
   path: ./kubernetes/apps/kargo/bank0/project
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   wait: true # the namespace must exist before the pipeline applies
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
@@ -29,13 +23,7 @@ metadata:
 spec:
   dependsOn:
     - name: bank0-project
-  interval: 1h
   path: ./kubernetes/apps/kargo/bank0/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   # false: the git credential waits on Vaultwarden, and the Stages wait on it.
   wait: false
 ---
@@ -49,11 +37,5 @@ metadata:
 spec:
   dependsOn:
     - name: bank0-project
-  interval: 1h
   path: ./kubernetes/apps/kargo/bank0/analysis
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
   wait: true
