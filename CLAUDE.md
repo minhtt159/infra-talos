@@ -31,7 +31,7 @@ Node/OS provisioning (the Omni cluster template) lives in a **separate private r
 ## Dependencies — Renovate owns versions
 
 - Everything is pinned and Renovate-tracked. **Don't hand-bump.** Non-standard versions get `# renovate: datasource=… depName=…` on the line above.
-- Dashboard-approval gates (no automatic PR) hold llama.cpp, kibana and bitwarden-cli — `.renovaterc.json5` says why.
+- Dashboard-approval gates (no automatic PR) hold llama.cpp and kibana — `.renovaterc.json5` says why.
 
 ## Grafana dashboards
 
