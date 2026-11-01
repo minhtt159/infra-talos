@@ -22,7 +22,7 @@ spec:
   enablePDB: false
   # PG18 is a hard floor — bank0's schema uses uuidv7() with no polyfill.
   # Renovate: tracked by the CNPG imageName custom manager (minor/patch only).
-  imageName: ghcr.io/cloudnative-pg/postgresql:18.4-standard-trixie
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-standard-trixie
   bootstrap:
     initdb:
       database: bank0

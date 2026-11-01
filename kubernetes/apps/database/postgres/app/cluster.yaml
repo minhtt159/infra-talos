@@ -17,7 +17,7 @@ spec:
   # the -system flavor (no extensions). Must be >= the running minor — CNPG
   # rejects downgrades and in-place major changes.
   # Renovate: tracked by the CNPG imageName custom manager (minor/patch only).
-  imageName: ghcr.io/cloudnative-pg/postgresql:18.4-standard-trixie
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-standard-trixie
   managed:
     roles:
       - name: hindsight
