@@ -46,12 +46,6 @@
       dependencyDashboardApproval: true,
     },
     {
-      description: "bw CLI >=2026.9.0 crashes on login against Vaultwarden (KeyIdBackfillMigration POSTs an endpoint Vaultwarden 404s) — manual approval only",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/charlesthomas/bitwarden-cli"],
-      dependencyDashboardApproval: true,
-    },
-    {
       description: "CNPG rejects in-place Postgres major upgrades — majors need a planned migration",
       matchDatasources: ["docker"],
       matchPackageNames: ["ghcr.io/cloudnative-pg/postgresql"],
