@@ -88,3 +88,16 @@ spec:
         ports:
           http:
             port: 8099
+    route:
+      app:
+        annotations:
+          # /healthz answers without auth; everything else wants the hub's basic auth or bearer.
+          gatus.home-operations.com/endpoint: |
+            path: /healthz
+            conditions:
+              - "[STATUS] == 200"
+        hostnames: ["yoke.hnimn.art"]
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+            sectionName: https

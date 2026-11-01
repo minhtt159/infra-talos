@@ -89,4 +89,17 @@ spec:
           storage: 2Gi
       # TrueNAS block: survives node rotation, Retain.
       storageClassName: truenas-iscsi
+  # Operator defaults the rule (PathPrefix / -> grafana-service:3000). LAN route
+  # only; the Access-gated public route stays in external.yaml.
+  httpRoute:
+    metadata:
+      annotations:
+        gatus.home-operations.com/endpoint: |
+          path: /api/health
+    spec:
+      hostnames:
+        - "grafana.hnimn.art"
+      parentRefs:
+        - name: envoy-internal
+          namespace: network
   disableDefaultSecurityContext: All

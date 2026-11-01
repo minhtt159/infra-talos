@@ -75,3 +75,27 @@ spec:
         ports:
           http:
             port: 8080
+    route:
+      app:
+        annotations:
+          # /healthz is `return Response('OK')` — it proves the process is up and
+          # nothing else. Query the JSON API instead, so the check fails only when no
+          # engine returns anything, which is the one failure Hermes actually feels.
+          # Aggregate, not per-engine: individual engines get CAPTCHA'd routinely
+          # (brave is disabled outright) while search as a whole keeps working.
+          # 10m because every probe is a real outbound search; more frequent polling
+          # buys little and risks more engines blocking us.
+          # Full url, not path: — the sidecar sets url.Path from a `path:` override
+          # and re-serializes, which escapes `?` to %3F and 404s. `url:` is assigned
+          # verbatim, so it's the only way to probe with a query string.
+          gatus.home-operations.com/endpoint: |
+            url: https://searxng.hnimn.art/search?q=talos+linux&format=json
+            interval: 10m
+            conditions:
+              - "[STATUS] == 200"
+              - "len([BODY].results) > 0"
+        hostnames: ["searxng.hnimn.art"]
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+            sectionName: https
