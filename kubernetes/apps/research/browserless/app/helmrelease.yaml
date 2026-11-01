@@ -80,3 +80,26 @@ spec:
         ports:
           http:
             port: 3000
+    # One host serves both the CDP WebSocket (ws://…:3000?token=) and the /docs UI.
+    # WS upgrade is on by default in Envoy Gateway. Auth is the ?token= (ESO-gen);
+    # reachable only on the LAN (envoy-internal + private DNS).
+    route:
+      app:
+        annotations:
+          # /pressure needs the token but reports whether chromium is actually
+          # available, not just that the HTTP server answers. The doubled `$$`
+          # escapes Flux postBuild, so gatus receives the token as a var reference
+          # and expands it from its own env (see the gatus app's externalsecret.yaml).
+          gatus.home-operations.com/endpoint: |
+            path: /pressure
+            interval: 30s
+            headers:
+              Authorization: Bearer $${BROWSERLESS_TOKEN}
+            conditions:
+              - "[STATUS] == 200"
+              - "[BODY].pressure.isAvailable == true"
+        hostnames: ["browser.hnimn.art"]
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+            sectionName: https

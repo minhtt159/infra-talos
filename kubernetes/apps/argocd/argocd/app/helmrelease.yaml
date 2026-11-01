@@ -54,6 +54,22 @@ spec:
           memory: 128Mi
         limits:
           memory: 512Mi
+      # LAN route; chart sets backendRefs (argocd-server:80, server.insecure). The
+      # Access-gated public route stays in external.yaml.
+      httproute:
+        enabled: true
+        annotations:
+          # /healthz unauthenticated on argocd-server. Covers DNS, gateway, API process.
+          gatus.home-operations.com/endpoint: |
+            path: /healthz
+            conditions:
+              - "[STATUS] == 200"
+        hostnames:
+          - "argocd.hnimn.art"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+            sectionName: https
     repoServer:
       resources:
         requests:

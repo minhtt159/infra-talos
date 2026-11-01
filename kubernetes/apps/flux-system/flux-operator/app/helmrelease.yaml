@@ -20,6 +20,13 @@ spec:
     # Web UI login via authentik OIDC; the UI impersonates the user for k8s RBAC
     # (rbac.yaml). Client id/secret come in through valuesFrom below.
     web:
+      httpRoute:
+        enabled: true
+        hostnames:
+          - "flux.hnimn.art"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
       config:
         baseURL: https://flux.hnimn.art
         authentication:
