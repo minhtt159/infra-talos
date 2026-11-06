@@ -14,7 +14,8 @@ spec:
       containers:
         - name: docs
           image: docker.io/rclone/rclone:1.75.2
-          args: ["serve", "http", "garage:homelab-docs", "--addr", ":8080", "--read-only"]
+          args: ["serve", "http", "garage:homelab-docs", "--addr", ":8080", "--read-only",
+                 "--template", "/etc/docs/dir-template.html"] # any directory URL -> /index.html
           ports:
             - containerPort: 8080
           env:
@@ -34,6 +35,14 @@ spec:
               memory: 32Mi
             limits:
               memory: 128Mi
+          volumeMounts:
+            - name: dir-template
+              mountPath: /etc/docs
+              readOnly: true
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
+      volumes:
+        - name: dir-template
+          configMap:
+            name: docs-dir-template

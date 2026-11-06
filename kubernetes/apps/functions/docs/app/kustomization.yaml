@@ -4,3 +4,9 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./service.yaml
+configMapGenerator:
+  - name: docs-dir-template
+    files:
+      - ./resources/dir-template.html
+generatorOptions:
+  disableNameSuffixHash: true # referenced from the ksvc, which kustomize does not rewrite
