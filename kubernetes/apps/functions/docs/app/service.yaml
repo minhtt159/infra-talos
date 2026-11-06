@@ -1,5 +1,5 @@
 ---
-# Private docs site: docs-functions.fn.<domain> (LAN-only, knative-internal).
+# Private docs site: docs-functions.fn.hnimn.art (LAN-only, knative-internal).
 # rclone serves the Garage bucket `homelab-docs` read-only; the content is
 # rendered and synced there by the private docs repo's CI, so nothing private
 # lives in this repo or in an image. Scales to zero when idle.
@@ -20,7 +20,7 @@ spec:
           env:
             - { name: RCLONE_CONFIG_GARAGE_TYPE, value: s3 }
             - { name: RCLONE_CONFIG_GARAGE_PROVIDER, value: Other }
-            - { name: RCLONE_CONFIG_GARAGE_ENDPOINT, value: "https://s3.${SECRET_DOMAIN}" }
+            - { name: RCLONE_CONFIG_GARAGE_ENDPOINT, value: "https://s3.hnimn.art" }
             - { name: RCLONE_CONFIG_GARAGE_REGION, value: garage }
             - name: RCLONE_CONFIG_GARAGE_ACCESS_KEY_ID
               valueFrom: { secretKeyRef: { name: docs-garage-s3, key: ACCESS_KEY_ID } }

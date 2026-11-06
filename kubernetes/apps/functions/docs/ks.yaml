@@ -9,8 +9,4 @@ spec:
     - name: knative-serving
       namespace: knative-serving
   path: ./kubernetes/apps/functions/docs/app
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
   targetNamespace: functions
