@@ -5,4 +5,5 @@ namespace: functions
 
 resources:
   - ./namespace.yaml
+  - ./docs/ks.yaml
   - ./hello/ks.yaml
