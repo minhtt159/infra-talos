@@ -1,0 +1,39 @@
+---
+# Private docs site: docs-functions.fn.hnimn.art (LAN-only, knative-internal).
+# rclone serves the Garage bucket `homelab-docs` read-only; the content is
+# rendered and synced there by the private docs repo's CI, so nothing private
+# lives in this repo or in an image. Scales to zero when idle.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: docs
+spec:
+  template:
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: docs
+          image: docker.io/rclone/rclone:1.75.2
+          args: ["serve", "http", "garage:homelab-docs", "--addr", ":8080", "--read-only"]
+          ports:
+            - containerPort: 8080
+          env:
+            - { name: RCLONE_CONFIG_GARAGE_TYPE, value: s3 }
+            - { name: RCLONE_CONFIG_GARAGE_PROVIDER, value: Other }
+            - { name: RCLONE_CONFIG_GARAGE_ENDPOINT, value: "https://s3.hnimn.art" }
+            - { name: RCLONE_CONFIG_GARAGE_REGION, value: garage }
+            - name: RCLONE_CONFIG_GARAGE_ACCESS_KEY_ID
+              valueFrom: { secretKeyRef: { name: docs-garage-s3, key: ACCESS_KEY_ID } }
+            - name: RCLONE_CONFIG_GARAGE_SECRET_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: docs-garage-s3, key: SECRET_ACCESS_KEY } }
+            - { name: XDG_CACHE_HOME, value: /tmp } # nonroot user has no writable HOME
+            - { name: XDG_CONFIG_HOME, value: /tmp }
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
