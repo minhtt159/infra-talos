@@ -13,7 +13,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: docs
-          image: docker.io/rclone/rclone:1.75.2
+          image: docker.io/rclone/rclone:1.76.0
           args: ["serve", "http", "garage:homelab-docs", "--addr", ":8080", "--read-only",
                  "--template", "/etc/docs/dir-template.html"] # any directory URL -> /index.html
           ports:
