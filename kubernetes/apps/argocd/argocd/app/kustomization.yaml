@@ -8,3 +8,4 @@ resources:
   - ./root-appproject.yaml
   - ./root-application.yaml
   - ./external.yaml
+  - ./grafanadashboard.yaml
