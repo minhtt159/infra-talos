@@ -180,9 +180,10 @@ harmless).
 ## Phase 3: migrate workloads
 
 Order: low risk first. Method **A** = static-PV adoption (Phase 2 passed), **B** = copy.
-Naming: PV names are free (`<app>-data`). Readable dataset names cost a rename + extent/share
-path edit on TrueNAS per volume (see Phase 2); dynamically provisioned ones stay `pvc-<uid>`
-until #76 lands upstream. Adopted NFS volumes keep real uid/gid, new ones get `mapall`.
+Naming (decided 2026-11-09): **keep the `pvc-<uid>` dataset names**; only the PV name is
+readable (`<app>-data`). Renaming would cost an extent/share path edit on TrueNAS per volume
+(see Phase 2) for no functional gain; revisit when #76 lands upstream. Adopted NFS volumes
+keep real uid/gid, new ones get `mapall`.
 For copies, a `pv-migrate`/rsync Job is fine for small volumes; for large ones,
 `zfs send | zfs recv` on TrueNAS into the dataset of a freshly provisioned PVC
 (test it on a throwaway first). Each step: suspend the app (Flux), migrate, switch
