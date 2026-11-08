@@ -21,10 +21,20 @@ spec:
       name: truenas-csi-secret
       valuesKey: url
       targetPath: truenas.url
+    # Two pools: iSCSI zvols and NFS datasets live on different pools. The SC
+    # `pool` parameter overrides truenas.defaultPool, which the chart requires.
     - kind: Secret
       name: truenas-csi-secret
-      valuesKey: pool
+      valuesKey: pool-iscsi
       targetPath: truenas.defaultPool
+    - kind: Secret
+      name: truenas-csi-secret
+      valuesKey: pool-iscsi
+      targetPath: storageClasses[0].parameters.pool
+    - kind: Secret
+      name: truenas-csi-secret
+      valuesKey: pool-nfs
+      targetPath: storageClasses[1].parameters.pool
   values:
     # ref: https://github.com/truenas/truenas-csi/blob/master/charts/truenas-csi/values.yaml
     fullnameOverride: truenas-csi
@@ -51,7 +61,7 @@ spec:
         reclaimPolicy: Retain
         volumeBindingMode: Immediate
         allowVolumeExpansion: true
-        parameters:
+        parameters: # pool: from valuesFrom
           protocol: iscsi
           datasetPath: truenas-csi/iscsi
           csi.storage.k8s.io/fstype: xfs
@@ -64,7 +74,7 @@ spec:
         mountOptions:
           - noatime
           - nfsvers=4
-        parameters:
+        parameters: # pool: from valuesFrom
           protocol: nfs
           datasetPath: truenas-csi/nfs
           # default share squashes every client to root:wheel (mapall). Apps

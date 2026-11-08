@@ -70,11 +70,12 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 ## Phase 0: prerequisites (TrueNAS 25.10)
 
 - [ ] TrueNAS: API key (dedicated user if the role model allows it), iSCSI + NFS services on,
-      parent datasets `<pool>/truenas-csi/iscsi` and `<pool>/truenas-csi/nfs`.
+      parent datasets `<pool-iscsi>/truenas-csi/iscsi` and `<pool-nfs>/truenas-csi/nfs`.
 - [ ] TLS: the cert must match the host in `url`. If it's still the stock self-signed cert, set
       `insecureSkipTLS: true` or `truenas.caBundle`.
-- [ ] Vaultwarden item `homelab-talos/truenas-csi` with fields `api-key`, `url`
-      (`wss://<host>/api/current`) and `pool`. Replace the 3 TODO UUIDs in
+- [x] Vaultwarden item `homelab-talos/truenas-csi` with fields `api-key`, `url`
+      (`wss://<host>/api/current`), `pool-iscsi` and `pool-nfs` (two pools, one per
+      protocol; the SC `pool` parameter overrides `truenas.defaultPool`). UUID is in
       `app/externalsecret.yaml`.
 - [x] Pin democratic-csi off the floating `next` tag, to the digest running now
       (`kubectl -n democratic-csi get pods -o jsonpath='{..imageID}'`), so a node
