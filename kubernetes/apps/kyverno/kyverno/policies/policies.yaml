@@ -128,8 +128,8 @@ spec:
           spec:
             automountServiceAccountToken: false
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
 metadata:
   name: verify-litellm-signature
   annotations:
@@ -139,28 +139,34 @@ metadata:
       signature so a tampered/typosquatted image can't run. If upstream rotates
       again, new tags are rejected until the key below is re-pinned.
 spec:
-  # verifyImages honours a per-rule failureAction; Enforce blocks admission.
-  # Spec-level too so `kubectl get cpol` (which reads only this) shows Enforce.
-  validationFailureAction: Enforce
-  background: false
-  rules:
-    - name: check-litellm-cosign
-      match:
-        any:
-          - resources:
-              kinds: [Pod]
-      verifyImages:
-        - imageReferences:
-            - "ghcr.io/berriai/litellm*"
-          failureAction: Enforce
-          # don't rewrite tag→digest in the live manifest; just verify.
-          mutateDigest: false
-          verifyDigest: false
-          attestors:
-            - entries:
-                - keys:
-                    publicKeys: |-
-                      -----BEGIN PUBLIC KEY-----
-                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEG06dpKM+vEDnmp2zcjyXgVCXxzRg
-                      JA5H2LnmwBKQafZGka6OOrWujCEWATQewiAgyD4WQdJ0pvU9RC4mvNAjvQ==
-                      -----END PUBLIC KEY-----
+  # Deny = Enforce: unsigned/mis-signed litellm images are rejected at admission.
+  validationActions: [Deny]
+  evaluation:
+    background:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  matchImageReferences:
+    - glob: "ghcr.io/berriai/litellm*"
+  # don't rewrite tag→digest in the live manifest; just verify.
+  validationConfigurations:
+    mutateDigest: false
+    verifyDigest: false
+  attestors:
+    - name: litellm
+      cosign:
+        key:
+          data: |-
+            -----BEGIN PUBLIC KEY-----
+            MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEG06dpKM+vEDnmp2zcjyXgVCXxzRg
+            JA5H2LnmwBKQafZGka6OOrWujCEWATQewiAgyD4WQdJ0pvU9RC4mvNAjvQ==
+            -----END PUBLIC KEY-----
+  validations:
+    - expression: >-
+        (images.containers + images.initContainers).map(image,
+        verifyImageSignatures(image, [attestors.litellm])).all(e, e > 0)
+      message: LiteLLM image signature does not verify against the pinned cosign key.

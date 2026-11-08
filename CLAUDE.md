@@ -16,7 +16,7 @@ Node/OS provisioning (the Omni cluster template) lives in a **separate private r
 
 ## Kyverno policies — write compliant manifests
 
-`kubernetes/apps/kyverno/kyverno/policies/policies.yaml`: three validate policies plus the litellm cosign verify, all **Enforce** (non-compliant pods are rejected). New workloads need:
+`kubernetes/apps/kyverno/kyverno/policies/policies.yaml`: three validate ClusterPolicies plus the litellm cosign `ImageValidatingPolicy`, all **Enforce** (non-compliant pods are rejected). New workloads need:
 
 1. **Pinned image tags** — no `:latest`, no tagless image (a chart's `appVersion` default is fine).
 2. **Resource requests** — every container sets `resources.requests.cpu` **and** `memory`.
