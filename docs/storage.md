@@ -9,6 +9,8 @@ loss), the llama-server model cache (re-pulled from Hugging Face) and mosquitto
 - **democratic-csi** — iSCSI (block) + NFS (shared) from TrueNAS; creds via
   `ExternalSecret`; setup in [democratic-csi/README.md](../kubernetes/apps/democratic-csi/README.md).
   `reclaimPolicy: Retain`: deleting a PVC or the cluster never deletes data.
+  Being replaced by **truenas-csi** (official driver, `truenas-csi-{iscsi,nfs}` classes):
+  [migration runbook](runbooks/truenas-csi-migration.md).
 - **openebs** — hostpath, pinned to the creating node, dies with it. Kafka on
   `openebs-hostpath-sata` (`/var/mnt/sata`, node `storage=sata`); llama-server models
   (GPU node) and mosquitto on `openebs-hostpath` (`/var/mnt/data` = Talos EPHEMERAL partition).

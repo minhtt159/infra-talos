@@ -58,9 +58,11 @@ spec:
         # warn: silences per-60s Probe (liveness) + NodeGetVolumeStats shell-exec
         # traces (findmnt/df/lsblk) logged at info. Keeps warnings + errors.
         logLevel: warn
+        # Pinned to the digest running on 2026-11-08: `next` now targets TrueNAS 26+ only.
+        # Not Renovate-tracked on purpose; removed with democratic-csi (truenas-csi-migration.md Phase 4).
         image:
           registry: ghcr.io/democratic-csi/democratic-csi
-          tag: next
+          tag: next@sha256:0f308ae601474cb9633f90dc96f59dbd23440b0ed0e77d70e224465246a12dfa
     node:
       driverRegistrar:
         verbosityLevel: 2
