@@ -106,6 +106,12 @@
       },
     },
     {
+      description: "kube-prometheus-stack 93.x ships prometheus-operator v0.95.1, which has no arm64 image — hold on 92.x",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/prometheus-community/charts/kube-prometheus-stack"],
+      allowedVersions: "<93",
+    },
+    {
       description: "Intel Device Plugins Group — operator + gpu charts release in lockstep",
       groupName: "intel-device-plugins",
       matchDatasources: ["helm"],
