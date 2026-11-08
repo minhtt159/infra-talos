@@ -41,6 +41,10 @@ spec:
     notifications:
       enabled: false
     controller:
+      metrics: &metrics
+        enabled: true
+        serviceMonitor:
+          enabled: true
       resources:
         requests:
           cpu: 100m
@@ -48,6 +52,7 @@ spec:
         limits:
           memory: 1Gi
     server:
+      metrics: *metrics
       resources:
         requests:
           cpu: 50m
@@ -71,6 +76,7 @@ spec:
             namespace: network
             sectionName: https
     repoServer:
+      metrics: *metrics
       resources:
         requests:
           cpu: 50m
@@ -80,6 +86,7 @@ spec:
     # Chart 10.3.0 has no applicationSet.enabled switch — ships either way.
     # Bootstrap is app-of-apps; generators sit there until they earn it.
     applicationSet:
+      metrics: *metrics
       resources:
         requests:
           cpu: 25m

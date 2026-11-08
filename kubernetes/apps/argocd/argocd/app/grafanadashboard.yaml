@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
+# Argo CD's upstream dashboard at the app version the chart ships. Uses its own
+# $datasource variable, so no datasources mapping. Renovate group "argocd" keeps
+# the tag in the same PR as the chart bump.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: argocd
+spec:
+  allowCrossNamespaceImport: true
+  folderUID: platform
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+  # renovate: datasource=github-releases depName=argoproj/argo-cd
+  url: https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.6/examples/dashboard.json
