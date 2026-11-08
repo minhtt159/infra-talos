@@ -16,11 +16,11 @@ Node/OS provisioning (the Omni cluster template) lives in a **separate private r
 
 ## Kyverno policies — write compliant manifests
 
-`kubernetes/apps/kyverno/kyverno/policies/policies.yaml`: three validate policies plus the litellm cosign verify, all **Enforce** (non-compliant pods are rejected). New workloads need:
+`kubernetes/apps/kyverno/kyverno/policies/policies.yaml`: CEL `policies.kyverno.io/v1` — three `ValidatingPolicy`s plus the litellm cosign `ImageValidatingPolicy`, all **Deny** (Enforce) (non-compliant pods are rejected). New workloads need:
 
 1. **Pinned image tags** — no `:latest`, no tagless image (a chart's `appVersion` default is fine).
 2. **Resource requests** — every container sets `resources.requests.cpu` **and** `memory`.
-3. **`automountServiceAccountToken: false`** unless the workload calls the Kubernetes API. Exclusions live in the policy file — check it, don't assume.
+3. **`automountServiceAccountToken: false`** unless the workload calls the Kubernetes API. Exclusions live in the policy file and `policyexceptions.yaml` (CEL `PolicyException`, `kyverno` ns) — check them, don't assume.
 
 ## Application pattern — match existing apps exactly
 
