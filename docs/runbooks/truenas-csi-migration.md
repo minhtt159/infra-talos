@@ -78,9 +78,10 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 - [ ] TLS: the cert must match the host in `url`. If it's still the stock self-signed cert, set
       `insecureSkipTLS: true` or `truenas.caBundle`.
 - [x] Vaultwarden item `homelab-talos/truenas-csi` with fields `api-key`, `url`
-      (`wss://<host>/api/current`), `pool-iscsi` and `pool-nfs` (two pools, one per
-      protocol; the SC `pool` parameter overrides `truenas.defaultPool`). UUID is in
-      `app/externalsecret.yaml`.
+      (`wss://<host>/api/current`), `pool-iscsi` and `pool-nfs`: **bare pool names**, one
+      per protocol; the SC `pool` parameter overrides `truenas.defaultPool`. The driver
+      checks both with `pool.query` (startup + CreateVolume), so a dataset path in there
+      crashloops the pods. UUID is in `app/externalsecret.yaml`.
 - [x] Pin democratic-csi off the floating `next` tag, to the digest running now
       (`kubectl -n democratic-csi get pods -o jsonpath='{..imageID}'`), so a node
       reprovision can't pull a TN26-only image. Done: `next@sha256:0f308ae6…` (2026-11-08).
@@ -94,6 +95,8 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 ## Phase 2: smoke tests (throwaway namespace)
 
 - [ ] iSCSI PVC + pod: write, delete pod, re-read on another node (drain); expand online.
+      Extent name is the dataset path cut at 64 chars, so a long pool name loses the UUID's
+      tail; lookups go by zvol path, so cosmetic.
 - [ ] VolumeSnapshot → restore PVC → data matches.
 - [ ] NFS PVC with a non-root pod (and one with `fsGroup`): check ownership with the default `mapall`.
 - [ ] Delete PVC → PV `Released`, dataset still on TrueNAS (Retain).
