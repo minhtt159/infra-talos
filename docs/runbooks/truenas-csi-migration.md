@@ -89,7 +89,7 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 
 ## Phase 1: deploy side by side
 
-- [ ] Drop `suspend: true` from `truenas-csi/ks.yaml`.
+- [x] Drop `suspend: true` from `truenas-csi/ks.yaml`.
 - [ ] `kubectl -n truenas-csi get pods`: controller 6/6, node 3/3 on every node.
 - [ ] `kubectl get csinode -o yaml | grep csi.truenas.io` on every node; `kubectl get sc`.
 
