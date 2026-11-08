@@ -1,132 +1,123 @@
 ---
-# The three validate policies Enforce (blocking at admission) since their
-# PolicyReports reached zero failures. Rollback: set a policy's
-# validationFailureAction back to Audit. New exemptions go in
+# CEL policies (policies.kyverno.io/v1). The three validate policies Deny at
+# admission; rollback: set validationActions to [Audit]. New exemptions go in
 # policyexceptions.yaml; check kubectl get polr -A after changes.
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: disallow-latest-tag
   annotations:
-    # Autogen for top-level controllers only — exclude ReplicaSet/
-    # ReplicationController: they are always owned by a Deployment that is
-    # already checked, so reporting them just triples the violation count
-    # (and flags stale zero-replica revisions kept for rollback).
-    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet,Job,CronJob
     policies.kyverno.io/description: >-
       Mutable image tags make rollbacks and audits impossible.
       Require a pinned tag (anything but :latest or tagless).
 spec:
-  validationFailureAction: Enforce
-  background: true
-  rules:
-    - name: require-pinned-tag
-      match:
-        any:
-          - resources:
-              kinds: [Pod]
-      validate:
-        message: "Image tag must be pinned — ':latest' or tagless not allowed."
-        foreach:
-          - list: request.object.spec.containers
-            deny:
-              conditions:
-                any:
-                  - key: "{{ element.image }}"
-                    operator: Equals
-                    value: "*:latest"
-                  - key: "{{ contains(element.image, ':') }}"
-                    operator: Equals
-                    value: false
+  validationActions: [Deny]
+  evaluation:
+    background:
+      enabled: true
+  # top-level controllers only — ReplicaSets are owned by an already-checked
+  # Deployment and would just multiply the violation count.
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  validations:
+    - expression: >-
+        object.spec.containers.all(c,
+        c.image.contains(':') && !c.image.endsWith(':latest'))
+      message: "Image tag must be pinned — ':latest' or tagless not allowed."
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: require-resource-requests
   annotations:
-    # Autogen for top-level controllers only — exclude ReplicaSet/
-    # ReplicationController: they are always owned by a Deployment that is
-    # already checked, so reporting them just triples the violation count
-    # (and flags stale zero-replica revisions kept for rollback).
-    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet,Job,CronJob
     policies.kyverno.io/description: >-
       Pods without requests wreck scheduling on a small mixed-arch cluster.
 spec:
-  validationFailureAction: Enforce
-  background: true
-  rules:
-    - name: require-cpu-memory-requests
-      match:
-        any:
-          - resources:
-              kinds: [Pod]
-      exclude:
-        any:
-          - resources:
-              namespaces: [kube-system] # CNI/CSI daemonsets managed by charts
-      validate:
-        message: "CPU and memory requests are required."
-        pattern:
-          spec:
-            containers:
-              - resources:
-                  requests:
-                    memory: "?*"
-                    cpu: "?*"
+  validationActions: [Deny]
+  evaluation:
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: [kube-system] # CNI/CSI daemonsets managed by charts
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  validations:
+    - expression: >-
+        object.spec.containers.all(c,
+        has(c.resources) && has(c.resources.requests) &&
+        'cpu' in c.resources.requests && 'memory' in c.resources.requests)
+      message: "CPU and memory requests are required."
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: restrict-sa-token-automount
   annotations:
-    # Autogen for top-level controllers only — exclude ReplicaSet/
-    # ReplicationController: they are always owned by a Deployment that is
-    # already checked, so reporting them just triples the violation count
-    # (and flags stale zero-replica revisions kept for rollback).
-    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet,Job,CronJob
     policies.kyverno.io/description: >-
       Least privilege: pods that don't talk to the API server shouldn't
       mount a ServiceAccount token.
 spec:
-  validationFailureAction: Enforce
-  background: true
-  rules:
-    - name: require-explicit-automount
-      match:
-        any:
-          - resources:
-              kinds: [Pod]
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - flux-system
-                - kyverno
-                - external-secrets
-                - cert-manager
-                - observability
-                - democratic-csi
-                - truenas-csi
-                - openebs
-                - network # controllers legitimately need the API
-                - argocd # ditto — every component watches/writes cluster state
-                # (argo-rollouts lives here too)
-                - kargo
-                - knative-serving # operator + Serving controllers watch/write cluster state
-                - headlamp # in-cluster mode reads the API CA/host from the SA mount
-          # CNPG instance manager (instances + initdb/join jobs) reads its Cluster,
-          # writes status and Secrets — needs the API wherever the Cluster lives.
-          - resources:
-              selector:
-                matchExpressions:
-                  - key: cnpg.io/cluster
-                    operator: Exists
-      validate:
-        message: "Set automountServiceAccountToken: false unless the workload needs the API."
-        pattern:
-          spec:
-            automountServiceAccountToken: false
+  validationActions: [Deny]
+  evaluation:
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - flux-system
+            - kyverno
+            - external-secrets
+            - cert-manager
+            - observability
+            - democratic-csi
+            - truenas-csi
+            - openebs
+            - network # controllers legitimately need the API
+            - argocd # ditto — every component watches/writes cluster state
+            # (argo-rollouts lives here too)
+            - kargo
+            - knative-serving # operator + Serving controllers watch/write cluster state
+            - headlamp # in-cluster mode reads the API CA/host from the SA mount
+    # CNPG instance manager (instances + initdb/join jobs) reads its Cluster,
+    # writes status and Secrets — needs the API wherever the Cluster lives.
+    objectSelector:
+      matchExpressions:
+        - key: cnpg.io/cluster
+          operator: DoesNotExist
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  validations:
+    - expression: >-
+        has(object.spec.automountServiceAccountToken) &&
+        object.spec.automountServiceAccountToken == false
+      message: "Set automountServiceAccountToken: false unless the workload needs the API."
 ---
 apiVersion: policies.kyverno.io/v1
 kind: ImageValidatingPolicy

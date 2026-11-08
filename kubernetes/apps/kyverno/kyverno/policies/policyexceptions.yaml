@@ -1,36 +1,23 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kyverno.io/policyexception_v2.json
+# CEL PolicyExceptions (policies.kyverno.io/v1). Namespaced; must live in
+# kyverno (features.policyExceptions.namespace). The policies run autogen, so
+# `object` may be a Pod or its controller — match on metadata only.
 # democratic-csi and truenas-csi pods carry 4-5 upstream-tuned sidecars each;
 # setting per-sidecar requests is boilerplate with no operational value
 # (truenas-csi's chart has no sidecar resources values at all).
-apiVersion: kyverno.io/v2
+apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
   name: democratic-csi-resource-requests
-  # ClusterPolicies around it are cluster-scoped so this Kustomization sets no
-  # targetNamespace; PolicyException is namespaced and must live in kyverno
-  # (features.policyExceptions.namespace restriction)
   namespace: kyverno
 spec:
-  exceptions:
-    - policyName: require-resource-requests
-      # both the base (Pod) and the autogen (controller) rule variants —
-      # the controllers fail on autogen-require-cpu-memory-requests
-      ruleNames:
-        - require-cpu-memory-requests
-        - autogen-require-cpu-memory-requests
-  match:
-    any:
-      - resources:
-          namespaces:
-            - democratic-csi
-            - truenas-csi
-          kinds:
-            - Pod
-            - Deployment
-            - DaemonSet
+  policyRefs:
+    - kind: ValidatingPolicy
+      name: require-resource-requests
+  matchConditions:
+    - name: csi-namespaces
+      expression: object.metadata.namespace in ['democratic-csi', 'truenas-csi']
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kyverno.io/policyexception_v2.json
 # Covers every workload in the `database` namespace that legitimately needs the
 # API token and can't disable it declaratively:
 #   - CNPG operator + postgres instance pods (controller + instance-manager
@@ -39,49 +26,33 @@ spec:
 #   - Strimzi cluster operator, entity operator (topic + user operators) and
 #     KafkaNodePool/StrimziPodSet broker pods; the Strimzi CRDs don't expose
 #     automountServiceAccountToken either.
-apiVersion: kyverno.io/v2
+apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
   name: cloudnative-pg-sa-token
   namespace: kyverno
 spec:
-  exceptions:
-    - policyName: restrict-sa-token-automount
-      ruleNames:
-        - require-explicit-automount
-        - autogen-require-explicit-automount
-  match:
-    any:
-      - resources:
-          namespaces:
-            - database
-          kinds:
-            - Pod
-            - Deployment
+  policyRefs:
+    - kind: ValidatingPolicy
+      name: restrict-sa-token-automount
+  matchConditions:
+    - name: database-namespace
+      expression: object.metadata.namespace == 'database'
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kyverno.io/policyexception_v2.json
 # kube-prometheus-stack helm-hook Jobs (webhook cert-gen + CRD upgrade) have
-# no chart value to set resources and run on every chart upgrade. Exempt them
-# so require-resource-requests can go Enforce without breaking helm hooks.
-apiVersion: kyverno.io/v2
+# no chart value to set resources and run on every chart upgrade.
+apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
   name: kube-prometheus-stack-hook-jobs
   namespace: kyverno
 spec:
-  exceptions:
-    - policyName: require-resource-requests
-      ruleNames:
-        - require-cpu-memory-requests
-        - autogen-require-cpu-memory-requests
-  match:
-    any:
-      - resources:
-          namespaces:
-            - observability
-          kinds:
-            - Job
-            - Pod
-          names:
-            - kube-prometheus-stack-admission-*
-            - kube-prometheus-stack-crds-*
+  policyRefs:
+    - kind: ValidatingPolicy
+      name: require-resource-requests
+  matchConditions:
+    - name: kps-hook-jobs
+      expression: >-
+        object.metadata.namespace == 'observability' &&
+        ['kube-prometheus-stack-admission-', 'kube-prometheus-stack-crds-'].exists(p,
+        object.metadata.name.startsWith(p))
