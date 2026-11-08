@@ -69,14 +69,15 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 
 ## Phase 0: prerequisites (TrueNAS 25.10)
 
-- [ ] TrueNAS: API key (dedicated user if the role model allows it), iSCSI + NFS services on.
+- [x] TrueNAS: API key (dedicated user if the role model allows it), iSCSI + NFS services on
+      (both already serve democratic-csi).
 - [x] Parent datasets: reuse democratic-csi's `<pool-iscsi>/k8s-iscsi/shares` and
       `<pool-nfs>/k8s-nfs/shares` (`datasetPath` in the HelmRelease). Both drivers create
       one child dataset/zvol + share/target per volume and never touch siblings, so sharing
       the parent is safe; it keeps adopted and new volumes under one path. The `…/snaps`
       datasets are democratic-csi's detached snapshots; truenas-csi doesn't use them.
-- [ ] TLS: the cert must match the host in `url`. If it's still the stock self-signed cert, set
-      `insecureSkipTLS: true` or `truenas.caBundle`.
+- [x] TLS: the cert must match the host in `url`. Verified 2026-11-09: Let's Encrypt cert on
+      the `url` host, so `insecureSkipTLS: false` stays.
 - [x] Vaultwarden item `homelab-talos/truenas-csi` with fields `api-key`, `url`
       (`wss://<host>/api/current`), `pool-iscsi` and `pool-nfs`: **bare pool names**, one
       per protocol; the SC `pool` parameter overrides `truenas.defaultPool`. The driver
