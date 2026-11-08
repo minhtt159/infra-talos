@@ -26,7 +26,7 @@ and self-declared not production-ready.
 | One VolumeSnapshotClass per driver | two | one (protocol-agnostic) | `truenas-csi` |
 | Volume handle | PV name, parent dataset from the private config | **full dataset path** (`<pool>/k8s-iscsi/shares/pvc-…`) | better for the rebuild runbook |
 | Import / static PV | n/a | not documented; code rebuilds target/export info from TrueNAS by dataset path | test in Phase 2 |
-| Deterministic names (ns/pvc) | no | no (truenas/truenas-csi#76) | — |
+| Deterministic names (ns/pvc) | no | no (truenas/truenas-csi#76): dataset = provisioner's `pvc-<uid>`; the chart already passes `--extra-create-metadata`, the driver ignores it | migrated volumes: rename on adoption (Phase 3); new PVCs: upstream |
 | NFS ownership | per our driver config | default `mapall root:wheel`; `nfs.rootSquash: "false"` + `fsGroup` for chown-sensitive apps | test per app |
 | NFS/iSCSI host allow-lists | per our driver config | `nfs.hosts`/`nfs.networks`, `iscsi.initiators` | LAN CIDRs are topology — keep out of git (Secret via `valuesFrom` if needed) |
 | CHAP | not used | yes, but secrets are plaintext SC params (PR #46 open) | don't use yet |
@@ -63,7 +63,13 @@ is the use case the issues above are missing.
    `node.iscsiDirHostPathType` value (or `DirectoryOrCreate`). It's a one-line chart change.
 2. **#83 (OCI chart):** add our use case: Flux `OCIRepository`, Renovate.
 3. **New issue:** `resources` values for the CSI sidecars, so policy engines don't need exceptions.
-4. **After Phase 2:** if static-PV adoption works, write it up (docs, or #76).
+4. **#76 (deterministic names):** propose a StorageClass `datasetNameTemplate` parameter
+   (`${pvc.metadata.namespace}-${pvc.metadata.name}`, csi-driver-nfs style). The pieces exist:
+   `--extra-create-metadata` is on, `CreateVolume` only needs to prefer the template over
+   `req.Name`, and the existing-dataset branch already handles reuse.
+5. **New issue:** a way to disable NVMe-oF. The driver derives a portal and calls
+   `nvmet.port.create` at startup even when no class uses it (a config write on the appliance).
+6. **After Phase 2:** if static-PV adoption works, write it up (docs, or #76).
 
 Expect the fix to ship in a release PR rather than as our PR merged.
 
@@ -90,8 +96,15 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 ## Phase 1: deploy side by side
 
 - [x] Drop `suspend: true` from `truenas-csi/ks.yaml`.
-- [ ] `kubectl -n truenas-csi get pods`: controller 6/6, node 3/3 on every node.
-- [ ] `kubectl get csinode -o yaml | grep csi.truenas.io` on every node; `kubectl get sc`.
+- [x] `kubectl -n truenas-csi get pods`: controller 6/6, node 3/3 on every node (2026-11-09).
+- [x] `kubectl get csinode -o yaml | grep csi.truenas.io` on every node; `kubectl get sc`.
+
+Startup log, both expected:
+- `Failed to resolve/create NVMe-oF port, will retry on first use ... Invalid params`: 1.4.0
+  always derives an NVMe-oF portal from `url` and tries `nvmet.port.create` at startup; no
+  value turns it off. Harmless while no StorageClass uses `protocol: nvmeof`.
+- `Configured iSCSI IQN base differs from the TrueNAS appliance basename`: the appliance
+  basename wins, same one democratic-csi targets use.
 
 ## Phase 2: smoke tests (throwaway namespace)
 
@@ -103,9 +116,11 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 - [ ] Delete PVC → PV `Released`, dataset still on TrueNAS (Retain).
 - [ ] Restart the controller/node pods mid-attach; the volume stays usable.
 - [ ] **Static-PV adoption** of a throwaway democratic-csi volume (one iSCSI, one NFS):
-      scale down → PV to Retain → delete PVC + PV → create a PV with
-      `csi.driver: csi.truenas.io`, `volumeHandle: <pool>/k8s-iscsi/shares/<pvc-name>`
-      (same parent as new volumes, so the handle is exactly what truenas-csi would have made),
+      scale down → PV to Retain → delete PVC + PV → **`zfs rename` the dataset to a readable
+      name** (e.g. `<pool>/k8s-iscsi/shares/grafana`; for iSCSI also delete the democratic
+      target/extent first, the driver recreates them from the new path) → create a PV with
+      `csi.driver: csi.truenas.io`, `volumeHandle: <pool>/k8s-iscsi/shares/<readable>`
+      (same parent as new volumes; the handle is whatever the dataset is called),
       same `volumeMode`/`fsType`, `claimRef` → PVC → mount. If this works, Phase 3
       becomes zero-copy. Watch whether ControllerPublish rewrites the democratic
       target's initiator group / NFS share hosts, and what `DeleteVolume` would remove.
@@ -113,6 +128,8 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 ## Phase 3: migrate workloads
 
 Order: low risk first. Method **A** = static-PV adoption (if Phase 2 passed), **B** = copy.
+Naming: migrated volumes get readable dataset + PV names (`<app>` or `<ns>-<app>`) during
+adoption; dynamically provisioned ones stay `pvc-<uid>` until #76 lands upstream.
 For copies, a `pv-migrate`/rsync Job is fine for small volumes; for large ones,
 `zfs send | zfs recv` on TrueNAS into the dataset of a freshly provisioned PVC
 (test it on a throwaway first). Each step: suspend the app (Flux), migrate, switch
