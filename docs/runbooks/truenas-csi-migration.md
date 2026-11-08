@@ -36,7 +36,10 @@ and self-declared not production-ready.
 | Metrics | no | controller `/metrics` + ServiceMonitor | enabled |
 | StorageClass snapshot schedules | no | `snapshot.*` params | optional later, instead of TrueNAS periodic tasks |
 
-## Upstream state (GitHub, 2026-10-31)
+## Upstream state (GitHub, 2026-10-31; re-checked 2026-11-08, no change)
+
+v1.4.0 still the latest release; #76, #80, #83, #84 still open (#80: 8 comments, no
+maintainer fix).
 
 - **Open, no maintainer reply:** #80 Talos node pods stuck on `/etc/iscsi` hostPath check
   (since Oct 15); #84 same root cause; #83 OCI chart; #76 deterministic volume identity.
@@ -73,9 +76,9 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 - [ ] Vaultwarden item `homelab-talos/truenas-csi` with fields `api-key`, `url`
       (`wss://<host>/api/current`) and `pool`. Replace the 3 TODO UUIDs in
       `app/externalsecret.yaml`.
-- [ ] Pin democratic-csi off the floating `next` tag, to the digest running now
+- [x] Pin democratic-csi off the floating `next` tag, to the digest running now
       (`kubectl -n democratic-csi get pods -o jsonpath='{..imageID}'`), so a node
-      reprovision can't pull a TN26-only image.
+      reprovision can't pull a TN26-only image. Done: `next@sha256:0f308ae6…` (2026-11-08).
 
 ## Phase 1: deploy side by side
 
