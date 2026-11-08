@@ -90,6 +90,22 @@
       },
     },
     {
+      description: "Argo Group — argo-cd + argo-rollouts charts, and the Argo CD dashboard tag",
+      groupName: "argocd",
+      matchPackageNames: ["/argoproj/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+    {
+      description: "Prometheus Community Group — all prometheus-community charts",
+      groupName: "prometheus-community",
+      matchPackageNames: ["/prometheus-community/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+    {
       description: "Intel Device Plugins Group — operator + gpu charts release in lockstep",
       groupName: "intel-device-plugins",
       matchDatasources: ["helm"],
