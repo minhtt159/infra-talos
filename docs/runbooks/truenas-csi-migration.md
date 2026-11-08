@@ -108,28 +108,81 @@ Startup log, both expected:
 
 ## Phase 2: smoke tests (throwaway namespace)
 
-- [ ] iSCSI PVC + pod: write, delete pod, re-read on another node (drain); expand online.
+All run 2026-11-09 in `truenas-csi-smoke` (deleted afterwards), truenas-csi 1.4.0.
+
+- [x] iSCSI PVC + pod: write, delete pod, re-read on another node; expand online. xfs,
+      attach+mount 6–7s, node move 9s, resize 73s (controller 1s, the rest kubelet).
+      Non-root pods need `fsGroup` (xfs root is 0:0; CSIDriver `fsGroupPolicy: File`).
       Extent name is the dataset path cut at 64 chars, so a long pool name loses the UUID's
       tail; lookups go by zvol path, so cosmetic.
-- [ ] VolumeSnapshot → restore PVC → data matches.
-- [ ] NFS PVC with a non-root pod (and one with `fsGroup`): check ownership with the default `mapall`.
-- [ ] Delete PVC → PV `Released`, dataset still on TrueNAS (Retain).
-- [ ] Restart the controller/node pods mid-attach; the volume stays usable.
-- [ ] **Static-PV adoption** of a throwaway democratic-csi volume (one iSCSI, one NFS):
-      scale down → PV to Retain → delete PVC + PV → **`zfs rename` the dataset to a readable
-      name** (e.g. `<pool>/k8s-iscsi/shares/grafana`; for iSCSI also delete the democratic
-      target/extent first, the driver recreates them from the new path) → create a PV with
-      `csi.driver: csi.truenas.io`, `volumeHandle: <pool>/k8s-iscsi/shares/<readable>`
-      (same parent as new volumes; the handle is whatever the dataset is called),
-      same `volumeMode`/`fsType`, `claimRef` → PVC → mount. If this works, Phase 3
-      becomes zero-copy. Watch whether ControllerPublish rewrites the democratic
-      target's initiator group / NFS share hosts, and what `DeleteVolume` would remove.
+- [x] VolumeSnapshot → restore PVC → data matches. Snapshot is `<dataset>@snapshot-<uid>`,
+      CreateSnapshot took 52s; restore is a sibling clone, bound in 5s.
+- [x] NFS PVC: nfs4.2 `noatime`. Default share is `mapall root:wheel`: a uid-1000 pod
+      writes fine, files show as 0:0; with `fsGroup: 1000` the dir is `0:1000` setgid.
+      RWX across two nodes works.
+- [x] Delete PVC → PV `Released`, no DeleteVolume in the log (Retain). Patching the PV to
+      `Delete` afterwards removes dataset + share/target in ~5s: that is the cleanup path.
+- [x] Controller rollout restart (9s) and node-pod delete (3s) under a 1 Hz writer: no gap
+      over 2s; new attach on that node right after: 14s.
+- [x] **Static-PV adoption** of throwaway democratic-csi volumes, iSCSI and NFS: works
+      zero-copy, data intact. PV shapes below. What the driver actually does:
+      - **ControllerPublish creates nothing.** It looks the extent up by zvol path (iSCSI) or
+        reads the dataset mountpoint (NFS) and reuses democratic's target/extent/share as
+        they are. `targetIQN` in `volumeAttributes` is ignored. No extent or share → publish
+        fails. So the adopted volume keeps democratic's initiator group and share settings
+        (no `mapall`: files keep real uid/gid, unlike new truenas-csi NFS volumes).
+      - **Readable names are not free.** A `zfs rename` alone breaks the mount, because the
+        extent's disk path / the share path still point at the old name. Per volume on
+        TrueNAS: rename dataset → edit the extent `disk` (iSCSI) or the share path (NFS) → PV
+        with the new handle. Or keep `pvc-<uid>` and skip the rename.
+      - **DeleteVolume on an adopted volume** (only if the PV is `Delete`) removes democratic's
+        target + extent (or share), then the dataset recursively; shared initiator/portal
+        groups stay while another target uses them. Target/extent/share delete errors are
+        non-fatal and logged only at debug.
+
+Static PV + PVC for adoption (pool names live in Vaultwarden, never here):
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata: {name: <app>-data}
+spec:
+  accessModes: [ReadWriteOnce]          # NFS: ReadWriteMany, plus mountOptions: [noatime, nfsvers=4]
+  capacity: {storage: <size>}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: truenas-csi-iscsi   # or truenas-csi-nfs
+  volumeMode: Filesystem
+  claimRef: {apiVersion: v1, kind: PersistentVolumeClaim, namespace: <ns>, name: <pvc>}
+  csi:
+    driver: csi.truenas.io
+    fsType: xfs                         # NFS: omit
+    volumeHandle: <pool>/k8s-iscsi/shares/<dataset>      # NFS: <pool>/k8s-nfs/shares/<dataset>
+    volumeAttributes:
+      protocol: iscsi                   # NFS: nfs, nfsServer: truenas.hnimn.art,
+      pool: <pool>                      #      nfsPath: /mnt/<pool>/k8s-nfs/shares/<dataset>
+      datasetPath: k8s-iscsi/shares
+      lun: "0"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: <pvc>, namespace: <ns>}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: truenas-csi-iscsi
+  volumeName: <app>-data
+  resources: {requests: {storage: <size>}}
+```
+
+Smaller findings: NFS PVs get `fsType: xfs` from the provisioner's `--default-fstype`
+(cosmetic); the controller `rollout restart` left a `restartedAt` annotation (Helm drift,
+harmless).
 
 ## Phase 3: migrate workloads
 
-Order: low risk first. Method **A** = static-PV adoption (if Phase 2 passed), **B** = copy.
-Naming: migrated volumes get readable dataset + PV names (`<app>` or `<ns>-<app>`) during
-adoption; dynamically provisioned ones stay `pvc-<uid>` until #76 lands upstream.
+Order: low risk first. Method **A** = static-PV adoption (Phase 2 passed), **B** = copy.
+Naming: PV names are free (`<app>-data`). Readable dataset names cost a rename + extent/share
+path edit on TrueNAS per volume (see Phase 2); dynamically provisioned ones stay `pvc-<uid>`
+until #76 lands upstream. Adopted NFS volumes keep real uid/gid, new ones get `mapall`.
 For copies, a `pv-migrate`/rsync Job is fine for small volumes; for large ones,
 `zfs send | zfs recv` on TrueNAS into the dataset of a freshly provisioned PVC
 (test it on a throwaway first). Each step: suspend the app (Flux), migrate, switch
@@ -171,6 +224,8 @@ Keep Postgres on iSCSI; don't use NFS for PGDATA.
 
 ## Phase 4: decommission democratic-csi
 
+- [ ] Adopted volumes stay on democratic's targets/shares; they only go when their PV is
+      deleted with `Delete`. Leave them, they are plain TrueNAS objects now.
 - [ ] No PV left with `org.democratic-csi.*`: `kubectl get pv -o custom-columns=NAME:.metadata.name,DRIVER:.spec.csi.driver`.
 - [ ] Remove `kubernetes/apps/democratic-csi/`, its Kyverno entries (`policies.yaml`
       exclude list, `policyexceptions.yaml`), the Taskfile regex half, and the
