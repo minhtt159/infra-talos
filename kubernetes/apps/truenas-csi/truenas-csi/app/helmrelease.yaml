@@ -63,7 +63,9 @@ spec:
         allowVolumeExpansion: true
         parameters: # pool: from valuesFrom
           protocol: iscsi
-          datasetPath: truenas-csi/iscsi
+          # democratic-csi's parent dataset: no TrueNAS prep, and adopted volumes
+          # (runbook Phase 2) keep the same handle shape as new ones.
+          datasetPath: k8s-iscsi/shares
           csi.storage.k8s.io/fstype: xfs
           # chart default false = thick zvol, full size reserved up front
           sparse: "true"
@@ -76,7 +78,7 @@ spec:
           - nfsvers=4
         parameters: # pool: from valuesFrom
           protocol: nfs
-          datasetPath: truenas-csi/nfs
+          datasetPath: k8s-nfs/shares # see iscsi
           # default share squashes every client to root:wheel (mapall). Apps
           # that chown their data dir need nfs.rootSquash: "false" + fsGroup.
 

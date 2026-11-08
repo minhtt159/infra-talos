@@ -24,7 +24,7 @@ and self-declared not production-ready.
 | Thin zvols | via driver config | `sparse` param, **default thick** | set `sparse: "true"` |
 | Snapshots / restore / clone | yes, `detachedSnapshots` (zfs send/recv copy) | yes, plain ZFS snapshot + clone (clone pins its snapshot; destroy is deferred) | **gap:** no detached snapshots — fine for us, nothing consumes VolumeSnapshots yet |
 | One VolumeSnapshotClass per driver | two | one (protocol-agnostic) | `truenas-csi` |
-| Volume handle | PV name, parent dataset from the private config | **full dataset path** (`<pool>/truenas-csi/iscsi/pvc-…`) | better for the rebuild runbook |
+| Volume handle | PV name, parent dataset from the private config | **full dataset path** (`<pool>/k8s-iscsi/shares/pvc-…`) | better for the rebuild runbook |
 | Import / static PV | n/a | not documented; code rebuilds target/export info from TrueNAS by dataset path | test in Phase 2 |
 | Deterministic names (ns/pvc) | no | no (truenas/truenas-csi#76) | — |
 | NFS ownership | per our driver config | default `mapall root:wheel`; `nfs.rootSquash: "false"` + `fsGroup` for chown-sensitive apps | test per app |
@@ -69,8 +69,12 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 
 ## Phase 0: prerequisites (TrueNAS 25.10)
 
-- [ ] TrueNAS: API key (dedicated user if the role model allows it), iSCSI + NFS services on,
-      parent datasets `<pool-iscsi>/truenas-csi/iscsi` and `<pool-nfs>/truenas-csi/nfs`.
+- [ ] TrueNAS: API key (dedicated user if the role model allows it), iSCSI + NFS services on.
+- [x] Parent datasets: reuse democratic-csi's `<pool-iscsi>/k8s-iscsi/shares` and
+      `<pool-nfs>/k8s-nfs/shares` (`datasetPath` in the HelmRelease). Both drivers create
+      one child dataset/zvol + share/target per volume and never touch siblings, so sharing
+      the parent is safe; it keeps adopted and new volumes under one path. The `…/snaps`
+      datasets are democratic-csi's detached snapshots; truenas-csi doesn't use them.
 - [ ] TLS: the cert must match the host in `url`. If it's still the stock self-signed cert, set
       `insecureSkipTLS: true` or `truenas.caBundle`.
 - [x] Vaultwarden item `homelab-talos/truenas-csi` with fields `api-key`, `url`
@@ -96,7 +100,8 @@ Expect the fix to ship in a release PR rather than as our PR merged.
 - [ ] Restart the controller/node pods mid-attach; the volume stays usable.
 - [ ] **Static-PV adoption** of a throwaway democratic-csi volume (one iSCSI, one NFS):
       scale down → PV to Retain → delete PVC + PV → create a PV with
-      `csi.driver: csi.truenas.io`, `volumeHandle: <pool>/<democratic dataset path>`,
+      `csi.driver: csi.truenas.io`, `volumeHandle: <pool>/k8s-iscsi/shares/<pvc-name>`
+      (same parent as new volumes, so the handle is exactly what truenas-csi would have made),
       same `volumeMode`/`fsType`, `claimRef` → PVC → mount. If this works, Phase 3
       becomes zero-copy. Watch whether ControllerPublish rewrites the democratic
       target's initiator group / NFS share hosts, and what `DeleteVolume` would remove.
@@ -151,7 +156,9 @@ Keep Postgres on iSCSI; don't use NFS for PGDATA.
       `dependsOn` references. Rename the classes in docs.
 - [ ] Update [storage.md](../storage.md), [cluster-rebuild.md](cluster-rebuild.md), README.
 - [ ] On TrueNAS: delete old zvols/datasets, targets/extents and NFS shares once verified.
-      Delete the two `homelab-talos/truenas-{iscsi,nfs}` Vaultwarden items.
+      Old and new volumes share the `shares` parents, so go per volume: a child dataset
+      with no matching `kubectl get pv` handle is democratic's leftover. Then drop the
+      `…/snaps` datasets. Delete the two `homelab-talos/truenas-{iscsi,nfs}` Vaultwarden items.
 
 ## Phase 5: TrueNAS 25.10 → 27
 

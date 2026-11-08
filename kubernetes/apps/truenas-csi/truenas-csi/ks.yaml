@@ -6,7 +6,7 @@ metadata:
   name: truenas-csi
 spec:
   # Suspended until Phase 0 of docs/runbooks/truenas-csi-migration.md is done
-  # (parent datasets on both pools, TLS choice). Delete this line to deploy.
+  # (API key scope, TLS choice). Delete this line to deploy.
   suspend: true
   dependsOn:
     - name: snapshot-controller # VolumeSnapshotClass CRD
