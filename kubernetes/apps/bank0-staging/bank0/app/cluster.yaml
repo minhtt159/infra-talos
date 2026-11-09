@@ -13,9 +13,7 @@ kind: Cluster
 metadata:
   name: bank0-staging
 spec:
-  # 2 only during the volume rebuild (5Gi data): the new replica gets the new
-  # size, gets promoted, then back to 1. CNPG never shrinks an existing PVC.
-  instances: 2
+  instances: 1
   # 1 instance: the primary PDB (minAvailable 1) can never be met, so every node
   # drain stalls on the Talos 5m timeout, then kills Postgres. Off = clean
   # shutdown + reschedule (iSCSI follows). Re-enable at instances >= 2.
