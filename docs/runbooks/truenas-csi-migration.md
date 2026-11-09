@@ -205,7 +205,8 @@ For copies, a `pv-migrate`/rsync Job is fine for small volumes; for large ones,
 | grafana | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09, method A**: suspend ks + scale operator/deployment to 0 → delete PVC and the old PV object (Retain, no driver call) → static PV `grafana-data` with the zvol handle, `claimRef` → PVC spec in git gets `volumeName: grafana-data` → merge, resume, operator recreates the PVC bound to it. ~4 min downtime, data intact, publish reused democratic's target |
 | hindsight, yoke, frigate config | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09, method A** in one window (#576): static PVs `hindsight-cache-data`, `yoke-data`, `frigate-config-data`; app-template renders `persistence.*.volumeName`. ~5 min downtime, data intact on all three |
 | frigate media | ~~truenas-nfs~~ | truenas-csi-nfs | **done 2026-11-09, method A** (#578): static PV `frigate-media-data` (NFS variant: `protocol: nfs`, `nfsServer`, `nfsPath`, `mountOptions`), 100Gi adopted in place, ~3 min downtime. Still on democratic's share (open, no_root_squash) until Phase 4 |
-| postgres, bank0-staging, bank0-production | truenas-iscsi | truenas-csi-iscsi | CNPG, see below |
+| postgres, bank0-production | truenas-iscsi | truenas-csi-iscsi | CNPG, see below |
+| bank0-staging | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09** (#581, #582): replica `-2` on the new class streamed in 40s, promote = 16s switchover (timeline 2), `instances: 1` removed old `-1` (it was the only replica, so no `destroy` needed). pg_dumpall taken first; 0 app errors |
 
 **Old-volume cleanup gotcha.** democratic-csi's DeleteVolume refuses a dataset that has
 snapshots (TrueNAS periodic tasks on `k8s-*/shares` make that every dataset), and its old
@@ -245,8 +246,12 @@ Per cluster:
 
 1. **Backup.** postgres: daily barman backups to Garage are `completed` and WAL archiving is
    on; take an on-demand `Backup` anyway. bank0-*: no object store yet, so
-   `kubectl -n <ns> exec <primary> -c postgres -- pg_dumpall -U postgres | gzip >
-   backups/cnpg/<cluster>-<date>.sql.gz` in the main checkout (`backups/` is gitignored).
+   `kubectl -n <ns> exec <primary> -c postgres -- pg_dumpall -U postgres --clean --if-exists
+   | gzip > backups/cnpg/<cluster>-<date>.sql.gz` in the main checkout (`backups/` is
+   gitignored). `kubectl cnpg status` may fail on an unrelated API-discovery timeout
+   (`security.openshift.io`); read `.status.currentPrimary`, pod label
+   `cnpg.io/instanceRole` and `pg_stat_wal_receiver` on the replica instead. `promote`
+   works regardless.
 2. **Git:** `storage.storageClass` and `walStorage.storageClass` → `truenas-csi-iscsi`,
    `instances: 2`. `postgres/ks.yaml`: `dependsOn` `democratic-iscsi` → `truenas-csi`
    (namespace `truenas-csi`). Merge; CNPG creates instance `<n+1>` with both PVCs on
@@ -283,6 +288,7 @@ ScheduledBackup stays a separate follow-up (blocked on the Garage bucket).
 
       Known leftovers so far (decided 2026-11-09: no per-volume cleanup, one sweep here):
       - `k8s-nfs/shares/pvc-ca827d8b-fce0-4ec0-adf7-c5e890bd1a7d` + its NFS share (alertmanager)
+      - `k8s-iscsi/shares/pvc-6deceb28-…` + `pvc-b24860ec-…` zvols, targets, extents (bank0-staging-1 data + WAL); PVs left `Released`
 
 ## Phase 5: TrueNAS 25.10 → 27
 
