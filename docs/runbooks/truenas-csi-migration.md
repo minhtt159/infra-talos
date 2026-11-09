@@ -285,11 +285,11 @@ ScheduledBackup stays a separate follow-up (blocked on the Garage bucket).
 
 - [ ] Adopted volumes stay on democratic's targets/shares; they only go when their PV is
       deleted with `Delete`. Leave them, they are plain TrueNAS objects now.
-- [ ] No PV left with `org.democratic-csi.*`: `kubectl get pv -o custom-columns=NAME:.metadata.name,DRIVER:.spec.csi.driver`.
-- [ ] Remove `kubernetes/apps/democratic-csi/`, its Kyverno entries (`policies.yaml`
-      exclude list, `policyexceptions.yaml`), the Taskfile regex half, and the
-      `dependsOn` references. Rename the classes in docs.
-- [ ] Update [storage.md](../storage.md), [cluster-rebuild.md](cluster-rebuild.md), README.
+- [x] No PV left with `org.democratic-csi.*` (2026-11-09: the 6 Released PV objects deleted; Retain, no driver call).
+- [x] Remove `kubernetes/apps/democratic-csi/`, its Kyverno entries, the Taskfile regex half
+      and the docs references (#591, 2026-11-09). Flux pruned both HelmReleases in ~35s; the
+      `democratic-csi` namespace (`prune: disabled`) was deleted by hand.
+- [x] Update [storage.md](../storage.md), [cluster-rebuild.md](cluster-rebuild.md), README (#591).
 - [ ] On TrueNAS: delete old zvols/datasets, targets/extents and NFS shares once verified.
       Old and new volumes share the `shares` parents, so go per volume: a child dataset
       with no matching `kubectl get pv` handle is democratic's leftover. Destroy its
