@@ -189,6 +189,9 @@ harmless).
 
 ## Phase 3: migrate workloads
 
+**Phase 3 complete 2026-11-09**: no PVC uses `truenas-iscsi`/`truenas-nfs` any more; the 6
+leftover democratic PVs are `Released`/Retain and listed under Phase 4.
+
 Order: low risk first. Method **A** = static-PV adoption (Phase 2 passed), **B** = copy.
 Naming (decided 2026-11-09): **keep the `pvc-<uid>` dataset names**; only the PV name is
 readable (`<app>-data`). Renaming would cost an extent/share path edit on TrueNAS per volume
@@ -205,7 +208,7 @@ For copies, a `pv-migrate`/rsync Job is fine for small volumes; for large ones,
 | grafana | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09, method A**: suspend ks + scale operator/deployment to 0 → delete PVC and the old PV object (Retain, no driver call) → static PV `grafana-data` with the zvol handle, `claimRef` → PVC spec in git gets `volumeName: grafana-data` → merge, resume, operator recreates the PVC bound to it. ~4 min downtime, data intact, publish reused democratic's target |
 | hindsight, yoke, frigate config | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09, method A** in one window (#576): static PVs `hindsight-cache-data`, `yoke-data`, `frigate-config-data`; app-template renders `persistence.*.volumeName`. ~5 min downtime, data intact on all three |
 | frigate media | ~~truenas-nfs~~ | truenas-csi-nfs | **done 2026-11-09, method A** (#578): static PV `frigate-media-data` (NFS variant: `protocol: nfs`, `nfsServer`, `nfsPath`, `mountOptions`), 100Gi adopted in place, ~3 min downtime. Still on democratic's share (open, no_root_squash) until Phase 4 |
-| bank0-production | truenas-iscsi | truenas-csi-iscsi | CNPG, see below |
+| bank0-production | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09** (#586, #589): pg_dumpall first; replica ready ~3.5 min, promote 20s (timeline 2), `destroy 1` → replacement ~6 min. 2 instances on different nodes, PDB on, slot cap 2GB. bank0-api/portal 0 errors. Sizes stayed 20Gi/5Gi: CNPG forbids shrinking (see below) |
 | postgres | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09** (#584): on-demand barman Backup first; replica ready in ~4 min, promote 20s (timeline 3), `cnpg destroy postgres 2` → replacement ~5 min. **CNPG reuses freed serials**: the new replica was `postgres-1`, the replacement `postgres-2` again. Now 2 instances on different nodes, PDB on, `max_slot_wal_keep_size` 4GB. hindsight/litellm 0 errors |
 | bank0-staging | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09** (#581, #582): replica `-2` on the new class streamed in 40s, promote = 16s switchover (timeline 2), `instances: 1` removed old `-1` (it was the only replica, so no `destroy` needed). pg_dumpall taken first; 0 app errors |
 
@@ -297,6 +300,7 @@ ScheduledBackup stays a separate follow-up (blocked on the Garage bucket).
       - `k8s-nfs/shares/pvc-ca827d8b-fce0-4ec0-adf7-c5e890bd1a7d` + its NFS share (alertmanager)
       - `k8s-iscsi/shares/pvc-6deceb28-…` + `pvc-b24860ec-…` zvols, targets, extents (bank0-staging-1 data + WAL); PVs left `Released`
       - `k8s-iscsi/shares/pvc-2c2beae1-…` + `pvc-b74dcdf0-…` zvols, targets, extents (old postgres-2 data + WAL); PVs left `Released`
+      - `k8s-iscsi/shares/pvc-b3ba94e6-…` + `pvc-58b1af71-…` zvols, targets, extents (old bank0-production-1 data + WAL); PVs left `Released`
 
 ## Phase 5: TrueNAS 25.10 → 27
 
