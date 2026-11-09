@@ -75,7 +75,8 @@ spec:
         type: persistentVolumeClaim
         accessMode: ReadWriteOnce
         size: 1Gi
-        storageClass: truenas-iscsi
+        storageClass: truenas-csi-iscsi
+        volumeName: yoke-data # static PV adopting the democratic-csi zvol (runbook Phase 3)
         retain: true
         globalMounts:
           - path: /data
