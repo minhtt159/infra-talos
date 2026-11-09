@@ -251,8 +251,12 @@ Keep Postgres on iSCSI; don't use NFS for PGDATA.
 - [ ] Update [storage.md](../storage.md), [cluster-rebuild.md](cluster-rebuild.md), README.
 - [ ] On TrueNAS: delete old zvols/datasets, targets/extents and NFS shares once verified.
       Old and new volumes share the `shares` parents, so go per volume: a child dataset
-      with no matching `kubectl get pv` handle is democratic's leftover. Then drop the
+      with no matching `kubectl get pv` handle is democratic's leftover. Destroy its
+      snapshots first (that is what blocked democratic's own delete). Then drop the
       `…/snaps` datasets. Delete the two `homelab-talos/truenas-{iscsi,nfs}` Vaultwarden items.
+
+      Known leftovers so far (decided 2026-11-09: no per-volume cleanup, one sweep here):
+      - `k8s-nfs/shares/pvc-ca827d8b-fce0-4ec0-adf7-c5e890bd1a7d` + its NFS share (alertmanager)
 
 ## Phase 5: TrueNAS 25.10 → 27
 
