@@ -201,11 +201,18 @@ For copies, a `pv-migrate`/rsync Job is fine for small volumes; for large ones,
 
 | Workload | Class today | → | Notes |
 |---|---|---|---|
-| alertmanager (kube-prometheus-stack) | truenas-nfs | truenas-csi-nfs | 1Gi, disposable: just recreate |
+| alertmanager (kube-prometheus-stack) | ~~truenas-nfs~~ | truenas-csi-nfs | **done 2026-11-09**: SC switched in git, old PVC + pod deleted, operator recreated both. Old PV patched to Delete: democratic's DeleteVolume **failed** (`filesystem has dependent snapshots`, a TrueNAS snapshot task on the parent) but the PV object went away anyway, so dataset `k8s-nfs/shares/pvc-ca827d8b-…` + its share are orphaned → delete by hand |
 | grafana | truenas-iscsi | truenas-csi-iscsi | small; A or B |
 | hindsight, yoke, frigate config | truenas-iscsi | truenas-csi-iscsi | A or B |
 | frigate media | truenas-nfs | truenas-csi-nfs | large: A, or zfs send/recv |
 | postgres, bank0-staging, bank0-production | truenas-iscsi | truenas-csi-iscsi | CNPG, see below |
+
+**Old-volume cleanup gotcha.** democratic-csi's DeleteVolume refuses a dataset that has
+snapshots (TrueNAS periodic tasks on `k8s-*/shares` make that every dataset), and its old
+external-provisioner (v3.6.0) doesn't hold the PV finalizer, so `kubectl delete pv` succeeds
+while the dataset and share stay. Either destroy snapshots first on TrueNAS, or leave old PVs
+`Released`/Retain and clean them up in one TrueNAS pass in Phase 4. truenas-csi's own
+DeleteVolume is `recursive + force`, so this only affects democratic volumes.
 
 StatefulSet `volumeClaimTemplates` (alertmanager, CNPG) can't change in place. Delete
 the StatefulSet with `--cascade=orphan` or let the operator recreate it, then replace
@@ -244,8 +251,12 @@ Keep Postgres on iSCSI; don't use NFS for PGDATA.
 - [ ] Update [storage.md](../storage.md), [cluster-rebuild.md](cluster-rebuild.md), README.
 - [ ] On TrueNAS: delete old zvols/datasets, targets/extents and NFS shares once verified.
       Old and new volumes share the `shares` parents, so go per volume: a child dataset
-      with no matching `kubectl get pv` handle is democratic's leftover. Then drop the
+      with no matching `kubectl get pv` handle is democratic's leftover. Destroy its
+      snapshots first (that is what blocked democratic's own delete). Then drop the
       `…/snaps` datasets. Delete the two `homelab-talos/truenas-{iscsi,nfs}` Vaultwarden items.
+
+      Known leftovers so far (decided 2026-11-09: no per-volume cleanup, one sweep here):
+      - `k8s-nfs/shares/pvc-ca827d8b-fce0-4ec0-adf7-c5e890bd1a7d` + its NFS share (alertmanager)
 
 ## Phase 5: TrueNAS 25.10 → 27
 
