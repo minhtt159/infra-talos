@@ -120,6 +120,16 @@ All run 2026-11-09 in `truenas-csi-smoke` (deleted afterwards), truenas-csi 1.4.
 - [x] NFS PVC: nfs4.2 `noatime`. Default share is `mapall root:wheel`: a uid-1000 pod
       writes fine, files show as 0:0; with `fsGroup: 1000` the dir is `0:1000` setgid.
       RWX across two nodes works.
+
+      **NFS permission model (decided 2026-11-09).** democratic-csi shares are
+      `maproot root:root` (no_root_squash) on `0777` datasets with no host allow-list.
+      truenas-csi `truenas-csi-nfs` keeps the chart's `mapall root:wheel` (any pod uid
+      writes, files 0:0, datasets stay 755) and adds `nfs.networks: <node subnet>`. The
+      real control on either driver is the allow-list, not the uid mapping. Mapall to an
+      unprivileged user doesn't work in 1.4.0: the driver never chowns the dataset, so the
+      mapped user can't write and fsGroup's chown is squashed. Ownership-sensitive NFS
+      apps (none today) get a separate class with `nfs.rootSquash: "false"`. SC params
+      are immutable: changing one means deleting the class while no PV uses it.
 - [x] Delete PVC → PV `Released`, no DeleteVolume in the log (Retain). Patching the PV to
       `Delete` afterwards removes dataset + share/target in ~5s: that is the cleanup path.
 - [x] Controller rollout restart (9s) and node-pod delete (3s) under a 1 Hz writer: no gap
