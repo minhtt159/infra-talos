@@ -88,8 +88,8 @@ spec:
           # sqlite ~6M + plugins ~50M; dashboards/datasources = CRs
           storage: 2Gi
       # TrueNAS block: survives node rotation, Retain. Bound to a static PV that
-      # adopts a pre-existing zvol (migration runbook Phase 3); PVs are cluster state,
-      # `task pv:export` backs them up.
+      # adopts a pre-existing zvol; PVs are cluster state, `task pv:export`
+      # backs them up.
       storageClassName: truenas-csi-iscsi
       volumeName: grafana-data
   # Operator defaults the rule (PathPrefix / -> grafana-service:3000). LAN route

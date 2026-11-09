@@ -8,8 +8,8 @@ metadata:
   labels:
     app: frigate
 spec:
-  # Static PV adopting a pre-existing zvol (migration runbook Phase 3); PVs are
-  # cluster state, `task pv:export` backs them up.
+  # Static PV adopting a pre-existing zvol; PVs are cluster state,
+  # `task pv:export` backs them up.
   storageClassName: truenas-csi-iscsi
   volumeName: frigate-config-data
   accessModes:
