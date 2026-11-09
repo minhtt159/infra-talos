@@ -8,7 +8,10 @@ metadata:
   labels:
     app: frigate
 spec:
-  storageClassName: truenas-iscsi
+  # Static PV adopting the democratic-csi zvol (runbook Phase 3); PVs are
+  # cluster state, `task pv:export` backs them up.
+  storageClassName: truenas-csi-iscsi
+  volumeName: frigate-config-data
   accessModes:
     - ReadWriteOnce
   resources:

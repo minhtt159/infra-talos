@@ -6,7 +6,10 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-iscsi
+  # Static PV adopting the democratic-csi zvol (runbook Phase 3); PVs are
+  # cluster state, `task pv:export` backs them up.
+  storageClassName: truenas-csi-iscsi
+  volumeName: hindsight-cache-data
   resources:
     requests:
       storage: 5Gi # else embedder/reranker models re-download every restart
