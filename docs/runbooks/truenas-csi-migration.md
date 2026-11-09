@@ -203,7 +203,7 @@ For copies, a `pv-migrate`/rsync Job is fine for small volumes; for large ones,
 |---|---|---|---|
 | alertmanager (kube-prometheus-stack) | ~~truenas-nfs~~ | truenas-csi-nfs | **done 2026-11-09**: SC switched in git, old PVC + pod deleted, operator recreated both. Old PV patched to Delete: democratic's DeleteVolume **failed** (`filesystem has dependent snapshots`, a TrueNAS snapshot task on the parent) but the PV object went away anyway, so dataset `k8s-nfs/shares/pvc-ca827d8b-…` + its share are orphaned → delete by hand |
 | grafana | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09, method A**: suspend ks + scale operator/deployment to 0 → delete PVC and the old PV object (Retain, no driver call) → static PV `grafana-data` with the zvol handle, `claimRef` → PVC spec in git gets `volumeName: grafana-data` → merge, resume, operator recreates the PVC bound to it. ~4 min downtime, data intact, publish reused democratic's target |
-| hindsight, yoke, frigate config | truenas-iscsi | truenas-csi-iscsi | A or B |
+| hindsight, yoke, frigate config | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09, method A** in one window (#576): static PVs `hindsight-cache-data`, `yoke-data`, `frigate-config-data`; app-template renders `persistence.*.volumeName`. ~5 min downtime, data intact on all three |
 | frigate media | truenas-nfs | truenas-csi-nfs | large: A, or zfs send/recv |
 | postgres, bank0-staging, bank0-production | truenas-iscsi | truenas-csi-iscsi | CNPG, see below |
 
