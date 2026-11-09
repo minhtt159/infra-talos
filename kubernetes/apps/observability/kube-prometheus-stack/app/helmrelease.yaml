@@ -45,7 +45,7 @@ spec:
         storage:
           volumeClaimTemplate:
             spec:
-              storageClassName: truenas-nfs
+              storageClassName: truenas-csi-nfs
               resources:
                 requests:
                   storage: 1Gi
