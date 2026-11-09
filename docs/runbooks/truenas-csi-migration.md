@@ -255,12 +255,12 @@ Per cluster:
    `kubectl cnpg promote <cluster> <cluster>-<n+1>`.
 4. Retire the old instance: `kubectl cnpg destroy <cluster> <n>`. CNPG recreates a
    replacement (`<n+2>`) on the new class to satisfy `instances: 2`.
-5. End state, **2 instances on truenas-csi**: in git set `enablePDB: true` (its comment says
-   "re-enable at instances >= 2") and add pod anti-affinity
-   (`affinity.enablePodAntiAffinity: true`, `topologyKey: kubernetes.io/hostname`); the
-   `ponytail:` comments asking for this come out. If 1 instance is wanted instead, set
-   `instances: 1` after step 3; scale-down then removes the replacement replica, not the old
-   primary, so still run step 4 first.
+5. End state (decided 2026-11-09): **postgres and bank0-production stay at 2 instances** on
+   truenas-csi; the step-2 git change also sets `enablePDB: true` (its comment says
+   "re-enable at instances >= 2") and pod anti-affinity (`affinity.enablePodAntiAffinity:
+   true`, `topologyKey: kubernetes.io/hostname`), and the `ponytail:` comments asking for
+   this come out. **bank0-staging goes back to 1**: after step 4, set `instances: 1`
+   (scale-down removes the replacement replica, the promoted instance stays).
 6. Old PVs (`<cluster>-<n>`, `<cluster>-<n>-wal`) stay `Released` → add to the Phase 4 list.
 
 Keep Postgres on iSCSI; don't use NFS for PGDATA. bank0-production's missing ObjectStore /
