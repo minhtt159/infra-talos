@@ -1,7 +1,7 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
 # Official TrueNAS CSI driver (TrueNAS 25.10+, WebSocket API); provides every
-# TrueNAS-backed PV. TrueNAS-side notes: homelab-platform (private).
+# TrueNAS-backed PV. History: docs/runbooks/truenas-csi-migration.md.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -63,7 +63,7 @@ spec:
         parameters: # pool: from valuesFrom
           protocol: iscsi
           # Pre-existing parent dataset: no TrueNAS prep, and adopted volumes
-          # keep the same handle shape as new ones.
+          # (migration runbook) keep the same handle shape as new ones.
           datasetPath: k8s-iscsi/shares
           csi.storage.k8s.io/fstype: xfs
           # chart default false = thick zvol, full size reserved up front

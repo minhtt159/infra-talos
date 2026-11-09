@@ -6,8 +6,8 @@ metadata:
   labels:
     app: frigate
 spec:
-  # Static PV adopting a pre-existing dataset; keeps the old NFS share until
-  # the TrueNAS cleanup (homelab-platform).
+  # Static PV adopting a pre-existing dataset (migration runbook Phase 3); keeps
+  # the old NFS share until the Phase 4 TrueNAS sweep.
   storageClassName: truenas-csi-nfs
   volumeName: frigate-media-data
   accessModes:

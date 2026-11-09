@@ -10,7 +10,7 @@ loss), the llama-server model cache (re-pulled from Hugging Face) and mosquitto
   `truenas-csi-{iscsi,nfs}` classes; creds via `ExternalSecret` from Vaultwarden;
   [kubernetes/apps/truenas-csi/](../kubernetes/apps/truenas-csi/).
   `reclaimPolicy: Retain`: deleting a PVC or the cluster never deletes data.
-  TrueNAS-side steps and the democratic-csi migration history: homelab-platform (private).
+  History: [migration runbook](runbooks/truenas-csi-migration.md).
 - **openebs** — hostpath, pinned to the creating node, dies with it. Kafka on
   `openebs-hostpath-sata` (`/var/mnt/sata`, node `storage=sata`); llama-server models
   (GPU node) and mosquitto on `openebs-hostpath` (`/var/mnt/data` = Talos EPHEMERAL partition).

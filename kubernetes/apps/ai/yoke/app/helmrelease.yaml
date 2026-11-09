@@ -76,7 +76,7 @@ spec:
         accessMode: ReadWriteOnce
         size: 1Gi
         storageClass: truenas-csi-iscsi
-        volumeName: yoke-data # static PV adopting a pre-existing zvol
+        volumeName: yoke-data # static PV adopting a pre-existing zvol (migration runbook Phase 3)
         retain: true
         globalMounts:
           - path: /data
