@@ -34,7 +34,8 @@ spec:
     size: 10Gi
   walStorage:
     storageClass: truenas-csi-iscsi
-    size: 2Gi
+    # floor = wal_keep_size 512MB + max_wal_size 1GB; 2Gi left ~0.5Gi. Sparse zvol.
+    size: 4Gi
   monitoring:
     enablePodMonitor: true
   resources:
