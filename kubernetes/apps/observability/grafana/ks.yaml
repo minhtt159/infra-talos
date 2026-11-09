@@ -21,8 +21,7 @@ spec:
         kind: Secret
   dependsOn:
     - name: grafana
-    - # NOTE:custom storage provider
-      name: democratic-iscsi
-      namespace: democratic-csi
+    - name: truenas-csi # provides the truenas-csi-iscsi StorageClass
+      namespace: truenas-csi
   path: ./kubernetes/apps/observability/grafana/instance
   targetNamespace: observability
