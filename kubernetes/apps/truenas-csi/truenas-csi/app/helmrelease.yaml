@@ -81,6 +81,9 @@ spec:
           datasetPath: k8s-nfs/shares # see iscsi
           # default share squashes every client to root:wheel (mapall). Apps
           # that chown their data dir need nfs.rootSquash: "false" + fsGroup.
+          # Node subnet only (same CIDR as cilium host-firewall); SC params are
+          # immutable, a change means delete the SC while no PV uses it.
+          nfs.networks: 10.1.80.0/24
 
     volumeSnapshotClass:
       enabled: true
