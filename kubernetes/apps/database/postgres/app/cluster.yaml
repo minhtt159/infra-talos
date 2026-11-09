@@ -1,18 +1,17 @@
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
-# Single instance on TrueNAS iSCSI: reschedules anywhere, but off a dead node expect
-# minutes (RWO force-detach + crash recovery). Backups: barman-cloud -> Garage S3, daily.
-# ponytail: still 1 instance - bump instances (>=2) before putting anything real in here.
+# Two instances on TrueNAS iSCSI, one per node: a node loss is a CNPG failover,
+# not an RWO force-detach wait. Backups: barman-cloud -> Garage S3, daily.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: postgres
 spec:
-  instances: 1
-  # 1 instance: the primary PDB (minAvailable 1) can never be met, so every node
-  # drain stalls on the Talos 5m timeout, then kills Postgres. Off = clean
-  # shutdown + reschedule (iSCSI follows). Re-enable at instances >= 2.
-  enablePDB: false
+  instances: 2
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: required
   # -standard flavor bundles pgvector (needed by Hindsight); default operand is
   # the -system flavor (no extensions). Must be >= the running minor — CNPG
   # rejects downgrades and in-place major changes.
@@ -30,16 +29,21 @@ spec:
         login: true
         passwordSecret:
           name: litellm-db-auth
-  # iSCSI honors these sizes — each provisions a real TrueNAS zvol (100Gi PGDATA
-  # + 20Gi WAL). Separate walStorage keeps a WAL spike from filling PGDATA.
-  # truenas-iscsi is Retain + allowVolumeExpansion; zvols survive cluster
-  # deletion (reclaim via docs/runbooks/cluster-rebuild.md).
+  # Each volume is a sparse TrueNAS zvol (100Gi PGDATA + 20Gi WAL). Separate
+  # walStorage keeps a WAL spike from filling PGDATA. truenas-csi-iscsi is
+  # Retain + allowVolumeExpansion; zvols survive cluster deletion (reclaim via
+  # docs/runbooks/cluster-rebuild.md).
   storage:
-    storageClass: truenas-iscsi
+    storageClass: truenas-csi-iscsi
     size: 100Gi
   walStorage:
-    storageClass: truenas-iscsi
+    storageClass: truenas-csi-iscsi
     size: 20Gi
+  postgresql:
+    parameters:
+      # HA replication slots retain WAL for a down replica without limit;
+      # cap it so a dead standby can't fill the primary's 20Gi WAL volume.
+      max_slot_wal_keep_size: 4GB
   monitoring:
     enablePodMonitor: true
   plugins:
