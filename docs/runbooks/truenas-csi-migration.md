@@ -202,7 +202,7 @@ For copies, a `pv-migrate`/rsync Job is fine for small volumes; for large ones,
 | Workload | Class today | → | Notes |
 |---|---|---|---|
 | alertmanager (kube-prometheus-stack) | ~~truenas-nfs~~ | truenas-csi-nfs | **done 2026-11-09**: SC switched in git, old PVC + pod deleted, operator recreated both. Old PV patched to Delete: democratic's DeleteVolume **failed** (`filesystem has dependent snapshots`, a TrueNAS snapshot task on the parent) but the PV object went away anyway, so dataset `k8s-nfs/shares/pvc-ca827d8b-…` + its share are orphaned → delete by hand |
-| grafana | truenas-iscsi | truenas-csi-iscsi | small; A or B |
+| grafana | ~~truenas-iscsi~~ | truenas-csi-iscsi | **done 2026-11-09, method A**: suspend ks + scale operator/deployment to 0 → delete PVC and the old PV object (Retain, no driver call) → static PV `grafana-data` with the zvol handle, `claimRef` → PVC spec in git gets `volumeName: grafana-data` → merge, resume, operator recreates the PVC bound to it. ~4 min downtime, data intact, publish reused democratic's target |
 | hindsight, yoke, frigate config | truenas-iscsi | truenas-csi-iscsi | A or B |
 | frigate media | truenas-nfs | truenas-csi-nfs | large: A, or zfs send/recv |
 | postgres, bank0-staging, bank0-production | truenas-iscsi | truenas-csi-iscsi | CNPG, see below |
@@ -213,6 +213,12 @@ external-provisioner (v3.6.0) doesn't hold the PV finalizer, so `kubectl delete 
 while the dataset and share stay. Either destroy snapshots first on TrueNAS, or leave old PVs
 `Released`/Retain and clean them up in one TrueNAS pass in Phase 4. truenas-csi's own
 DeleteVolume is `recursive + force`, so this only affects democratic volumes.
+
+Adoption recipe (grafana proved it): the old PV object can simply be deleted once the PVC is
+gone; with Retain the driver is never called and the zvol/dataset stays. Create the static PV
+before merging the git change so the new PVC binds immediately. Operator-managed PVCs
+(grafana-operator) accept `volumeName`, which makes the bind race-free; for plain PVCs in git
+set `volumeName` too.
 
 StatefulSet `volumeClaimTemplates` (alertmanager, CNPG) can't change in place. Delete
 the StatefulSet with `--cascade=orphan` or let the operator recreate it, then replace
