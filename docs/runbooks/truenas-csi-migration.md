@@ -226,25 +226,45 @@ the PVC.
 
 ### CNPG (postgres, bank0-*)
 
-Don't copy PGDATA files. Use CNPG's own replica swap; it needs no adoption and costs
-a switchover's seconds of downtime:
+Don't copy PGDATA files and don't adopt CNPG PVCs (the operator owns them). Use CNPG's own
+replica mechanics; the DBs are tiny (postgres 359 MB, bank0-staging 46 MB, bank0-production
+37 MB), so a new replica streams in seconds and the cut-over is one switchover.
 
-1. Backup first. postgres: on-demand `Backup` (barman-cloud). **bank0-production has no
-   backups**: take a `pg_dump` (or add an ObjectStore) before touching it.
-2. In git, set `storage.storageClass` **and** `walStorage.storageClass` to
-   `truenas-csi-iscsi`, and `instances: 2`. CNPG never moves existing PVCs, so the
-   primary stays put, while the new replica gets fresh PVCs on the new class from the
-   current spec.
-3. Wait until the replica is streaming (`kubectl cnpg status <cluster>`), then
-   `kubectl cnpg promote <cluster> <new-instance>`.
-4. Set `instances: 1` again. CNPG removes the remaining replica (the old instance)
-   and its PVCs, whose PVs go to `Released` (Retain) and stay on TrueNAS until deleted
-   by hand. Better: stay at `instances: 2` with anti-affinity, which the `ponytail`
-   comments already ask for.
-5. `database/postgres/ks.yaml`: change `dependsOn` from `democratic-iscsi` to
-   `truenas-csi` (namespace `truenas-csi`).
+Facts that shape the procedure (CNPG 1.30.1, plugin 1.30.1 installed locally):
+- Changing `storage.storageClass`/`walStorage.storageClass` never touches existing PVCs; only
+  instances created afterwards get the new class.
+- Scale-down removes the **highest-serial non-primary**. After promoting the new instance,
+  that would be a *new* one, so the old instance is retired with `kubectl cnpg destroy`
+  (deletes the instance and its PVCs; PVs are Retain → `Released`, Phase 4 leftovers).
+- `kubectl cnpg promote` is a switchover: seconds of write unavailability, clients reconnect
+  (hindsight/litellm use `postgres-rw`, bank0 reads the `*-app` Secret URI; names don't change).
 
-Keep Postgres on iSCSI; don't use NFS for PGDATA.
+Order: **bank0-staging** (rehearsal, nothing depends on it) → **postgres** → **bank0-production**.
+
+Per cluster:
+
+1. **Backup.** postgres: daily barman backups to Garage are `completed` and WAL archiving is
+   on; take an on-demand `Backup` anyway. bank0-*: no object store yet, so
+   `kubectl -n <ns> exec <primary> -c postgres -- pg_dumpall -U postgres | gzip >
+   backups/cnpg/<cluster>-<date>.sql.gz` in the main checkout (`backups/` is gitignored).
+2. **Git:** `storage.storageClass` and `walStorage.storageClass` → `truenas-csi-iscsi`,
+   `instances: 2`. `postgres/ks.yaml`: `dependsOn` `democratic-iscsi` → `truenas-csi`
+   (namespace `truenas-csi`). Merge; CNPG creates instance `<n+1>` with both PVCs on
+   `truenas-csi-iscsi` and starts streaming.
+3. `kubectl cnpg status <cluster>` until the replica is streaming and in sync, then
+   `kubectl cnpg promote <cluster> <cluster>-<n+1>`.
+4. Retire the old instance: `kubectl cnpg destroy <cluster> <n>`. CNPG recreates a
+   replacement (`<n+2>`) on the new class to satisfy `instances: 2`.
+5. End state (decided 2026-11-09): **postgres and bank0-production stay at 2 instances** on
+   truenas-csi; the step-2 git change also sets `enablePDB: true` (its comment says
+   "re-enable at instances >= 2") and pod anti-affinity (`affinity.enablePodAntiAffinity:
+   true`, `topologyKey: kubernetes.io/hostname`), and the `ponytail:` comments asking for
+   this come out. **bank0-staging goes back to 1**: after step 4, set `instances: 1`
+   (scale-down removes the replacement replica, the promoted instance stays).
+6. Old PVs (`<cluster>-<n>`, `<cluster>-<n>-wal`) stay `Released` → add to the Phase 4 list.
+
+Keep Postgres on iSCSI; don't use NFS for PGDATA. bank0-production's missing ObjectStore /
+ScheduledBackup stays a separate follow-up (blocked on the Garage bucket).
 
 ## Phase 4: decommission democratic-csi
 
