@@ -6,20 +6,19 @@
 # sync with the DSN.
 # bootstrap.initdb generates Secret bank0-production-app, which carries a ready
 # `uri` — that's what the chart reads (database.existingSecret + secretKey: uri).
-# ponytail: 1 instance and NO backups yet. Both matter here more than in
-# staging — see the PR for the ObjectStore/ScheduledBackup follow-up, which is
-# blocked on the Garage bucket the `postgres` cluster's objectstore.yaml still
-# TODOs.
+# ponytail: NO backups yet — see the PR for the ObjectStore/ScheduledBackup
+# follow-up, which is blocked on the Garage bucket the `postgres` cluster's
+# objectstore.yaml still TODOs.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: bank0-production
 spec:
-  instances: 1
-  # 1 instance: the primary PDB (minAvailable 1) can never be met, so every node
-  # drain stalls on the Talos 5m timeout, then kills Postgres. Off = clean
-  # shutdown + reschedule (iSCSI follows). Re-enable at instances >= 2.
-  enablePDB: false
+  instances: 2
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: required
   # PG18 is a hard floor — bank0's schema uses uuidv7() with no polyfill.
   # Renovate: tracked by the CNPG imageName custom manager (minor/patch only).
   imageName: ghcr.io/cloudnative-pg/postgresql:18.4-standard-trixie
@@ -27,14 +26,19 @@ spec:
     initdb:
       database: bank0
       owner: bank0
-  # truenas-iscsi is network-attached, so a pod reschedules to any node and the
-  # volume follows.
+  # truenas-csi-iscsi is network-attached, so a pod reschedules to any node and
+  # the volume follows.
   storage:
-    storageClass: truenas-iscsi
+    storageClass: truenas-csi-iscsi
     size: 20Gi
   walStorage:
-    storageClass: truenas-iscsi
+    storageClass: truenas-csi-iscsi
     size: 5Gi
+  postgresql:
+    parameters:
+      # HA replication slots retain WAL for a down replica without limit;
+      # cap it so a dead standby can't fill the primary's 5Gi WAL volume.
+      max_slot_wal_keep_size: 2GB
   monitoring:
     enablePodMonitor: true
   resources:
