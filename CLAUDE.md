@@ -9,7 +9,7 @@ Node/OS provisioning (the Omni cluster template) lives in a **separate private r
 
 ## Security posture — hard rules
 
-- **This repo is PUBLIC. No private information.** Functional network values the manifests need — CIDRs, LoadBalancer VIPs, the router IP — are fine; never node IPs, node hostnames, disk serials, machine UUIDs, or hardware inventory. If you're about to write one of those, stop — it belongs in a private repo.
+- **This repo is PUBLIC. No private information.** Functional network values the manifests need — CIDRs, LoadBalancer VIPs, the router IP — are fine; never node IPs, node hostnames, disk serials, machine UUIDs, hardware inventory, or TrueNAS pool names (the pool comes from a private `valuesFrom`; write "the pool" or a pool-relative dataset path like `k8s-nfs/shares/pvc-...`). This covers commit messages and PR/issue text too. If you're about to write one of those, stop — it belongs in a private repo.
 - The domain `hnimn.art` is public — write it literally.
 - **No secrets in git, ever.** Secrets come from **Vaultwarden** via an `ExternalSecret` (item UUID + field, never the value); no SOPS, no age key. How-to: [docs/secrets.md](docs/secrets.md).
 - `postBuild.substituteFrom: cluster-secrets` is only for the remaining `SECRET_*` keys (Cloudflare Access team, Access AUD tags, TrueNAS IP).
