@@ -2,21 +2,20 @@
 # CEL PolicyExceptions (policies.kyverno.io/v1). Namespaced; must live in
 # kyverno (features.policyExceptions.namespace). The policies run autogen, so
 # `object` may be a Pod or its controller — match on metadata only.
-# democratic-csi and truenas-csi pods carry 4-5 upstream-tuned sidecars each;
-# setting per-sidecar requests is boilerplate with no operational value
-# (truenas-csi's chart has no sidecar resources values at all).
+# truenas-csi pods carry upstream-tuned sidecars and the chart has no sidecar
+# `resources` values to set.
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
-  name: democratic-csi-resource-requests
+  name: truenas-csi-resource-requests
   namespace: kyverno
 spec:
   policyRefs:
     - kind: ValidatingPolicy
       name: require-resource-requests
   matchConditions:
-    - name: csi-namespaces
-      expression: object.metadata.namespace in ['democratic-csi', 'truenas-csi']
+    - name: truenas-csi-namespace
+      expression: object.metadata.namespace == 'truenas-csi'
 ---
 # Covers every workload in the `database` namespace that legitimately needs the
 # API token and can't disable it declaratively:

@@ -6,7 +6,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  # Static PV adopting the democratic-csi zvol (runbook Phase 3); PVs are
+  # Static PV adopting a pre-existing zvol (migration runbook Phase 3); PVs are
   # cluster state, `task pv:export` backs them up.
   storageClassName: truenas-csi-iscsi
   volumeName: hindsight-cache-data

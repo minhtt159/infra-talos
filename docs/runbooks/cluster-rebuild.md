@@ -1,6 +1,6 @@
 # Runbook: cluster rebuild with volume reclaim
 
-Tear down, rebuild, re-attach every democratic-csi volume. Works because
+Tear down, rebuild, re-attach every truenas-csi volume. Works because
 `reclaimPolicy: Retain` keeps TrueNAS data and a PV's `spec.csi.volumeHandle`
 re-mounts the same dataset/zvol.
 
@@ -11,7 +11,7 @@ re-mounts the same dataset/zvol.
 ## 0. Preconditions
 
 ```sh
-# every democratic-csi PV must be Retain
+# every truenas-csi PV must be Retain
 kubectl get pv -o custom-columns=NAME:.metadata.name,RECLAIM:.spec.persistentVolumeReclaimPolicy,SC:.spec.storageClassName
 # if any say Delete:
 # kubectl patch pv <name> -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'

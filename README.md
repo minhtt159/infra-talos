@@ -15,11 +15,11 @@ one Flux `Kustomization` per app → `app/` with a `HelmRelease`.
 
 - **[Application pattern](docs/applications.md)** — how every app is wired, the app inventory, and adding a new one.
 - **[Networking & ingress](docs/networking.md)** — Cilium BGP VIPs, Envoy Gateway, external-dns, tunnel, certs.
-- **[Storage](docs/storage.md)** — TrueNAS (democratic-csi) for everything stateful; openebs hostpath for Kafka only.
+- **[Storage](docs/storage.md)** — TrueNAS (truenas-csi) for everything stateful; openebs hostpath for Kafka only.
 - **[Secrets](docs/secrets.md)** — External Secrets Operator + Vaultwarden.
 - **[Bootstrapping](docs/bootstrapping.md)** — standing up a fresh cluster.
 - **[Operations & automation](docs/operations.md)** — Renovate, GitHub Actions, Flux webhook, day-2 commands.
-- **Runbooks** — [cluster rebuild](docs/runbooks/cluster-rebuild.md), [node loss](docs/runbooks/node-loss.md), [democratic-csi → truenas-csi](docs/runbooks/truenas-csi-migration.md).
+- **Runbooks** — [cluster rebuild](docs/runbooks/cluster-rebuild.md), [node loss](docs/runbooks/node-loss.md), [truenas-csi migration](docs/runbooks/truenas-csi-migration.md).
 - **[CLAUDE.md](CLAUDE.md)** — conventions + security posture for contributors (incl. AI).
 
 ---

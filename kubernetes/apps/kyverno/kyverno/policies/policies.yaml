@@ -93,7 +93,6 @@ spec:
             - external-secrets
             - cert-manager
             - observability
-            - democratic-csi
             - truenas-csi
             - openebs
             - network # controllers legitimately need the API
