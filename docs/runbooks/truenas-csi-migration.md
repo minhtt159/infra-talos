@@ -201,11 +201,18 @@ For copies, a `pv-migrate`/rsync Job is fine for small volumes; for large ones,
 
 | Workload | Class today | → | Notes |
 |---|---|---|---|
-| alertmanager (kube-prometheus-stack) | truenas-nfs | truenas-csi-nfs | 1Gi, disposable: just recreate |
+| alertmanager (kube-prometheus-stack) | ~~truenas-nfs~~ | truenas-csi-nfs | **done 2026-11-09**: SC switched in git, old PVC + pod deleted, operator recreated both. Old PV patched to Delete: democratic's DeleteVolume **failed** (`filesystem has dependent snapshots`, a TrueNAS snapshot task on the parent) but the PV object went away anyway, so dataset `k8s-nfs/shares/pvc-ca827d8b-…` + its share are orphaned → delete by hand |
 | grafana | truenas-iscsi | truenas-csi-iscsi | small; A or B |
 | hindsight, yoke, frigate config | truenas-iscsi | truenas-csi-iscsi | A or B |
 | frigate media | truenas-nfs | truenas-csi-nfs | large: A, or zfs send/recv |
 | postgres, bank0-staging, bank0-production | truenas-iscsi | truenas-csi-iscsi | CNPG, see below |
+
+**Old-volume cleanup gotcha.** democratic-csi's DeleteVolume refuses a dataset that has
+snapshots (TrueNAS periodic tasks on `k8s-*/shares` make that every dataset), and its old
+external-provisioner (v3.6.0) doesn't hold the PV finalizer, so `kubectl delete pv` succeeds
+while the dataset and share stay. Either destroy snapshots first on TrueNAS, or leave old PVs
+`Released`/Retain and clean them up in one TrueNAS pass in Phase 4. truenas-csi's own
+DeleteVolume is `recursive + force`, so this only affects democratic volumes.
 
 StatefulSet `volumeClaimTemplates` (alertmanager, CNPG) can't change in place. Delete
 the StatefulSet with `--cascade=orphan` or let the operator recreate it, then replace
