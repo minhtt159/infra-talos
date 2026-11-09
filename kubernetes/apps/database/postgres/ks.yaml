@@ -8,7 +8,7 @@ spec:
   dependsOn:
     - name: cloudnative-pg
     - name: barman-cloud-plugin
-    - name: democratic-iscsi # provides the truenas-iscsi StorageClass
-      namespace: democratic-csi # cross-namespace; ks lives in democratic-csi, not database
+    - name: truenas-csi # provides the truenas-csi-iscsi StorageClass
+      namespace: truenas-csi
   path: ./kubernetes/apps/database/postgres/app
   targetNamespace: database
