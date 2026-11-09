@@ -238,6 +238,9 @@ Facts that shape the procedure (CNPG 1.30.1, plugin 1.30.1 installed locally):
 - Scale-down removes the **highest-serial non-primary**. After promoting the new instance,
   that would be a *new* one, so the old instance is retired with `kubectl cnpg destroy`
   (deletes the instance and its PVCs; PVs are Retain → `Released`, Phase 4 leftovers).
+- CNPG's webhook **forbids shrinking** `storage.size`/`walStorage.size` on an existing Cluster
+  (`can't shrink existing storage`), even though only new instances would get the size. Sizes
+  are sparse zvols, so leave them; a real shrink means a new Cluster bootstrapped from backup.
 - CNPG **reuses freed serials**: with `postgres-2` as the only instance, the new replica
   came up as `postgres-1`; after destroying 2, the replacement was `postgres-2` again. Read
   names from the cluster, don't assume `<n+1>`.
