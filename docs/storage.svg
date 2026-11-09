@@ -26,11 +26,11 @@
 
   <!-- TrueNAS group -->
   <rect class="grp" x="250" y="10" width="230" height="150"/>
-  <text class="gt" x="260" y="27">TrueNAS via democratic-csi</text>
+  <text class="gt" x="260" y="27">TrueNAS via truenas-csi</text>
   <rect class="box" x="270" y="40" width="190" height="42"/>
-  <text class="t" x="365" y="57">truenas-iscsi</text><text class="s" x="365" y="73">block · RWO · Retain</text>
+  <text class="t" x="365" y="57">truenas-csi-iscsi</text><text class="s" x="365" y="73">block · RWO · Retain</text>
   <rect class="box" x="270" y="100" width="190" height="42"/>
-  <text class="t" x="365" y="117">truenas-nfs</text><text class="s" x="365" y="133">shared · Retain</text>
+  <text class="t" x="365" y="117">truenas-csi-nfs</text><text class="s" x="365" y="133">shared · Retain</text>
 
   <!-- node-local group -->
   <rect class="grp" x="250" y="175" width="230" height="110"/>

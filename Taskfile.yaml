@@ -46,13 +46,13 @@ tasks:
       - task: bootstrap:apps
 
   pv:export:
-    desc: Export TrueNAS (democratic-csi + truenas-csi) PV/PVC manifests for post-rebuild reclaim
+    desc: Export truenas-csi PV/PVC manifests for post-rebuild reclaim
     cmds:
       - mkdir -p backups/pv
       # Strip runtime-only fields so the manifests re-apply cleanly
       - >-
         kubectl get pv -o json
-        | yq -P '.items[] | select(.spec.csi.driver | test("^org\.democratic-csi\.|^csi\.truenas\.io$"))
+        | yq -P '.items[] | select(.spec.csi.driver | test("^csi\.truenas\.io$"))
         | del(.metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp,
               .metadata.annotations, .metadata.finalizers, .spec.claimRef.uid,
               .spec.claimRef.resourceVersion, .status)

@@ -29,7 +29,6 @@ One row per namespace under [`kubernetes/apps/`](../kubernetes/apps); each app i
 | `cert-manager` | cert-manager | Let's Encrypt + internal CA |
 | `database` | barman-cloud-plugin, cloudnative-pg, kafka, postgres, strimzi-operator, valkey | CNPG operator + S3 backups, shared Postgres, single-broker Kafka, cache |
 | `default` | (none) | namespace only |
-| `democratic-csi` | iscsi, nfs | TrueNAS-backed PVs |
 | `external-secrets` | external-secrets | ESO + bitwarden-cli bridge to Vaultwarden |
 | `flux-system` | flux-instance, flux-operator | Flux |
 | `frigate` | frigate | NVR, detection on the Coral TPU; raw manifests |

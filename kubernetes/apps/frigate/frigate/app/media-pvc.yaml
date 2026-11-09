@@ -6,8 +6,8 @@ metadata:
   labels:
     app: frigate
 spec:
-  # Static PV adopting the democratic-csi dataset (runbook Phase 3); keeps
-  # democratic's share until the Phase 4 TrueNAS sweep.
+  # Static PV adopting a pre-existing dataset (migration runbook Phase 3); keeps
+  # the old NFS share until the Phase 4 TrueNAS sweep.
   storageClassName: truenas-csi-nfs
   volumeName: frigate-media-data
   accessModes:
