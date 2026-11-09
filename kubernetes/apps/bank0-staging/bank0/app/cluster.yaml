@@ -13,9 +13,7 @@ kind: Cluster
 metadata:
   name: bank0-staging
 spec:
-  # 2 only during the volume rebuild (5Gi data): the new replica gets the new
-  # size, gets promoted, then back to 1. CNPG never shrinks an existing PVC.
-  instances: 2
+  instances: 1
   # 1 instance: the primary PDB (minAvailable 1) can never be met, so every node
   # drain stalls on the Talos 5m timeout, then kills Postgres. Off = clean
   # shutdown + reschedule (iSCSI follows). Re-enable at instances >= 2.
@@ -28,12 +26,11 @@ spec:
       database: bank0
       owner: bank0
   # truenas-csi-iscsi is network-attached, so a pod reschedules to any node and
-  # the volume follows. Small on purpose (DB ~50MB): sparse zvols, online
-  # expansion on the KubePersistentVolumeFillingUp alert. 2Gi WAL is the floor
-  # with CNPG defaults (max_wal_size 1GB + wal_keep_size 512MB).
+  # the volume follows. Sizes are sparse zvols and CNPG's webhook forbids
+  # shrinking them on an existing Cluster; grow online if ever needed.
   storage:
     storageClass: truenas-csi-iscsi
-    size: 5Gi
+    size: 10Gi
   walStorage:
     storageClass: truenas-csi-iscsi
     size: 2Gi

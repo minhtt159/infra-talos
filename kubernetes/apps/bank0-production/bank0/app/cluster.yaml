@@ -28,21 +28,19 @@ spec:
       owner: bank0
   # truenas-csi-iscsi is network-attached, so a pod reschedules to any node and
   # the volume follows.
-  # Small on purpose (DB ~40MB): sparse zvols, online expansion on the
-  # KubePersistentVolumeFillingUp alert. WAL floor with CNPG defaults is
-  # max_wal_size 1GB + wal_keep_size 512MB, so 2Gi is the minimum.
+  # Sizes are sparse zvols (DB ~40MB) and CNPG's webhook forbids shrinking
+  # them on an existing Cluster; grow online on KubePersistentVolumeFillingUp.
   storage:
     storageClass: truenas-csi-iscsi
-    size: 5Gi
+    size: 20Gi
   walStorage:
     storageClass: truenas-csi-iscsi
-    size: 2Gi
+    size: 5Gi
   postgresql:
     parameters:
-      # HA slots retain WAL for a down replica without limit; cap at
-      # wal_keep_size so a dead standby can't fill the 2Gi WAL volume
-      # (a replica lagging past it is re-cloned, trivial at this size).
-      max_slot_wal_keep_size: 512MB
+      # HA slots retain WAL for a down replica without limit; cap it so a
+      # dead standby can't fill the 5Gi WAL volume (floor is ~1.5Gi).
+      max_slot_wal_keep_size: 2GB
   monitoring:
     enablePodMonitor: true
   resources:
