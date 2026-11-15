@@ -29,4 +29,5 @@ releases:
   - name: kube-prometheus-stack
     namespace: observability
     chart: oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack
-    version: 93.1.0
+    # held <93 in .renovaterc.json5 (no arm64 prometheus-operator)
+    version: 92.22.0
