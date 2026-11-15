@@ -17,8 +17,6 @@ spec:
   upgrade:
     crds: CreateReplace
   values:
-    global:
-      imageRegistry: mirror.gcr.io
     deployment:
       annotations:
         # EG doesn't self-reload its config, and Flux won't cycle the
