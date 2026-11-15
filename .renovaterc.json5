@@ -8,7 +8,7 @@
     ":disableRateLimiting",
     ":semanticCommits",
   ],
-  dependencyDashboardTitle: "Renovate Dashboard 🤖",
+  dependencyDashboard: { title: "Renovate Dashboard 🤖" },
   schedule: ["every weekend"],
   flux: {
     managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml$/"],
@@ -67,6 +67,8 @@
     {
       description: "mirror.gcr.io is a pull-through cache: its tag list only shows already-pulled tags, so look versions up on Docker Hub (manifests keep the mirror URL)",
       matchDatasources: ["docker"],
+      // helmfile's overrideDepName would take the docker.io name and fail the update
+      matchManagers: ["!helmfile"],
       matchPackageNames: ["mirror.gcr.io/**"],
       overridePackageName: "{{replace 'mirror.gcr.io/' 'docker.io/' packageName}}",
     },
@@ -177,6 +179,13 @@
       semanticCommitType: "chore",
       commitMessageExtra: "( {{currentDigestShort}} ➔ {{newDigestShort}} )",
     },
+    {
+      description: "llama.cpp regex versioning makes every build a 'major'; drop the breaking-change marker",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/ggml-org/llama.cpp"],
+      matchUpdateTypes: ["major"],
+      commitMessagePrefix: "{{semanticCommitType}}({{semanticCommitScope}}):",
+    },
     // Commit scope + topic, per datasource/manager
     {
       matchDatasources: ["docker"],
@@ -203,7 +212,7 @@
       matchStrings: [
         // # renovate: datasource=npm depName=@headlamp-k8s/pluginctl
         // version: 0.1.1
-        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( repository=(?<registryUrl>\\S+))?\\n.+(:\\s|=)(&\\S+\\s)?(?<currentValue>\\S+)",
+        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( repository=(?<registryUrl>\\S+))?\\n.+(:\\s|=)(&\\S+\\s)?(?<currentValue>[^\\s/]+)(\\s|$)",
         // # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
         // url: https://raw.githubusercontent.com/BerriAI/litellm/v1.106.6/cookbook/…/grafana_dashboard.json
         "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n.+/(?<currentValue>(v|\\d)[^/]+)",
