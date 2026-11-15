@@ -8,7 +8,7 @@
     ":disableRateLimiting",
     ":semanticCommits",
   ],
-  dependencyDashboard: { title: "Renovate Dashboard 🤖" },
+  dependencyDashboardTitle: "Renovate Dashboard 🤖",
   schedule: ["every weekend"],
   flux: {
     managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml$/"],
