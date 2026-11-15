@@ -111,6 +111,33 @@
       matchPackageNames: ["ghcr.io/prometheus-community/charts/kube-prometheus-stack"],
       allowedVersions: "<93",
     },
+    // OCI charts whose source label names the app repo: point at the chart repo,
+    // whose `<chart>-<version>` release tags Renovate matches for release notes
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/argoproj/argo-helm/**"],
+      sourceUrl: "https://github.com/argoproj/argo-helm",
+    },
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/coredns/charts/coredns"],
+      sourceUrl: "https://github.com/coredns/helm",
+    },
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/fluent/helm-charts/**"],
+      sourceUrl: "https://github.com/fluent/helm-charts",
+    },
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/piraeusdatastore/helm-charts/**"],
+      sourceUrl: "https://github.com/piraeusdatastore/helm-charts",
+    },
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/prometheus-community/charts/**"],
+      sourceUrl: "https://github.com/prometheus-community/helm-charts",
+    },
     {
       description: "Intel Device Plugins Group — operator + gpu charts release in lockstep",
       groupName: "intel-device-plugins",
