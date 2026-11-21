@@ -36,12 +36,14 @@ PUT _ilm/policy/ilm@logs-envoy
   }
 }
 # Enrichment: GeoIP city+ASN on source.ip (ES auto-downloads GeoLite2) and
-# network.direction internal/external. MUST precede the template that names it as
+# network.direction internal/external. fluent-bit ships literal dotted keys
+# ("source.ip"), hence dot_expander first. MUST precede the template that names it as
 # default_pipeline. Template changes need: POST logs-envoy.access/_rollover
 PUT _ingest/pipeline/logs-envoy.access@enrich
 {
   "description": "envoy access: geoip + asn + internal/external flag",
   "processors": [
+    { "dot_expander": { "field": "*" } },
     { "geoip": { "field": "source.ip", "target_field": "source.geo", "ignore_missing": true } },
     { "geoip": { "field": "source.ip", "target_field": "source.as", "database_file": "GeoLite2-ASN.mmdb",
                  "properties": ["asn", "organization_name"], "ignore_missing": true } },
