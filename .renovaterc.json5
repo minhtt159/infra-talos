@@ -1,239 +1,344 @@
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
-    "config:recommended",
-    "helpers:pinGitHubActionDigests",
-    ":automergeBranch",
-    ":dependencyDashboard",
-    ":disableRateLimiting",
-    ":semanticCommits",
+    'config:recommended',
+    'helpers:pinGitHubActionDigests',
+    ':automergeBranch',
+    ':dependencyDashboard',
+    ':disableRateLimiting',
+    ':semanticCommits',
   ],
-  dependencyDashboardTitle: "Renovate Dashboard 🤖",
-  schedule: ["every weekend"],
+  dependencyDashboard: {
+    title: 'Renovate Dashboard 🤖',
+  },
+  schedule: [
+    'every weekend',
+  ],
   flux: {
-    managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml$/"],
+    managerFilePatterns: [
+      '/(^|/)kubernetes/.+\\.ya?ml$/',
+    ],
   },
   kubernetes: {
-    managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml$/"],
+    managerFilePatterns: [
+      '/(^|/)kubernetes/.+\\.ya?ml$/',
+    ],
   },
   customDatasources: {
-    // Track grafana.com dashboard revisions so `# renovate: datasource=custom.grafana-dashboards`
-    // annotations bump the pinned `revision:` (the API returns the latest as top-level `revision`).
-    "grafana-dashboards": {
-      defaultRegistryUrlTemplate: "https://grafana.com/api/dashboards/{{packageName}}",
-      format: "json",
-      transformTemplates: ['{ "releases": [{ "version": $string(revision) }] }'],
+    'grafana-dashboards': {
+      defaultRegistryUrlTemplate: 'https://grafana.com/api/dashboards/{{packageName}}',
+      format: 'json',
+      transformTemplates: [
+        '{ "releases": [{ "version": $string(revision) }] }',
+      ],
     },
   },
   packageRules: [
     {
-      description: "grafana.com dashboard revisions are plain integers",
-      matchDatasources: ["custom.grafana-dashboards"],
-      versioning: "loose",
+      description: 'grafana.com dashboard revisions are plain integers',
+      matchDatasources: [
+        'custom.grafana-dashboards',
+      ],
+      versioning: 'loose',
     },
     {
-      description: "llama.cpp server images are tagged server-<backend>-b<build>; the build number is the version",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/ggml-org/llama.cpp"],
-      versioning: "regex:^server-intel-b(?<major>\\d+)$",
-      // b11669 hung the B580 (2026-10-16): no bump without a benchmark on the card
+      description: 'llama.cpp server images are tagged server-<backend>-b<build>; the build number is the version',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/ggml-org/llama.cpp',
+      ],
+      versioning: 'regex:^server-intel-b(?<major>\\d+)$',
       dependencyDashboardApproval: true,
     },
     {
-      description: "Kibana must never exceed the ES version on TrueNAS — manual approval only",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["docker.elastic.co/kibana/kibana"],
+      description: 'Kibana must never exceed the ES version on TrueNAS — manual approval only',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'docker.elastic.co/kibana/kibana',
+      ],
       dependencyDashboardApproval: true,
     },
     {
-      description: "CNPG rejects in-place Postgres major upgrades — majors need a planned migration",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/cloudnative-pg/postgresql"],
-      matchUpdateTypes: ["major"],
+      description: 'CNPG rejects in-place Postgres major upgrades — majors need a planned migration',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/cloudnative-pg/postgresql',
+      ],
+      matchUpdateTypes: [
+        'major',
+      ],
       enabled: false,
     },
     {
-      description: "yoke hub image lives in the private Forgejo registry — hand-bumped",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["git.hnimn.art/minhtt159/yoke"],
+      description: 'yoke hub image lives in the private Forgejo registry — hand-bumped',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'git.hnimn.art/minhtt159/yoke',
+      ],
       enabled: false,
     },
     {
-      description: "Override Helmfile Dependency Name",
-      matchDatasources: ["docker"],
-      matchManagers: ["helmfile"],
-      overrideDepName: "{{packageName}}",
+      description: 'Override Helmfile Dependency Name',
+      matchDatasources: [
+        'docker',
+      ],
+      matchManagers: [
+        'helmfile',
+      ],
+      overrideDepName: '{{packageName}}',
     },
     {
-      description: "mirror.gcr.io is a pull-through cache: its tag list only shows already-pulled tags, so look versions up on Docker Hub (manifests keep the mirror URL)",
-      matchDatasources: ["docker"],
-      // helmfile's overrideDepName would take the docker.io name and fail the update
-      matchManagers: ["!helmfile"],
-      matchPackageNames: ["mirror.gcr.io/**"],
+      description: 'mirror.gcr.io is a pull-through cache: its tag list only shows already-pulled tags, so look versions up on Docker Hub (manifests keep the mirror URL)',
+      matchDatasources: [
+        'docker',
+      ],
+      matchManagers: [
+        '!helmfile',
+      ],
+      matchPackageNames: [
+        'mirror.gcr.io/**',
+      ],
       overridePackageName: "{{replace 'mirror.gcr.io/' 'docker.io/' packageName}}",
     },
     {
-      description: "Flux Operator Group",
-      groupName: "flux-operator",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["/flux-operator/", "/flux-instance/", "/flux-operator-manifests/"],
+      description: 'Flux Operator Group',
+      groupName: 'flux-operator',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        '/flux-operator/',
+        '/flux-instance/',
+        '/flux-operator-manifests/',
+      ],
       group: {
-        commitMessageTopic: "{{{groupName}}} group",
+        commitMessageTopic: '{{{groupName}}} group',
       },
       minimumGroupSize: 3,
     },
     {
-      description: "Envoy Gateway Group — controller chart + addons (dashboards) chart",
-      groupName: "envoy-gateway",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["/gateway-helm/", "/gateway-addons-helm/"],
+      description: 'Envoy Gateway Group — controller chart + addons (dashboards) chart',
+      groupName: 'envoy-gateway',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        '/gateway-helm/',
+        '/gateway-addons-helm/',
+      ],
       group: {
-        commitMessageTopic: "{{{groupName}}} group",
+        commitMessageTopic: '{{{groupName}}} group',
       },
     },
     {
-      description: "Argo Group — argo-cd + argo-rollouts charts, and the Argo CD dashboard tag",
-      groupName: "argocd",
-      matchPackageNames: ["/argoproj/"],
+      description: 'Argo Group — argo-cd + argo-rollouts charts, and the Argo CD dashboard tag',
+      groupName: 'argocd',
+      matchPackageNames: [
+        '/argoproj/',
+      ],
       group: {
-        commitMessageTopic: "{{{groupName}}} group",
+        commitMessageTopic: '{{{groupName}}} group',
       },
     },
     {
-      description: "Prometheus Community Group — all prometheus-community charts",
-      groupName: "prometheus-community",
-      matchPackageNames: ["/prometheus-community/"],
+      description: 'Prometheus Community Group — all prometheus-community charts',
+      groupName: 'prometheus-community',
+      matchPackageNames: [
+        '/prometheus-community/',
+      ],
       group: {
-        commitMessageTopic: "{{{groupName}}} group",
+        commitMessageTopic: '{{{groupName}}} group',
       },
     },
     {
-      description: "kube-prometheus-stack 93.x ships prometheus-operator v0.95.1, which has no arm64 image — hold on 92.x",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/prometheus-community/charts/kube-prometheus-stack"],
-      allowedVersions: "<93",
-    },
-    // OCI charts whose source label names the app repo: point at the chart repo,
-    // whose `<chart>-<version>` release tags Renovate matches for release notes
-    {
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/argoproj/argo-helm/**"],
-      sourceUrl: "https://github.com/argoproj/argo-helm",
+      description: 'kube-prometheus-stack 93.x ships prometheus-operator v0.95.1, which has no arm64 image — hold on 92.x',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/prometheus-community/charts/kube-prometheus-stack',
+      ],
+      allowedVersions: '<93',
     },
     {
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/coredns/charts/coredns"],
-      sourceUrl: "https://github.com/coredns/helm",
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/argoproj/argo-helm/**',
+      ],
+      sourceUrl: 'https://github.com/argoproj/argo-helm',
     },
     {
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/fluent/helm-charts/**"],
-      sourceUrl: "https://github.com/fluent/helm-charts",
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/coredns/charts/coredns',
+      ],
+      sourceUrl: 'https://github.com/coredns/helm',
     },
     {
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/piraeusdatastore/helm-charts/**"],
-      sourceUrl: "https://github.com/piraeusdatastore/helm-charts",
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/fluent/helm-charts/**',
+      ],
+      sourceUrl: 'https://github.com/fluent/helm-charts',
     },
     {
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/prometheus-community/charts/**"],
-      sourceUrl: "https://github.com/prometheus-community/helm-charts",
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/piraeusdatastore/helm-charts/**',
+      ],
+      sourceUrl: 'https://github.com/piraeusdatastore/helm-charts',
     },
     {
-      description: "Intel Device Plugins Group — operator + gpu charts release in lockstep",
-      groupName: "intel-device-plugins",
-      matchDatasources: ["helm"],
-      matchPackageNames: ["/^intel-device-plugins-/"],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/prometheus-community/charts/**',
+      ],
+      sourceUrl: 'https://github.com/prometheus-community/helm-charts',
+    },
+    {
+      description: 'Intel Device Plugins Group — operator + gpu charts release in lockstep',
+      groupName: 'intel-device-plugins',
+      matchDatasources: [
+        'helm',
+      ],
+      matchPackageNames: [
+        '/^intel-device-plugins-/',
+      ],
       group: {
-        commitMessageTopic: "{{{groupName}}} group",
+        commitMessageTopic: '{{{groupName}}} group',
       },
     },
     {
-      description: "Auto-merge GitHub Actions",
-      matchManagers: ["github-actions"],
+      description: 'Auto-merge GitHub Actions',
+      matchManagers: [
+        'github-actions',
+      ],
       automerge: true,
-      matchUpdateTypes: ["minor", "patch", "digest"],
-      minimumReleaseAge: "3 days",
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+        'digest',
+      ],
+      minimumReleaseAge: '3 days',
       ignoreTests: true,
     },
-    // Commit type, per update type
     {
-      matchUpdateTypes: ["major"],
-      semanticCommitType: "feat",
-      commitMessagePrefix: "{{semanticCommitType}}({{semanticCommitScope}})!:",
-      commitMessageExtra: "( {{currentVersion}} ➔ {{newVersion}} )",
+      matchUpdateTypes: [
+        'major',
+      ],
+      semanticCommitType: 'feat',
+      commitMessagePrefix: '{{semanticCommitType}}({{semanticCommitScope}})!:',
+      commitMessageExtra: '( {{currentVersion}} ➔ {{newVersion}} )',
     },
     {
-      matchUpdateTypes: ["minor"],
-      semanticCommitType: "feat",
-      commitMessageExtra: "( {{currentVersion}} ➔ {{newVersion}} )",
+      matchUpdateTypes: [
+        'minor',
+      ],
+      semanticCommitType: 'feat',
+      commitMessageExtra: '( {{currentVersion}} ➔ {{newVersion}} )',
     },
     {
-      matchUpdateTypes: ["patch"],
-      semanticCommitType: "fix",
-      commitMessageExtra: "( {{currentVersion}} ➔ {{newVersion}} )",
+      matchUpdateTypes: [
+        'patch',
+      ],
+      semanticCommitType: 'fix',
+      commitMessageExtra: '( {{currentVersion}} ➔ {{newVersion}} )',
     },
     {
-      matchUpdateTypes: ["digest"],
-      semanticCommitType: "chore",
-      commitMessageExtra: "( {{currentDigestShort}} ➔ {{newDigestShort}} )",
+      matchUpdateTypes: [
+        'digest',
+      ],
+      semanticCommitType: 'chore',
+      commitMessageExtra: '( {{currentDigestShort}} ➔ {{newDigestShort}} )',
     },
     {
       description: "llama.cpp regex versioning makes every build a 'major'; drop the breaking-change marker",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/ggml-org/llama.cpp"],
-      matchUpdateTypes: ["major"],
-      commitMessagePrefix: "{{semanticCommitType}}({{semanticCommitScope}}):",
-    },
-    // Commit scope + topic, per datasource/manager
-    {
-      matchDatasources: ["docker"],
-      semanticCommitScope: "container",
-      commitMessageTopic: "image {{depName}}",
-    },
-    {
-      matchDatasources: ["helm"],
-      semanticCommitScope: "helm",
-      commitMessageTopic: "chart {{depName}}",
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/ggml-org/llama.cpp',
+      ],
+      matchUpdateTypes: [
+        'major',
+      ],
+      commitMessagePrefix: '{{semanticCommitType}}({{semanticCommitScope}}):',
     },
     {
-      matchManagers: ["github-actions"],
-      semanticCommitType: "ci",
-      semanticCommitScope: "github-action",
-      commitMessageTopic: "action {{depName}}",
+      matchDatasources: [
+        'docker',
+      ],
+      semanticCommitScope: 'container',
+      commitMessageTopic: 'image {{depName}}',
+    },
+    {
+      matchDatasources: [
+        'helm',
+      ],
+      semanticCommitScope: 'helm',
+      commitMessageTopic: 'chart {{depName}}',
+    },
+    {
+      matchManagers: [
+        'github-actions',
+      ],
+      semanticCommitType: 'ci',
+      semanticCommitScope: 'github-action',
+      commitMessageTopic: 'action {{depName}}',
     },
   ],
   customManagers: [
     {
-      description: "Process annotated dependencies",
-      customType: "regex",
-      managerFilePatterns: ["/(^|/).+\\.ya?ml$/"],
-      matchStrings: [
-        // # renovate: datasource=npm depName=@headlamp-k8s/pluginctl
-        // version: 0.1.1
-        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( repository=(?<registryUrl>\\S+))?\\n.+(:\\s|=)(&\\S+\\s)?(?<currentValue>[^\\s/]+)(\\s|$)",
-        // # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
-        // url: https://raw.githubusercontent.com/BerriAI/litellm/v1.106.6/cookbook/…/grafana_dashboard.json
-        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n.+/(?<currentValue>(v|\\d)[^/]+)",
+      description: 'Process annotated dependencies',
+      customType: 'regex',
+      managerFilePatterns: [
+        '/(^|/).+\\.ya?ml$/',
       ],
-      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
+      matchStrings: [
+        'datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( repository=(?<registryUrl>\\S+))?\\n.+(:\\s|=)(&\\S+\\s)?(?<currentValue>[^\\s/]+)(\\s|$)',
+        'datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n.+/(?<currentValue>(v|\\d)[^/]+)',
+      ],
+      datasourceTemplate: '{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}',
     },
     {
-      customType: "regex",
-      description: "CloudNativePG Cluster imageName (repository:tag in one field)",
-      managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml$/"],
-      matchStrings: ["imageName:\\s+(?<depName>[^:\\s]+):(?<currentValue>\\S+)"],
-      datasourceTemplate: "docker",
+      customType: 'regex',
+      description: 'CloudNativePG Cluster imageName (repository:tag in one field)',
+      managerFilePatterns: [
+        '/(^|/)kubernetes/.+\\.ya?ml$/',
+      ],
+      matchStrings: [
+        'imageName:\\s+(?<depName>[^:\\s]+):(?<currentValue>\\S+)',
+      ],
+      datasourceTemplate: 'docker',
     },
     {
-      customType: "regex",
-      description: "Process OCI dependencies",
-      managerFilePatterns: ["/\\.yaml$/"],
-      matchStrings: [
-        "oci://(?<depName>[^:]+):(?<currentValue>\\S+)",
+      customType: 'regex',
+      description: 'Process OCI dependencies',
+      managerFilePatterns: [
+        '/\\.yaml$/',
       ],
-      datasourceTemplate: "docker",
+      matchStrings: [
+        'oci://(?<depName>[^:]+):(?<currentValue>\\S+)',
+      ],
+      datasourceTemplate: 'docker',
     },
   ],
 }
