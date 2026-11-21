@@ -1,0 +1,26 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: bank0-production-backup
+spec:
+  # Same bucket as the `postgres` cluster; barman's serverName (the Cluster
+  # name) keeps it under its own s3://cnpg-backups/bank0-production/ prefix.
+  retentionPolicy: 30d
+  configuration:
+    destinationPath: s3://cnpg-backups/
+    endpointURL: https://s3.hnimn.art
+    s3Credentials:
+      accessKeyId:
+        name: bank0-production-backup-s3
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: bank0-production-backup-s3
+        key: ACCESS_SECRET_KEY
+      region:
+        name: bank0-production-backup-s3
+        key: REGION
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
