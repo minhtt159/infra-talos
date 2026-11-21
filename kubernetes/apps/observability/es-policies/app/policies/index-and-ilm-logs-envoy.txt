@@ -35,6 +35,28 @@ PUT _ilm/policy/ilm@logs-envoy
     }
   }
 }
+# Enrichment: GeoIP city+ASN on source.ip (ES auto-downloads GeoLite2) and
+# network.direction internal/external. MUST precede the template that names it as
+# default_pipeline. Template changes need: POST logs-envoy.access/_rollover
+PUT _ingest/pipeline/logs-envoy.access@enrich
+{
+  "description": "envoy access: geoip + asn + internal/external flag",
+  "processors": [
+    { "geoip": { "field": "source.ip", "target_field": "source.geo", "ignore_missing": true } },
+    { "geoip": { "field": "source.ip", "target_field": "source.as", "database_file": "GeoLite2-ASN.mmdb",
+                 "properties": ["asn", "organization_name"], "ignore_missing": true } },
+    { "rename": { "field": "source.as.asn", "target_field": "source.as.number", "ignore_missing": true } },
+    { "rename": { "field": "source.as.organization_name", "target_field": "source.as.organization.name", "ignore_missing": true } },
+    { "script": {
+        "if": "ctx.source?.ip != null",
+        "params": { "internal": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10", "127.0.0.0/8", "fc00::/7", "fe80::/10", "::1/128"] },
+        "source": "boolean internal = false; for (String c : params.internal) { if (new CIDR(c).contains(ctx.source.ip)) { internal = true; break; } } if (ctx.network == null) { ctx.network = [:]; } ctx.network.direction = internal ? 'internal' : 'external';"
+    } }
+  ],
+  "on_failure": [
+    { "set": { "field": "event.ingest_error", "value": "{{ _ingest.on_failure_message }}" } }
+  ]
+}
 PUT _index_template/logs-envoy_template
 {
   "index_patterns": [
@@ -45,12 +67,34 @@ PUT _index_template/logs-envoy_template
   "template": {
     "settings": {
       "index.number_of_replicas": 0,
-      "index.lifecycle.name": "ilm@logs-envoy"
+      "index.lifecycle.name": "ilm@logs-envoy",
+      "index.default_pipeline": "logs-envoy.access@enrich"
     },
     "mappings": {
       "properties": {
         "@timestamp": { "type": "date" },
-        "source": { "properties": { "ip": { "type": "ip" } } },
+        "source": {
+          "properties": {
+            "ip": { "type": "ip" },
+            "geo": {
+              "properties": {
+                "location": { "type": "geo_point" },
+                "continent_name": { "type": "keyword" },
+                "country_iso_code": { "type": "keyword" },
+                "country_name": { "type": "keyword" },
+                "region_name": { "type": "keyword" },
+                "city_name": { "type": "keyword" }
+              }
+            },
+            "as": {
+              "properties": {
+                "number": { "type": "long" },
+                "organization": { "properties": { "name": { "type": "keyword" } } }
+              }
+            }
+          }
+        },
+        "network": { "properties": { "direction": { "type": "keyword" } } },
         "destination": { "properties": { "address": { "type": "keyword" } } },
         "url": {
           "properties": {
@@ -87,7 +131,8 @@ PUT _index_template/logs-envoy_template
         "event": {
           "properties": {
             "dataset": { "type": "keyword" },
-            "start": { "type": "date" }
+            "start": { "type": "date" },
+            "ingest_error": { "type": "keyword" }
           }
         },
         "envoy": {
