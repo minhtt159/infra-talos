@@ -17,6 +17,14 @@ spec:
   upgrade:
     crds: CreateReplace
   values:
+    # Chart ships no requests for the pre-install/upgrade certgen hook Job;
+    # Kyverno require-resource-requests rejects it and the upgrade rolls back.
+    certgen:
+      job:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
     deployment:
       annotations:
         # EG doesn't self-reload its config, and Flux won't cycle the
