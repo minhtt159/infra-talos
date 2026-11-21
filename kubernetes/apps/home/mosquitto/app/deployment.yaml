@@ -27,7 +27,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: *name
-          image: docker.io/library/eclipse-mosquitto:2.0.22
+          image: docker.io/library/eclipse-mosquitto:2.0.23
           ports:
             - name: mqtt
               containerPort: 1883
