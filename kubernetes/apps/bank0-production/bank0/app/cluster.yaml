@@ -6,9 +6,7 @@
 # sync with the DSN.
 # bootstrap.initdb generates Secret bank0-production-app, which carries a ready
 # `uri` — that's what the chart reads (database.existingSecret + secretKey: uri).
-# ponytail: NO backups yet — see the PR for the ObjectStore/ScheduledBackup
-# follow-up, which is blocked on the Garage bucket the `postgres` cluster's
-# objectstore.yaml still TODOs.
+# Backups: barman-cloud -> Garage S3, WAL continuous + base daily.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -43,6 +41,11 @@ spec:
       max_slot_wal_keep_size: 2GB
   monitoring:
     enablePodMonitor: true
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: bank0-production-backup
   resources:
     requests:
       cpu: 100m

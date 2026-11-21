@@ -11,6 +11,8 @@ spec:
   dependsOn:
     - name: cloudnative-pg # operator for this env's own Postgres cluster
       namespace: database
+    - name: barman-cloud-plugin # ObjectStore CRD + WAL archiver sidecar
+      namespace: database
   path: ./kubernetes/apps/bank0-production/bank0/app
   postBuild:
     substituteFrom:

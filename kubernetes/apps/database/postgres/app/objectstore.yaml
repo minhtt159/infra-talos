@@ -7,7 +7,6 @@ spec:
   # 30d of base backups + WALs. Bump before this holds anything you'd miss.
   retentionPolicy: 30d
   configuration:
-    # TODO: create the bucket in Garage and set the real endpoint host.
     destinationPath: s3://cnpg-backups/
     endpointURL: https://s3.hnimn.art
     s3Credentials:

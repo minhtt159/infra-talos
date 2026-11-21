@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/scheduledbackup_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: bank0-production
+spec:
+  # 04:00 daily (CNPG cron: seconds-first), clear of postgres' 03:30 run.
+  # immediate: first base backup on create, so WAL archiving is restorable now.
+  schedule: "0 0 4 * * *"
+  immediate: true
+  backupOwnerReference: self
+  cluster:
+    name: bank0-production
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
