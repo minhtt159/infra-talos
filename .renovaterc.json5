@@ -204,6 +204,38 @@
       ],
       sourceUrl: 'https://github.com/piraeusdatastore/helm-charts',
     },
+    // Images with no source label: point at the repo whose tags match the version
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/grafana/helm-charts/grafana-operator"],
+      sourceUrl: "https://github.com/grafana/grafana-operator",
+    },
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["docker.io/library/node"],
+      sourceUrl: "https://github.com/nodejs/node",
+    },
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/blakeblackshear/frigate"],
+      sourceUrl: "https://github.com/blakeblackshear/frigate",
+    },
+    // Chart release tags Renovate can't match (prefixed or app-versioned): link only
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/home-operations/charts-mirror/external-dns"],
+      changelogUrl: "https://github.com/kubernetes-sigs/external-dns/releases/tag/external-dns-helm-chart-{{newVersion}}",
+    },
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/stakater/charts/reloader"],
+      changelogUrl: "https://github.com/stakater/Reloader/releases/tag/chart-v{{newVersion}}",
+    },
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/kyverno/charts/kyverno"],
+      changelogUrl: "https://github.com/kyverno/kyverno/releases",
+    },
     {
       matchDatasources: [
         'docker',
